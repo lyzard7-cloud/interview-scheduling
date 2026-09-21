@@ -116,9 +116,10 @@
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
           <h3 class="text-lg font-bold text-slate-900">학생 인증 및 접속</h3>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
           <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="tel" id="sPhone" placeholder="연락처 (예: 010-1234-5678)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <input type="password" id="sPin" placeholder="PIN (4자리)" autocomplete="off" maxlength="4" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <button onclick="handleStudentLogin()" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
             접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
@@ -126,7 +127,7 @@
         </div>
       </section>
 
-      <!-- 학생 예약 내역 확인 -->
+      <!-- 학생 예약 내역 확인 (면접교사 정보 완벽 제외) -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-brand-purple"></i> 내가 신청한 면접 내역
@@ -231,6 +232,10 @@
           <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
+        <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+          <span><i class="fa-solid fa-chart-pie mr-2"></i>면접교사 배정 통계</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
         <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
           <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -264,20 +269,32 @@
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
+      const phone = document.getElementById('sPhone').value.trim();
       const pin = document.getElementById('sPin').value.trim();
 
-      if (!num || !name || pin.length !== 4) {
-        alert('학번, 이름, PIN 4자리를 정확히 입력해 주세요.');
+      if (!num || !name || !phone || pin.length !== 4) {
+        alert('학번, 이름, 연락처, PIN 4자리를 정확히 입력해 주세요.');
         return;
       }
 
-      state.user = { num, name, pin };
+      // PIN 검증 강화: 이미 해당 학번으로 등록된 예약 내역이 있을 경우 기존 PIN과 일치해야 함
+      const existingUserRegs = state.regs.filter(r => r.num === num);
+      if (existingUserRegs.length > 0) {
+        const storedPin = existingUserRegs[0].pin;
+        if (storedPin && storedPin !== pin) {
+          alert('비밀번호(PIN)가 일치하지 않습니다. 최초 신청 시 입력한 PIN 4자리를 입력해 주세요.');
+          return;
+        }
+      }
+
+      state.user = { num, name, phone, pin };
       document.getElementById('authStatus').innerHTML = `<span class="text-brand-orange font-bold"><i class="fa-solid fa-user-check mr-1"></i>${name} (${num})</span> 학생 접속됨`;
       document.getElementById('stepDetails').classList.remove('hidden');
       checkMyRegistrations();
-      alert(`${name} 학생으로 로그인되었습니다.`);
+      alert(`${name} 학생으로 인증되었습니다.`);
     }
 
+    // 학생 화면에서 면접교사 정보를 완벽히 제외하고 본인 예약만 표시
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -287,9 +304,9 @@
       if (myRegs.length > 0) {
         container.classList.remove('hidden');
         content.innerHTML = myRegs.map(r => `
-          <div class="flex justify-between items-center py-1.5 border-b border-slate-200/50 last:border-0">
-            <span>📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept} (${(r.teacher1 || r.teacher2) ? '면접교사: ' + [r.teacher1, r.teacher2].filter(Boolean).join(', ') : '면접교사 배정중'})</span>
-            <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline">신청 취소</button>
+          <div class="flex justify-between items-center py-2 border-b border-slate-200/50 last:border-0">
+            <span class="font-medium text-slate-800">📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept}</span>
+            <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline ml-4">신청 취소</button>
           </div>
         `).join('');
       } else {
@@ -348,7 +365,7 @@
 
     function selectDate(dateStr) {
       if (!state.user) {
-        alert('STEP 1에서 학번, 이름, PIN 입력 후 [접속하기]를 먼저 눌러주세요.');
+        alert('STEP 1에서 학번, 이름, 연락처, PIN 입력 후 [접속하기]를 먼저 눌러주세요.');
         return;
       }
       state.selectedDate = dateStr;
@@ -360,10 +377,10 @@
       const btnGroup = document.getElementById('slotButtonsGroup');
       btnGroup.innerHTML = `
         <button onclick="submitReservation(8)" ${p8Reg ? 'disabled' : ''} class="py-3.5 border-2 ${p8Reg ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
-          ${p8Reg ? `8교시 마감 (예약자: ${p8Reg.name})` : '8교시 (16:40 ~ 17:30) 신청'}
+          ${p8Reg ? '8교시 마감 (신청 불가)' : '8교시 (16:40 ~ 17:30) 신청'}
         </button>
         <button onclick="submitReservation(9)" ${p9Reg ? 'disabled' : ''} class="py-3.5 border-2 ${p9Reg ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
-          ${p9Reg ? `9교시 마감 (예약자: ${p9Reg.name})` : '9교시 (17:40 ~ 18:30) 신청'}
+          ${p9Reg ? '9교시 마감 (신청 불가)' : '9교시 (17:40 ~ 18:30) 신청'}
         </button>
       `;
 
@@ -382,7 +399,7 @@
 
       const existingSlot = state.regs.find(r => r.date === state.selectedDate && Number(r.period) === Number(period));
       if (existingSlot) {
-        alert(`해당 ${period}교시는 이미 ${existingSlot.name} 학생이 예약 완료하였습니다.`);
+        alert(`해당 ${period}교시는 이미 예약이 완료되었습니다.`);
         return;
       }
 
@@ -392,6 +409,8 @@
         period: period,
         num: state.user.num,
         name: state.user.name,
+        phone: state.user.phone || '미입력',
+        pin: state.user.pin,
         univ: univ,
         dept: dept,
         teacher1: '',
@@ -419,9 +438,9 @@
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,면접교사1,면접교사2\n';
+      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,연락처,지원대학교,지원학과,면접교사1,면접교사2\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},${r.phone || ''},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -434,6 +453,8 @@
     function renderTeacherView() {
       if (state.teacherTab === 'calendar') {
         renderTeacherCalendarView();
+      } else if (state.teacherTab === 'stats') {
+        renderTeacherStatsView();
       } else {
         renderTeacherListView();
       }
@@ -444,23 +465,74 @@
       renderTeacherListView();
     }
 
-    function renderTeacherListView() {
+    function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
 
-      const teacherStats = {};
+      const teacherMap = {};
       state.regs.forEach(r => {
         [r.teacher1, r.teacher2].filter(Boolean).forEach(t => {
-          teacherStats[t] = (teacherStats[t] || 0) + 1;
+          if (!teacherMap[t]) teacherMap[t] = [];
+          teacherMap[t].push(r);
         });
       });
 
-      const statCards = Object.keys(teacherStats).map(t => `
-        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-center">
-          <p class="text-xs text-slate-500 font-medium">${t}</p>
-          <p class="text-base font-extrabold text-brand-purple mt-0.5">${teacherStats[t]}건</p>
-        </div>
-      `).join('') || `<div class="text-xs text-slate-400 py-2">배정된 면접교사가 없습니다.</div>`;
+      const teacherNames = Object.keys(teacherMap);
+      
+      const cardsHtml = teacherNames.map(t => {
+        const studentList = teacherMap[t].map(r => `
+          <div class="flex justify-between items-center text-xs py-1 border-b border-slate-100 last:border-0">
+            <span class="font-semibold text-slate-800">${r.name} (${r.num})</span>
+            <span class="text-slate-500">${r.date} ${r.period}교시</span>
+          </div>
+        `).join('');
+
+        return `
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+              <h4 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> ${t} 선생님
+              </h4>
+              <span class="bg-brand-purpleLight text-brand-purple font-extrabold text-xs px-3 py-1 rounded-full">
+                총 ${teacherMap[t].length}건
+              </span>
+            </div>
+            <div class="space-y-1">
+              <p class="text-[11px] font-bold text-slate-400 mb-1">담당 면접 학생 목록</p>
+              ${studentList}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">📊 면접교사별 배정 통계 대시보드</h3>
+              <p class="text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 면접 학생 목록을 한눈에 관리합니다.</p>
+            </div>
+            <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2.5 rounded-xl font-bold shadow-sm transition-all">
+              <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
+            </button>
+          </div>
+
+          ${teacherNames.length > 0 ? `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              ${cardsHtml}
+            </div>
+          ` : `
+            <div class="text-center py-12 text-slate-400 text-xs">
+              아직 배정된 면접교사가 없습니다. [면접 예약 현황 목록] 탭에서 교사를 배정해 주세요.
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function renderTeacherListView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
 
       let tableRows = state.regs.map((r, idx) => {
         const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
@@ -486,13 +558,22 @@
           `;
         }
 
+        const phoneCallBtn = r.phone ? `
+          <a href="tel:${r.phone}" title="${r.phone} 전화걸기" class="inline-flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-7 h-7 rounded-full transition-all">
+            <i class="fa-solid fa-phone text-xs"></i>
+          </a>
+        ` : `<span class="text-slate-300">-</span>`;
+
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
             <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-3 px-3 font-bold text-brand-navy">${r.date}</td>
             <td class="py-3 px-3 font-bold text-brand-purple">${r.period}교시</td>
             <td class="py-3 px-3 font-semibold">${r.num}</td>
-            <td class="py-3 px-3 font-bold text-slate-900">${r.name}</td>
+            <td class="py-3 px-3 font-bold text-slate-900 flex items-center gap-1.5">
+              <span>${r.name}</span>
+              ${phoneCallBtn}
+            </td>
             <td class="py-3 px-3">${r.univ}</td>
             <td class="py-3 px-3">${r.dept}</td>
             <td class="py-3 px-3">${teacherCellHtml}</td>
@@ -527,13 +608,6 @@
             </div>
           </div>
 
-          <div class="space-y-2">
-            <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-chart-pie mr-1 text-brand-purple"></i> 면접교사별 배정 건수 (2인 1조)</h4>
-            <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
-              ${statCards}
-            </div>
-          </div>
-
           <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-left border-collapse">
               <thead>
@@ -542,7 +616,7 @@
                   <th class="py-3 px-3">면접 희망일</th>
                   <th class="py-3 px-3">교시</th>
                   <th class="py-3 px-3">학번</th>
-                  <th class="py-3 px-3">이름</th>
+                  <th class="py-3 px-3">이름 (통화)</th>
                   <th class="py-3 px-3">지원 대학교</th>
                   <th class="py-3 px-3">지원 학과</th>
                   <th class="py-3 px-3">담당 면접교사 (2인)</th>
@@ -594,17 +668,44 @@
         `;
       }
 
+      const defaultStartDate = `${state.year}-${String(state.month).padStart(2, '0')}-01`;
+      const defaultEndDate = `${state.year}-${String(state.month).padStart(2, '0')}-${String(lastDate).padStart(2, '0')}`;
+
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
-              <h3 class="text-lg font-bold text-slate-900">📅 교사용 달력 및 마감 관리 대시보드</h3>
-              <p class="text-xs text-slate-500 mt-0.5">날짜를 클릭하여 운영 마감 설정 및 예약 내역을 직접 관리할 수 있습니다.</p>
+              <h3 class="text-lg font-bold text-slate-900">📅 교사용 달력 및 일괄 마감 관리 대시보드</h3>
+              <p class="text-xs text-slate-500 mt-0.5">희망하는 기간을 지정하여 한 번에 마감/해제하거나 특정 날짜를 직접 관리할 수 있습니다.</p>
             </div>
             <div class="flex items-center space-x-2">
               <button onclick="changeMonth(-1)" class="px-3 py-1.5 border rounded-lg text-xs font-bold">◀ 이전달</button>
               <span class="font-bold text-sm px-2 text-brand-navy">${state.year}년 ${state.month}월</span>
               <button onclick="changeMonth(1)" class="px-3 py-1.5 border rounded-lg text-xs font-bold">다음달 ▶</button>
+            </div>
+          </div>
+
+          <!-- 기간지정 일괄 마감 컨트롤 바 -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
+                <i class="fa-solid fa-sliders text-brand-purple"></i>
+                <span>일괄 마감 설정:</span>
+                <input type="date" id="bulkStartDate" value="${defaultStartDate}" class="px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-normal">
+                <span>~</span>
+                <input type="date" id="bulkEndDate" value="${defaultEndDate}" class="px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-normal">
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="applyBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all">
+                  <i class="fa-solid fa-lock mr-1"></i> 선택기간 일괄 마감
+                </button>
+                <button onclick="applyBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all">
+                  <i class="fa-solid fa-lock-open mr-1"></i> 선택기간 일괄 해제
+                </button>
+                <button onclick="applyWeekendClose(true)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
+                  토/일 주말 마감
+                </button>
+              </div>
             </div>
           </div>
 
@@ -618,6 +719,68 @@
           <div id="teacherCalDetail" class="hidden border-t pt-5 space-y-3"></div>
         </section>
       `;
+    }
+
+    function applyBulkClose(isClose) {
+      const sVal = document.getElementById('bulkStartDate').value;
+      const eVal = document.getElementById('bulkEndDate').value;
+
+      if (!sVal || !eVal) {
+        alert('시작일과 종료일을 올바르게 선택해 주세요.');
+        return;
+      }
+
+      let curr = new Date(sVal);
+      const end = new Date(eVal);
+
+      if (curr > end) {
+        alert('시작일이 종료일보다 늦을 수 없습니다.');
+        return;
+      }
+
+      let count = 0;
+      while (curr <= end) {
+        const dStr = curr.toISOString().slice(0, 10);
+        if (isClose) {
+          if (!state.closedDates.includes(dStr)) {
+            state.closedDates.push(dStr);
+            count++;
+          }
+        } else {
+          if (state.closedDates.includes(dStr)) {
+            state.closedDates = state.closedDates.filter(d => d !== dStr);
+            count++;
+          }
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+
+      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      alert(`총 ${count}개 날짜가 일괄 ${isClose ? '마감' : '해제'} 처리되었습니다.`);
+      renderTeacherCalendarView();
+    }
+
+    function applyWeekendClose(isClose) {
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+      let count = 0;
+
+      for (let d = 1; d <= lastDate; d++) {
+        const dateObj = new Date(state.year, state.month - 1, d);
+        const day = dateObj.getDay();
+        if (day === 0 || day === 6) {
+          const dStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          if (isClose) {
+            if (!state.closedDates.includes(dStr)) {
+              state.closedDates.push(dStr);
+              count++;
+            }
+          }
+        }
+      }
+
+      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      alert(`${state.month}월 모든 주말(토/일)이 일괄 마감 처리되었습니다.`);
+      renderTeacherCalendarView();
     }
 
     function selectTeacherCalDate(dateStr) {
@@ -644,7 +807,7 @@
         <div class="flex justify-between items-center bg-brand-purpleLight/50 p-4 rounded-xl">
           <h4 class="font-bold text-slate-900 text-sm">📅 ${dateStr} 일정 상세 정보</h4>
           <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-4 py-2 rounded-xl">
-            ${isClosed ? '마감 해제 (운영 재개)' : '해당 날짜 전체 휴무/마감 처리'}
+            ${isClosed ? '마감 해제 (운영 재개)' : '해당 날짜 개별 마감 처리'}
           </button>
         </div>
         <div class="space-y-2">
@@ -659,7 +822,7 @@
         alert(`${dateStr} 날짜가 정상 운영(예약 가능)으로 재개되었습니다.`);
       } else {
         state.closedDates.push(dateStr);
-        alert(`${dateStr} 날짜가 전체 휴무/마감 처리되었습니다.`);
+        alert(`${dateStr} 날짜가 마감 처리되었습니다.`);
       }
       localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
       renderTeacherCalendarView();
