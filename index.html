@@ -110,7 +110,7 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- STEP 1: 학생 인증 -->
+      <!-- STEP 1: 학생 인증 (전화번호 필드 포함) -->
       <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center space-x-2">
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
@@ -127,7 +127,7 @@
         </div>
       </section>
 
-      <!-- 학생 예약 내역 확인 (면접교사 정보 완벽 제외) -->
+      <!-- 학생 예약 내역 확인 (면접교사 정보 절대 노출 안됨) -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-brand-purple"></i> 내가 신청한 면접 내역
@@ -273,16 +273,16 @@
       const pin = document.getElementById('sPin').value.trim();
 
       if (!num || !name || !phone || pin.length !== 4) {
-        alert('학번, 이름, 연락처, PIN 4자리를 정확히 입력해 주세요.');
+        alert('학번, 이름, 연락처, PIN 4자리를 모두 정확히 입력해 주세요.');
         return;
       }
 
-      // PIN 검증 강화: 이미 해당 학번으로 등록된 예약 내역이 있을 경우 기존 PIN과 일치해야 함
+      // PIN 일치 검증: 해당 학번에 이전 예약 내역이 있으면 동일한 PIN인지 확인
       const existingUserRegs = state.regs.filter(r => r.num === num);
       if (existingUserRegs.length > 0) {
         const storedPin = existingUserRegs[0].pin;
         if (storedPin && storedPin !== pin) {
-          alert('비밀번호(PIN)가 일치하지 않습니다. 최초 신청 시 입력한 PIN 4자리를 입력해 주세요.');
+          alert('비밀번호(PIN)가 일치하지 않습니다. 최초 신청 시 사용했던 PIN 4자리를 입력해 주세요.');
           return;
         }
       }
@@ -291,10 +291,10 @@
       document.getElementById('authStatus').innerHTML = `<span class="text-brand-orange font-bold"><i class="fa-solid fa-user-check mr-1"></i>${name} (${num})</span> 학생 접속됨`;
       document.getElementById('stepDetails').classList.remove('hidden');
       checkMyRegistrations();
-      alert(`${name} 학생으로 인증되었습니다.`);
+      alert(`${name} 학생으로 로그인되었습니다.`);
     }
 
-    // 학생 화면에서 면접교사 정보를 완벽히 제외하고 본인 예약만 표시
+    // ★ 면접교사 명칭을 완벽히 삭제한 학생 본인 신청 내역 카드 ★
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -305,7 +305,7 @@
         container.classList.remove('hidden');
         content.innerHTML = myRegs.map(r => `
           <div class="flex justify-between items-center py-2 border-b border-slate-200/50 last:border-0">
-            <span class="font-medium text-slate-800">📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept}</span>
+            <span class="font-semibold text-slate-800">📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept}</span>
             <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline ml-4">신청 취소</button>
           </div>
         `).join('');
