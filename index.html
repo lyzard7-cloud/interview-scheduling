@@ -56,7 +56,7 @@
 </head>
 <body class="bg-brand-bgLight text-slate-800 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- 상단 네이비 입학 포털 헤더 -->
+  <!-- 상단 네이비 헤더 -->
   <header class="bg-brand-navy text-white shadow-md">
     <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center text-xs border-b border-slate-700/60">
       <div class="flex items-center space-x-3 text-slate-300">
@@ -85,7 +85,7 @@
   <!-- 본문 컨테이너 -->
   <div class="max-w-7xl w-full mx-auto px-6 py-8 flex-1 flex gap-8">
     
-    <!-- 좌측 LNB 사이드바 -->
+    <!-- 좌측 사이드바 -->
     <aside class="w-64 shrink-0 space-y-4">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-2">
         <div class="bg-brand-purple text-white p-3.5 rounded-xl font-bold text-sm flex items-center justify-between">
@@ -93,7 +93,7 @@
           <i class="fa-solid fa-bars"></i>
         </div>
         <nav class="space-y-1 text-sm font-medium pt-2" id="sidebarNav">
-          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
+          <a href="#" onclick="switchTeacherTab('list')" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
             <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약 현황</span>
             <i class="fa-solid fa-chevron-right text-xs"></i>
           </a>
@@ -107,7 +107,7 @@
       </div>
     </aside>
 
-    <!-- 우측 메인 콘텐츠 -->
+    <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
       <!-- STEP 1: 학생 인증 -->
@@ -126,7 +126,7 @@
         </div>
       </section>
 
-      <!-- 학생 예약 내역 확인 (접속 시 노출) -->
+      <!-- 학생 예약 내역 확인 -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-brand-purple"></i> 내가 신청한 면접 내역
@@ -134,7 +134,7 @@
         <div id="myRegContent" class="text-xs text-slate-700 space-y-1"></div>
       </div>
 
-      <!-- STEP 2 & 3: 접속 후 펼쳐짐 -->
+      <!-- STEP 2 & 3 -->
       <div id="stepDetails" class="hidden space-y-6">
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
           <div class="flex items-center space-x-2">
@@ -171,12 +171,9 @@
           </div>
           <div id="calGrid" class="grid grid-cols-7 gap-2"></div>
 
-          <!-- 실시간 마감 처리 교시 버튼 -->
           <div id="slotPicker" class="hidden border-t border-slate-200 pt-5 mt-4 space-y-3">
             <div class="text-sm font-bold text-slate-800" id="selectedDateTitle">선택된 날짜: -</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="slotButtonsGroup">
-              <!-- JS로 실시간 생성 -->
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="slotButtonsGroup"></div>
           </div>
         </section>
       </div>
@@ -194,6 +191,8 @@
       year: 2026,
       month: 10,
       selectedDate: null,
+      teacherTab: 'list',
+      editingTeacherId: null,
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || '[]'),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
@@ -218,15 +217,25 @@
       window.location.href = window.location.pathname;
     }
 
+    function switchTeacherTab(tabName) {
+      state.teacherTab = tabName;
+      updateSidebarNavForTeacher();
+      renderTeacherView();
+    }
+
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
       nav.innerHTML = `
-        <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold mb-1">
-          <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 관리</span>
+        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+          <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
-        </a>
-        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all">
+        </button>
+        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+          <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t">
           <span><i class="fa-solid fa-user-graduate mr-2 text-brand-purple"></i>학생 페이지로 이동</span>
           <i class="fa-solid fa-arrow-right text-xs text-slate-400"></i>
         </button>
@@ -279,7 +288,7 @@
         container.classList.remove('hidden');
         content.innerHTML = myRegs.map(r => `
           <div class="flex justify-between items-center py-1.5 border-b border-slate-200/50 last:border-0">
-            <span>📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept} (${r.teacher ? '담당교사: ' + r.teacher : '면접교사 배정중'})</span>
+            <span>📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept} (${(r.teacher1 || r.teacher2) ? '면접교사: ' + [r.teacher1, r.teacher2].filter(Boolean).join(', ') : '면접교사 배정중'})</span>
             <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline">신청 취소</button>
           </div>
         `).join('');
@@ -293,7 +302,8 @@
       if (state.month < 9) state.month = 9;
       if (state.month > 11) state.month = 11;
       document.getElementById('calMonthText').textContent = `${state.year}년 ${state.month}월`;
-      renderCalendar();
+      if (isTeacher && state.teacherTab === 'calendar') renderTeacherCalendarView();
+      else renderCalendar();
     }
 
     function renderCalendar() {
@@ -384,7 +394,8 @@
         name: state.user.name,
         univ: univ,
         dept: dept,
-        teacher: '',
+        teacher1: '',
+        teacher2: '',
         createdAt: new Date().toLocaleString()
       };
 
@@ -408,9 +419,9 @@
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,담당면접교사\n';
+      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,면접교사1,면접교사2\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}",${r.teacher || '미지정'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -421,13 +432,27 @@
     }
 
     function renderTeacherView() {
+      if (state.teacherTab === 'calendar') {
+        renderTeacherCalendarView();
+      } else {
+        renderTeacherListView();
+      }
+    }
+
+    function enableTeacherEdit(id) {
+      state.editingTeacherId = id;
+      renderTeacherListView();
+    }
+
+    function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
 
       const teacherStats = {};
       state.regs.forEach(r => {
-        const t = r.teacher || '미배정';
-        teacherStats[t] = (teacherStats[t] || 0) + 1;
+        [r.teacher1, r.teacher2].filter(Boolean).forEach(t => {
+          teacherStats[t] = (teacherStats[t] || 0) + 1;
+        });
       });
 
       const statCards = Object.keys(teacherStats).map(t => `
@@ -435,28 +460,48 @@
           <p class="text-xs text-slate-500 font-medium">${t}</p>
           <p class="text-base font-extrabold text-brand-purple mt-0.5">${teacherStats[t]}건</p>
         </div>
-      `).join('');
+      `).join('') || `<div class="text-xs text-slate-400 py-2">배정된 면접교사가 없습니다.</div>`;
 
-      let tableRows = state.regs.map((r, idx) => `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
-          <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
-          <td class="py-3 px-3 font-bold text-brand-navy">${r.date}</td>
-          <td class="py-3 px-3 font-bold text-brand-purple">${r.period}교시</td>
-          <td class="py-3 px-3 font-semibold">${r.num}</td>
-          <td class="py-3 px-3 font-bold text-slate-900">${r.name}</td>
-          <td class="py-3 px-3">${r.univ}</td>
-          <td class="py-3 px-3">${r.dept}</td>
-          <td class="py-3 px-3">
+      let tableRows = state.regs.map((r, idx) => {
+        const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+        
+        let teacherCellHtml = '';
+        if (isEditing) {
+          teacherCellHtml = `
             <div class="flex items-center space-x-1">
-              <input type="text" id="tInput_${r.id}" value="${r.teacher || ''}" placeholder="교사명 입력" class="w-24 px-2 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:border-brand-purple">
-              <button onclick="assignTeacher('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded-md text-[11px] font-bold hover:bg-brand-purple/90">저장</button>
+              <input type="text" id="t1Input_${r.id}" value="${r.teacher1 || ''}" placeholder="교사1" class="w-16 px-1.5 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-brand-purple">
+              <input type="text" id="t2Input_${r.id}" value="${r.teacher2 || ''}" placeholder="교사2" class="w-16 px-1.5 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-brand-purple">
+              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-[11px] font-bold hover:bg-brand-purple/90">저장</button>
             </div>
-          </td>
-          <td class="py-3 px-3 text-center">
-            <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold text-[11px] underline">취소</button>
-          </td>
-        </tr>
-      `).join('');
+          `;
+        } else {
+          teacherCellHtml = `
+            <div class="flex items-center justify-between">
+              <div class="space-x-1">
+                ${r.teacher1 ? `<span class="bg-brand-purpleLight text-brand-purple px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher1}</span>` : ''}
+                ${r.teacher2 ? `<span class="bg-brand-purpleLight text-brand-purple px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher2}</span>` : ''}
+              </div>
+              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[11px] font-semibold ml-2 underline">수정</button>
+            </div>
+          `;
+        }
+
+        return `
+          <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
+            <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3 px-3 font-bold text-brand-navy">${r.date}</td>
+            <td class="py-3 px-3 font-bold text-brand-purple">${r.period}교시</td>
+            <td class="py-3 px-3 font-semibold">${r.num}</td>
+            <td class="py-3 px-3 font-bold text-slate-900">${r.name}</td>
+            <td class="py-3 px-3">${r.univ}</td>
+            <td class="py-3 px-3">${r.dept}</td>
+            <td class="py-3 px-3">${teacherCellHtml}</td>
+            <td class="py-3 px-3 text-center">
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold text-[11px] underline">취소</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       if (state.regs.length === 0) {
         tableRows = `<tr><td colspan="9" class="py-8 text-center text-xs text-slate-400">아직 신청한 학생 내역이 없습니다.</td></tr>`;
@@ -467,7 +512,7 @@
           <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
               <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
-              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 연습 신청 현황 (총 ${state.regs.length}건)</p>
+              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 면접교사 2인 배정 관리 (총 ${state.regs.length}건)</p>
             </div>
             <div class="flex items-center space-x-2">
               <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2.5 rounded-xl font-bold shadow-sm transition-all">
@@ -482,9 +527,8 @@
             </div>
           </div>
 
-          <!-- 면접교사 배정 현황 통계 -->
           <div class="space-y-2">
-            <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-chart-pie mr-1 text-brand-purple"></i> 면접교사별 배정 현황</h4>
+            <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-chart-pie mr-1 text-brand-purple"></i> 면접교사별 배정 건수 (2인 1조)</h4>
             <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
               ${statCards}
             </div>
@@ -501,7 +545,7 @@
                   <th class="py-3 px-3">이름</th>
                   <th class="py-3 px-3">지원 대학교</th>
                   <th class="py-3 px-3">지원 학과</th>
-                  <th class="py-3 px-3">담당 면접교사</th>
+                  <th class="py-3 px-3">담당 면접교사 (2인)</th>
                   <th class="py-3 px-3 text-center">관리</th>
                 </tr>
               </thead>
@@ -514,24 +558,133 @@
       `;
     }
 
-    async function assignTeacher(id) {
-      const input = document.getElementById(`tInput_${id}`);
-      if (!input) return;
-      const teacherName = input.value.trim();
+    function renderTeacherCalendarView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      const firstDay = new Date(state.year, state.month - 1, 1).getDay();
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+
+      let calGridHtml = '';
+      for (let i = 0; i < firstDay; i++) {
+        calGridHtml += `<div class="h-24 bg-slate-50/50 rounded-xl"></div>`;
+      }
+
+      for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isClosed = state.closedDates.includes(dateStr);
+        const dayRegs = state.regs.filter(r => r.date === dateStr);
+
+        let regsSummary = dayRegs.map(r => `
+          <div class="text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1.5 py-0.5 rounded truncate">
+            ${r.period}교시: ${r.name}
+          </div>
+        `).join('');
+
+        calGridHtml += `
+          <div onclick="selectTeacherCalDate('${dateStr}')" class="h-24 border ${isClosed ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-2 cursor-pointer flex flex-col justify-between transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
+              ${isClosed ? '<span class="text-[10px] bg-red-100 text-red-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-400">${dayRegs.length}건</span>`}
+            </div>
+            <div class="space-y-1 overflow-hidden">
+              ${regsSummary}
+            </div>
+          </div>
+        `;
+      }
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">📅 교사용 달력 및 마감 관리 대시보드</h3>
+              <p class="text-xs text-slate-500 mt-0.5">날짜를 클릭하여 운영 마감 설정 및 예약 내역을 직접 관리할 수 있습니다.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="changeMonth(-1)" class="px-3 py-1.5 border rounded-lg text-xs font-bold">◀ 이전달</button>
+              <span class="font-bold text-sm px-2 text-brand-navy">${state.year}년 ${state.month}월</span>
+              <button onclick="changeMonth(1)" class="px-3 py-1.5 border rounded-lg text-xs font-bold">다음달 ▶</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 py-2 border-b border-slate-100">
+            <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+          </div>
+          <div class="grid grid-cols-7 gap-2">
+            ${calGridHtml}
+          </div>
+
+          <div id="teacherCalDetail" class="hidden border-t pt-5 space-y-3"></div>
+        </section>
+      `;
+    }
+
+    function selectTeacherCalDate(dateStr) {
+      const container = document.getElementById('teacherCalDetail');
+      if (!container) return;
+
+      const isClosed = state.closedDates.includes(dateStr);
+      const dayRegs = state.regs.filter(r => r.date === dateStr);
+
+      let listHtml = dayRegs.map(r => `
+        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
+          <div>
+            <span class="font-bold text-brand-purple">[${r.period}교시]</span>
+            <span class="font-bold text-slate-900 ml-2">${r.name} (${r.num})</span>
+            <span class="text-slate-500 ml-2">${r.univ} ${r.dept}</span>
+            <span class="text-brand-navy ml-2 font-semibold">담당교사: ${[r.teacher1, r.teacher2].filter(Boolean).join(', ') || '미배정'}</span>
+          </div>
+          <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline">삭제</button>
+        </div>
+      `).join('') || '<div class="text-xs text-slate-400 py-2">이 날짜에 신청된 면접 예약이 없습니다.</div>';
+
+      container.classList.remove('hidden');
+      container.innerHTML = `
+        <div class="flex justify-between items-center bg-brand-purpleLight/50 p-4 rounded-xl">
+          <h4 class="font-bold text-slate-900 text-sm">📅 ${dateStr} 일정 상세 정보</h4>
+          <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-4 py-2 rounded-xl">
+            ${isClosed ? '마감 해제 (운영 재개)' : '해당 날짜 전체 휴무/마감 처리'}
+          </button>
+        </div>
+        <div class="space-y-2">
+          ${listHtml}
+        </div>
+      `;
+    }
+
+    function toggleDateClosed(dateStr) {
+      if (state.closedDates.includes(dateStr)) {
+        state.closedDates = state.closedDates.filter(d => d !== dateStr);
+        alert(`${dateStr} 날짜가 정상 운영(예약 가능)으로 재개되었습니다.`);
+      } else {
+        state.closedDates.push(dateStr);
+        alert(`${dateStr} 날짜가 전체 휴무/마감 처리되었습니다.`);
+      }
+      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      renderTeacherCalendarView();
+      selectTeacherCalDate(dateStr);
+    }
+
+    async function saveTeachers(id) {
+      const t1 = document.getElementById(`t1Input_${id}`)?.value.trim() || '';
+      const t2 = document.getElementById(`t2Input_${id}`)?.value.trim() || '';
 
       const reg = state.regs.find(r => r.id === id);
       if (reg) {
-        reg.teacher = teacherName;
+        reg.teacher1 = t1;
+        reg.teacher2 = t2;
         localStorage.setItem('mock_regs', JSON.stringify(state.regs));
 
         if (window.isFirebaseReady && window.dbTools) {
           try {
             const { doc, setDoc } = window.dbTools;
             await setDoc(doc(window.db, 'interview_registrations', id), reg);
-          } catch(e) { console.warn("Firestore Teacher Assign Error", e); }
+          } catch(e) { console.warn("Firestore Teacher Save Error", e); }
         }
 
-        alert(`담당 면접교사(${teacherName || '미지정'})가 저장되었습니다.`);
+        state.editingTeacherId = null;
+        alert(`담당 면접교사가 완벽히 저장되었습니다.`);
         renderTeacherView();
       }
     }
