@@ -31,7 +31,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
@@ -44,9 +44,13 @@
 
     try {
       const app = initializeApp(firebaseConfig);
-      window.db = getFirestore(app);
+      const db = getFirestore(app);
+      window.db = db;
+      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot };
+      window.isFirebaseReady = true;
     } catch(e) {
       console.warn("Firebase Init fallback", e);
+      window.isFirebaseReady = false;
     }
   </script>
 </head>
@@ -65,7 +69,6 @@
       </div>
     </div>
     
-    <!-- 메인 타이틀 영역 -->
     <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-end">
       <div>
         <p class="text-xs text-brand-orange font-bold uppercase tracking-wider mb-1">High School Mock Interview System</p>
@@ -77,7 +80,7 @@
     </div>
   </header>
 
-  <!-- 본문 컨테이너 (사이드바 + 메인 영역) -->
+  <!-- 본문 컨테이너 -->
   <div class="max-w-7xl w-full mx-auto px-6 py-8 flex-1 flex gap-8">
     
     <!-- 좌측 LNB 사이드바 -->
@@ -89,16 +92,12 @@
         </div>
         <nav class="space-y-1 text-sm font-medium pt-2">
           <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
-            <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약 신청</span>
+            <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약 현황</span>
             <i class="fa-solid fa-chevron-right text-xs"></i>
-          </a>
-          <a href="#" onclick="alert('교사 비밀번호가 있으신 경우 Ctrl+Shift+K를 눌러 로그인하세요.')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
-            <span><i class="fa-solid fa-user-shield mr-2"></i>교사 전용 포털</span>
           </a>
         </nav>
       </div>
 
-      <!-- 고객지원/안내 박스 -->
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 text-xs space-y-2">
         <p class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
         <p class="text-slate-500">3학년 진학지도부 교무실</p>
@@ -127,8 +126,6 @@
 
       <!-- STEP 2 & 3: 접속 후 펼쳐짐 -->
       <div id="stepDetails" class="hidden space-y-6">
-        
-        <!-- STEP 2: 희망 대학 작성 -->
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
           <div class="flex items-center space-x-2">
             <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 2</span>
@@ -146,7 +143,6 @@
           </div>
         </section>
 
-        <!-- STEP 3: 날짜 및 교시 선택 달력 -->
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
           <div class="flex justify-between items-center">
             <div class="flex items-center space-x-2">
@@ -160,13 +156,11 @@
             </div>
           </div>
 
-          <!-- 달력 그리드 -->
           <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 py-2 border-b border-slate-100">
             <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
           </div>
           <div id="calGrid" class="grid grid-cols-7 gap-2"></div>
 
-          <!-- 하단 교시 신청 버튼 영역 -->
           <div id="slotPicker" class="hidden border-t border-slate-200 pt-5 mt-4 space-y-3">
             <div class="text-sm font-bold text-slate-800" id="selectedDateTitle">선택된 날짜: -</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -184,7 +178,6 @@
     </main>
   </div>
 
-  <!-- 푸터 -->
   <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto">
     <p>© 고등학교 대입 면접 연습 배정 시스템. All rights reserved.</p>
   </footer>
@@ -194,13 +187,15 @@
       user: null,
       year: 2026,
       month: 10,
-      selectedDate: null
+      selectedDate: null,
+      regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
 
     const urlParams = new URLSearchParams(window.location.search);
     const isTeacher = urlParams.get('role') === 'teacher' || urlParams.get('mode') === 'teacher';
 
     document.addEventListener('DOMContentLoaded', () => {
+      syncDatabase();
       if (isTeacher) {
         document.getElementById('headerTitle').textContent = '교사 전용 면접 배정 관리 시스템';
         document.getElementById('sideNavCategory').textContent = '교사 관리 포털';
@@ -209,6 +204,20 @@
         renderCalendar();
       }
     });
+
+    function syncDatabase() {
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { collection, onSnapshot } = window.dbTools;
+          onSnapshot(collection(window.db, 'interview_registrations'), (snapshot) => {
+            state.regs = [];
+            snapshot.forEach(doc => state.regs.push(doc.data()));
+            localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+            if (isTeacher) renderTeacherView();
+          });
+        } catch(e) { console.warn("Firestore Listener Error", e); }
+      }
+    }
 
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
@@ -269,7 +278,7 @@
       renderCalendar();
     }
 
-    function submitReservation(period) {
+    async function submitReservation(period) {
       const univ = document.getElementById('sUniv').value.trim();
       const dept = document.getElementById('sDept').value.trim();
 
@@ -278,22 +287,105 @@
         return;
       }
 
-      alert(`[신청 완료]\n\n· 날짜: ${state.selectedDate}\n· 교시: ${period}교시\n· 학생: ${state.user.name} (${state.user.num})\n· 지원: ${univ} ${dept}\n\n정상 접수되었습니다!`);
+      const regData = {
+        id: `${state.selectedDate}_${period}_${state.user.num}`,
+        date: state.selectedDate,
+        period: period,
+        num: state.user.num,
+        name: state.user.name,
+        univ: univ,
+        dept: dept,
+        createdAt: new Date().toLocaleString()
+      };
+
+      // LocalStorage 저장
+      state.regs = state.regs.filter(r => r.id !== regData.id);
+      state.regs.push(regData);
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      // Firebase Firestore 저장
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_registrations', regData.id), regData);
+        } catch(e) { console.warn("Firestore Save Error", e); }
+      }
+
+      alert(`[신청 완료]\n\n· 날짜: ${state.selectedDate}\n· 교시: ${period}교시\n· 학생: ${state.user.name} (${state.user.num})\n· 지원: ${univ} ${dept}\n\n정상 접수되었습니다! 교사 관리자 페이지에서 확인 가능합니다.`);
     }
 
     function renderTeacherView() {
       const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      let tableRows = state.regs.map((r, idx) => `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
+          <td class="py-3 px-4 font-semibold text-slate-500">${idx + 1}</td>
+          <td class="py-3 px-4 font-bold text-brand-navy">${r.date}</td>
+          <td class="py-3 px-4 font-bold text-brand-purple">${r.period}교시</td>
+          <td class="py-3 px-4 font-semibold">${r.num}</td>
+          <td class="py-3 px-4 font-bold text-slate-900">${r.name}</td>
+          <td class="py-3 px-4">${r.univ}</td>
+          <td class="py-3 px-4">${r.dept}</td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold text-[11px] underline">취소</button>
+          </td>
+        </tr>
+      `).join('');
+
+      if (state.regs.length === 0) {
+        tableRows = `<tr><td colspan="8" class="py-8 text-center text-xs text-slate-400">아직 신청한 학생 내역이 없습니다.</td></tr>`;
+      }
+
       main.innerHTML = `
-        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
-          <div class="flex justify-between items-center border-b pb-4">
-            <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
-            <button onclick="window.print()" class="bg-brand-purple text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-brand-purple/90">
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
+              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 연습 신청 현황 (총 ${state.regs.length}건)</p>
+            </div>
+            <button onclick="window.print()" class="bg-brand-purple text-white text-xs px-4 py-2.5 rounded-xl font-bold hover:bg-brand-purple/90 shadow-sm">
               <i class="fa-solid fa-print mr-1"></i> A4 시간표 인쇄
             </button>
           </div>
-          <p class="text-sm text-slate-600">학생들의 면접 연습 신청 현황 확인 및 면접관(교사) 배정이 가능합니다.</p>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                  <th class="py-3 px-4">No</th>
+                  <th class="py-3 px-4">면접 희망일</th>
+                  <th class="py-3 px-4">교시</th>
+                  <th class="py-3 px-4">학번</th>
+                  <th class="py-3 px-4">이름</th>
+                  <th class="py-3 px-4">지원 대학교</th>
+                  <th class="py-3 px-4">지원 학과</th>
+                  <th class="py-3 px-4 text-center">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
         </section>
       `;
+    }
+
+    async function deleteRegistration(id) {
+      if (!confirm('이 학생의 면접 예약 내역을 취소/삭제하시겠습니까?')) return;
+      state.regs = state.regs.filter(r => r.id !== id);
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, deleteDoc } = window.dbTools;
+          await deleteDoc(doc(window.db, 'interview_registrations', id));
+        } catch(e) { console.warn("Delete Firestore Error", e); }
+      }
+
+      renderTeacherView();
+      alert('예약 내역이 삭제되었습니다.');
     }
 
     // 단축키 Ctrl+Shift+K 교사 접속
