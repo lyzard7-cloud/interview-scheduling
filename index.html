@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>고등학교 대입 면접 연습 배정 및 관리 시스템</title>
-    <!-- Tailwind CSS -->
+    <title>대입 면접 연습 배정 시스템</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Web Fonts -->
+    
+    <!-- Google & Custom Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff2" />
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Custom CSS & Font Theme Classes -->
     <style>
         @font-face {
             font-family: 'GmarketSans';
@@ -33,33 +36,28 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         .glass-header {
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
 
         .gradient-brand {
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #06b6d4 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #2563eb 100%);
         }
 
         .card-shadow {
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
         }
 
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
         }
-
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-        }
     </style>
 </head>
 <body class="font-pretendard bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-700">
 
+    <!-- Header -->
     <header class="glass-header sticky top-0 z-30 border-b border-slate-200/80 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
             
@@ -70,7 +68,7 @@
                 <div>
                     <div class="flex items-center space-x-2">
                         <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">대입 면접 연습 배정 시스템</h1>
-                        <span id="roleBadge" class="hidden text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">교사 관리자</span>
+                        <span id="roleBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">교사 관리자</span>
                     </div>
                     <p class="text-xs text-slate-500 font-medium">고등학교 수시 맞춤형 1:1 면접 연습 예약</p>
                 </div>
@@ -94,32 +92,18 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-        <!-- Banner Notice Popup Bar -->
-        <div id="announcementBanner" class="hidden mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm flex items-start space-x-3">
-            <div class="p-2 bg-amber-100 text-amber-700 rounded-xl mt-0.5">
-                <i class="fa-solid fa-bullhorn text-sm"></i>
-            </div>
-            <div class="flex-1">
-                <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider">면접 연습 유의사항 공지</h4>
-                <p id="announcementText" class="text-xs sm:text-sm text-amber-800 mt-0.5 leading-relaxed font-medium">
-                    면접 시작 10분 전까지 지정된 대기실에 입실해 주시기 바라며, 생기부 출력본을 지참하시기 바랍니다.
-                </p>
-            </div>
-        </div>
-
-        <!-- ================= STUDENT VIEW SECTION ================= -->
         <section id="studentSection" class="space-y-6">
             
-            <!-- Step 1: Student Login & Info Input -->
+            <!-- Step 1: Student Login & Info Card -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 card-shadow transition-all">
                 <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                     
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
                             <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-extrabold px-3 py-1 rounded-full">STEP 1</span>
-                            <h2 class="text-xl font-bold text-slate-900">학생 인증 및 지원 대학교 입력</h2>
+                            <h2 class="text-xl font-bold text-slate-900">학생 인증 및 지원 대학 작성</h2>
                         </div>
-                        <p class="text-xs sm:text-sm text-slate-500">학번, 이름, 본인이 사용할 4자리 PIN을 입력하여 로그인 후 희망 정보를 작성하세요.</p>
+                        <p class="text-xs sm:text-sm text-slate-500">학번, 이름, 본인이 사용할 4자리 PIN을 입력하여 로그인 후 희망 대학교/학과를 작성해 주세요.</p>
                     </div>
 
                     <div id="studentAuthForm" class="flex flex-wrap items-center gap-2.5">
@@ -151,32 +135,28 @@
 
                 </div>
 
-                <div id="infoInputContainer" class="mt-5 pt-5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="infoInputContainer" class="mt-5 pt-5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">희망 대학교 <span class="text-red-500">*</span></label>
-                        <input type="text" id="stuUniv" placeholder="예: 서울대학교" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <input type="text" id="stuUniv" placeholder="예: 한국대학교 / 서울대학교" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">희망 학과 / 전공 <span class="text-red-500">*</span></label>
-                        <input type="text" id="stuDept" placeholder="예: 컴퓨터공학부" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">면접 준비 자료 링크 (선택)</label>
-                        <input type="url" id="stuDocLink" placeholder="예: 구글 드라이브 / 블로그 링크" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <input type="text" id="stuDept" placeholder="예: 컴퓨터공학과 / 경영학과" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
                     </div>
                 </div>
             </div>
 
-            <!-- Step 2: Large Monthly Calendar & Time Slot Detail Card -->
+            <!-- Step 2: Large Monthly Calendar View & Time Slot Detail Modal/Card -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 card-shadow space-y-6">
                 
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                     <div>
                         <div class="flex items-center space-x-2">
                             <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-extrabold px-3 py-1 rounded-full">STEP 2</span>
-                            <h2 class="text-xl font-bold text-slate-900">면접 희망 날짜 선택 (9월 ~ 11월)</h2>
+                            <h2 class="text-xl font-bold text-slate-900">면접 희망 날짜 선택</h2>
                         </div>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-1">원하시는 날짜를 클릭하시면 하단 카드에 8교시, 9교시 선택 버튼이 생성됩니다.</p>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">달력에서 원하시는 날짜를 클릭하시면 하단 카드에 8교시, 9교시 선택 버튼이 나타납니다.</p>
                     </div>
 
                     <!-- Month Navigation Header Controls -->
@@ -197,13 +177,14 @@
                         <i class="fa-solid fa-clock text-base"></i>
                     </div>
                     <div class="leading-relaxed">
-                        <span class="font-bold">운영 시간 안내:</span> 
+                        <span class="font-bold">기본 운영 시간 안내:</span> 
                         <span class="ml-1">8교시 (<strong class="font-semibold">16:40 ~ 17:30</strong>) 및 9교시 (<strong class="font-semibold">17:40 ~ 18:30</strong>)로 진행됩니다.</span>
                     </div>
                 </div>
 
-                <!-- Calendar Grid Layout -->
+                <!-- Prominent Calendar Layout -->
                 <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-slate-50/50">
+                    <!-- Day of Week Header -->
                     <div class="calendar-grid bg-slate-100/90 border-b border-slate-200 text-center font-bold text-xs text-slate-600 py-3">
                         <div class="text-red-500">일</div>
                         <div>월</div>
@@ -214,30 +195,33 @@
                         <div class="text-blue-500">토</div>
                     </div>
 
+                    <!-- Days Container Grid -->
                     <div id="calendarDaysGrid" class="calendar-grid bg-white divide-x divide-y divide-slate-100 min-h-[420px]">
-                        <!-- Dynamic Calendar Cells -->
+                        <!-- Dynamic Calendar Day Cells Render Here -->
                     </div>
                 </div>
 
-                <!-- Interactive Date Detail Card -->
+                <!-- Dynamic Slot Selection Card (Appears when a date is clicked) -->
                 <div id="selectedDateCardContainer" class="hidden transition-all duration-300">
                     <div class="bg-indigo-50/50 border-2 border-indigo-200 rounded-3xl p-6 shadow-md relative">
                         <button onclick="closeSelectedDateCard()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
                             <i class="fa-solid fa-xmark text-sm"></i>
                         </button>
 
+                        <!-- Selected Date Header Banner -->
                         <div class="flex items-center space-x-3 mb-6">
                             <div class="w-12 h-12 gradient-brand text-white rounded-2xl flex items-center justify-center text-xl shadow-md">
                                 <i class="fa-solid fa-calendar-day"></i>
                             </div>
                             <div>
                                 <span class="text-xs font-extrabold text-indigo-600 uppercase tracking-wider">선택한 면접 날짜</span>
-                                <h3 id="selectedDateTitle" class="text-lg sm:text-xl font-bold text-slate-900">2026년 10월 15일</h3>
+                                <h3 id="selectedDateTitle" class="text-lg sm:text-xl font-bold text-slate-900">2026년 10월 15일 (목요일)</h3>
                             </div>
                         </div>
 
+                        <!-- 8th and 9th Period Interactive Buttons -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="slotDetailButtons">
-                            <!-- Rendered JS Slot Buttons -->
+                            <!-- Rendered by JS -->
                         </div>
                     </div>
                 </div>
@@ -245,7 +229,7 @@
             </div>
         </section>
 
-        <!-- ================= TEACHER ADMIN SECTION (URL MODE OR SHORTCUT ONLY) ================= -->
+        <!-- ================= TEACHER ADMIN SECTION (URL MODE ONLY) ================= -->
         <section id="teacherSection" class="hidden space-y-6">
             
             <div id="teacherAuthBox" class="bg-white rounded-3xl p-8 border border-slate-200/80 card-shadow text-center max-w-md mx-auto my-12">
@@ -265,77 +249,32 @@
 
             <div id="teacherDashboard" class="hidden space-y-6">
                 
-                <!-- Summary Stats Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500 font-medium">총 신청 학생 수</div>
-                            <div class="text-xl font-extrabold text-slate-900" id="statTotalStudents">0명</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                            <i class="fa-solid fa-user-clock"></i>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500 font-medium">면접관 미배정 건수</div>
-                            <div class="text-xl font-extrabold text-amber-600" id="statUnassignedCount">0건</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                            <i class="fa-solid fa-calendar-check"></i>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500 font-medium">총 운영 날짜 수</div>
-                            <div class="text-xl font-extrabold text-slate-900" id="statOperatingDays">0일</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Admin Action Toolbar Bar -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 card-shadow flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 card-shadow flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <div class="flex items-center space-x-2">
                             <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">ADMIN</span>
-                            <h2 class="text-xl font-bold text-slate-900">면접 연습 신청 및 배정 관리 대시보드</h2>
+                            <h2 class="text-xl font-bold text-slate-900">면접관 배정 및 신청 관리자 대시보드</h2>
                         </div>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-1">학생들의 신청 현황을 관리하고 면접관 교사 2명을 배정 및 관리합니다.</p>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">학생들의 신청 정보를 확인하고, 면접관 교사 2명을 지정 및 배정 관리할 수 있습니다.</p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="openPrintAreaModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
-                            <i class="fa-solid fa-print"></i>
-                            <span>시간표 인쇄 (A4)</span>
-                        </button>
-                        <button onclick="openAddDateModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                        <button onclick="openAddDateModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
                             <i class="fa-solid fa-calendar-plus"></i>
-                            <span>운영 날짜 관리</span>
+                            <span>운영 날짜 추가</span>
                         </button>
-                        <button onclick="openNoticeModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
-                            <i class="fa-solid fa-bullhorn"></i>
-                            <span>공지사항 관리</span>
-                        </button>
-                        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
                             <i class="fa-solid fa-file-excel"></i>
-                            <span>CSV 엑셀</span>
-                        </button>
-                        <button onclick="backupJSONData()" class="bg-slate-600 hover:bg-slate-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
-                            <i class="fa-solid fa-download"></i>
-                            <span>JSON 백업</span>
+                            <span>엑셀(CSV) 내보내기</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Master Student Applications Table -->
                 <div class="bg-white rounded-3xl border border-slate-200/80 card-shadow overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <h3 class="font-bold text-slate-800 text-sm flex items-center space-x-2">
                             <i class="fa-solid fa-list-check text-indigo-600"></i>
-                            <span>전체 면접 연습 신청자 목록</span>
+                            <span>전체 면접 연습 신청자 현황</span>
                             <span id="totalRegCount" class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded-full">0건</span>
                         </h3>
                         <div class="relative w-full sm:w-72">
@@ -351,17 +290,16 @@
                                     <th class="p-3.5">날짜 / 교시</th>
                                     <th class="p-3.5">학번</th>
                                     <th class="p-3.5">학생 이름</th>
-                                    <th class="p-3.5">PIN 코드</th>
+                                    <th class="p-3.5">PIN (고유코드)</th>
                                     <th class="p-3.5">지원 대학교</th>
                                     <th class="p-3.5">지원 학과</th>
-                                    <th class="p-3.5">준비 자료</th>
-                                    <th class="p-3.5">면접관 1</th>
-                                    <th class="p-3.5">면접관 2</th>
+                                    <th class="p-3.5">배정 면접관 1</th>
+                                    <th class="p-3.5">배정 면접관 2</th>
                                     <th class="p-3.5 text-center">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="teacherTableBody" class="divide-y divide-slate-100">
-                                <!-- Dynamic Table Rows -->
+                                <!-- Dynamic Table Rows Render Here -->
                             </tbody>
                         </table>
                     </div>
@@ -372,86 +310,38 @@
 
     </main>
 
-    <!-- Footer Section -->
-    <footer class="bg-white border-t border-slate-200/80 py-6 mt-12 text-center text-xs text-slate-400">
-        <p id="secretFooterTrigger" class="cursor-pointer select-none transition hover:text-slate-600">
-            © 2026 고등학교 대입 면접 연습 배정 시스템 (Comprehensive Scheduler System)
-        </p>
+    <!-- Footer (PURELY STATIC TEXT - NO CLICK LISTENER / NO TRIGGER) -->
+    <footer class="border-t border-slate-200 py-6 text-center text-xs text-slate-400 bg-white">
+        <p>© 고등학교 대입 면접 연습 배정 시스템. All rights reserved.</p>
     </footer>
 
-    <!-- Modal: Mobile Confirmation Ticket Popup -->
-    <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 text-center space-y-4">
-            <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-sm">
-                <i class="fa-solid fa-circle-check"></i>
+    <!-- Modals -->
+    <!-- Modal: Add New Operating Date -->
+    <div id="addDateModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-900 text-base">새 면접 운영 날짜 추가</h3>
+                <button onclick="closeAddDateModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div>
-                <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">APPLICATION COMPLETE</span>
-                <h3 class="text-lg font-bold text-slate-900">면접 연습 신청 완료 확인증</h3>
-                <p class="text-xs text-slate-500 mt-1">아래 카드를 화면 캡처하여 보관해 주세요.</p>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">운영 날짜 지정</label>
+                <input type="date" id="newOpDate" min="2026-09-01" max="2026-11-30" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
             </div>
-
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-2 text-xs">
-                <div class="flex justify-between border-b border-slate-200 pb-2">
-                    <span class="text-slate-500">학생 정보</span>
-                    <span class="font-bold text-slate-900" id="ticketStuInfo">30101 홍길동</span>
-                </div>
-                <div class="flex justify-between border-b border-slate-200 pb-2">
-                    <span class="text-slate-500">신청 날짜</span>
-                    <span class="font-bold text-indigo-600" id="ticketDate">2026-10-15</span>
-                </div>
-                <div class="flex justify-between border-b border-slate-200 pb-2">
-                    <span class="text-slate-500">신청 교시</span>
-                    <span class="font-bold text-slate-900" id="ticketPeriod">8교시 (16:40~17:30)</span>
-                </div>
-                <div class="flex justify-between border-b border-slate-200 pb-2">
-                    <span class="text-slate-500">지원 대학/학과</span>
-                    <span class="font-bold text-slate-900" id="ticketUnivDept">서울대 컴퓨터공학부</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">개인 고유 PIN</span>
-                    <span class="font-mono font-bold text-indigo-600" id="ticketPin">1234</span>
-                </div>
-            </div>
-
-            <button onclick="closeTicketModal()" class="w-full gradient-brand hover:opacity-95 text-white font-bold py-3 rounded-xl transition text-xs shadow-md">
-                확인 완료 (화면 닫기)
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal: Printable A4 Schedule Generator -->
-    <div id="printModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-3xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-slate-900 text-base">일자별 면접 연습 시간표 인쇄 (A4 서식)</h3>
-                <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-
-            <div class="flex items-center space-x-3">
-                <label class="text-xs font-bold text-slate-700">인쇄 대상 날짜 선택:</label>
-                <select id="printDateSelect" onchange="renderPrintTable()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 font-bold">
-                    <!-- Dynamic Date Options -->
-                </select>
-                <button onclick="window.print()" class="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-print"></i>
-                    <span>A4 출력하기</span>
-                </button>
-            </div>
-
-            <div id="printArea" class="flex-1 overflow-y-auto border border-slate-200 p-6 bg-white rounded-xl">
-                <!-- Printable Table Rendered Here -->
+            <p class="text-xs text-slate-500 leading-relaxed">※ 날짜를 추가하면 해당 날짜의 8교시(16:40~17:30) 및 9교시(17:40~18:30) 예약 슬롯이 달력에 활성화됩니다.</p>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeAddDateModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">취소</button>
+                <button onclick="saveNewOperatingDate()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">추가하기</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Assign Interviewers -->
+    <!-- Modal: Teacher Assign Interviewers -->
     <div id="assignTeacherModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="font-bold text-slate-900 text-base">면접관 교사 배정 및 지정</h3>
-                    <p class="text-xs text-slate-500 mt-0.5" id="assignModalSub">학생: 홍길동 (서울대 컴퓨터공학부)</p>
+                    <p class="text-xs text-slate-500 mt-0.5" id="assignModalSub">학생: 홍길동 (한국대 컴퓨터공학과)</p>
                 </div>
                 <button onclick="closeAssignTeacherModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
@@ -476,46 +366,26 @@
         </div>
     </div>
 
-    <!-- Modal: Add New Operating Date -->
-    <div id="addDateModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-slate-900 text-base">새 면접 운영 날짜 추가</h3>
-                <button onclick="closeAddDateModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">운영 날짜 지정 (9월~11월)</label>
-                <input type="date" id="newOpDate" min="2026-09-01" max="2026-11-30" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
-            </div>
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeAddDateModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">취소</button>
-                <button onclick="saveNewOperatingDate()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">추가하기</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration (Replace with actual values for production deployment)
-const firebaseConfig = {
-  apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
-  authDomain: "interview-system-b3b6e.firebaseapp.com",
-  projectId: "interview-system-b3b6e",
-  storageBucket: "interview-system-b3b6e.firebasestorage.app",
-  messagingSenderId: "1017259873467",
-  appId: "1:1017259873467:web:27440e2d6d496938c6c59e"
-};
-
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'mock-interview-app';
+        let firebaseConfig = null;
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch(e) {
+            console.warn("Firebase configuration not present. Fallback to local storage mode.", e);
+        }
 
         let db = null;
         let auth = null;
         let isFirebaseAvailable = false;
 
-        if (firebaseConfig && firebaseConfig.apiKey) {
+        if (firebaseConfig) {
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -528,15 +398,15 @@ const firebaseConfig = {
                 }
                 isFirebaseAvailable = true;
             } catch (err) {
-                console.warn("Firebase not connected. Operating in LocalStorage Fallback mode.", err);
+                console.warn("Failed to initialize Firebase SDK.", err);
             }
         }
 
         window.state = {
             isTeacherMode: false,
-            studentAuth: null,
+            studentAuth: null, 
             currentYear: 2026,
-            currentMonth: 10,
+            currentMonth: 10, // Range: 9~11
             selectedDate: null,
             operatingDates: [
                 "2026-09-22", "2026-09-24", 
@@ -544,12 +414,11 @@ const firebaseConfig = {
                 "2026-11-05", "2026-11-10"
             ],
             registrations: [],
-            teacherAuthenticated: false,
-            announcement: "면접 시작 10분 전 대기실 입실 완료 필수! 생기부 요약본 출력본을 지참해 주세요.",
-            clickFooterCount: 0
+            teacherAuthenticated: false
         };
 
         const REGISTRATIONS_COLLECTION = isFirebaseAvailable ? collection(db, 'artifacts', appId, 'public', 'data', 'registrations') : null;
+        const DATES_COLLECTION = isFirebaseAvailable ? collection(db, 'artifacts', appId, 'public', 'data', 'operating_dates') : null;
 
         const initialMockRegistrations = [
             {
@@ -559,11 +428,10 @@ const firebaseConfig = {
                 passcode: "1234",
                 university: "서울대학교",
                 department: "컴퓨터공학부",
-                docLink: "https://drive.google.com",
                 date: "2026-10-12",
                 period: "8교시",
-                interviewer1: "김철수 교사",
-                interviewer2: "이영희 교사"
+                interviewer1: "박선생 교사",
+                interviewer2: "최선생 교사"
             },
             {
                 id: "reg_2",
@@ -572,10 +440,9 @@ const firebaseConfig = {
                 passcode: "5678",
                 university: "연세대학교",
                 department: "경영학과",
-                docLink: "",
                 date: "2026-10-12",
                 period: "9교시",
-                interviewer1: "박선생 교사",
+                interviewer1: "정선생 교사",
                 interviewer2: ""
             }
         ];
@@ -597,6 +464,18 @@ const firebaseConfig = {
             }
         }
 
+        // Secret keyboard shortcut for teachers (Ctrl + Shift + K)
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                window.state.isTeacherMode = true;
+                document.getElementById('studentSection').classList.add('hidden');
+                document.getElementById('teacherSection').classList.remove('hidden');
+                document.getElementById('roleBadge').classList.remove('hidden');
+                showToast("교사 페이지 모드로 전환되었습니다.", "info");
+            }
+        });
+
         async function loadInitialData() {
             checkRouteMode();
 
@@ -606,6 +485,15 @@ const firebaseConfig = {
                     snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
                     window.state.registrations = list;
                     renderApp();
+                }, (err) => console.error("Firestore sync error:", err));
+
+                onSnapshot(DATES_COLLECTION, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const datesList = [];
+                        snapshot.forEach((doc) => datesList.push(doc.data().date));
+                        window.state.operatingDates = Array.from(new Set([...window.state.operatingDates, ...datesList])).sort();
+                        renderApp();
+                    }
                 });
             } else {
                 const stored = localStorage.getItem('mock_interview_regs');
@@ -617,18 +505,12 @@ const firebaseConfig = {
                 }
                 renderApp();
             }
-
-            if (window.state.announcement) {
-                document.getElementById('announcementBanner').classList.remove('hidden');
-                document.getElementById('announcementText').innerText = window.state.announcement;
-            }
         }
 
         window.renderApp = function() {
             if (window.state.isTeacherMode) {
                 if (window.state.teacherAuthenticated) {
                     renderTeacherTable();
-                    renderTeacherStats();
                 }
             } else {
                 renderCalendarView();
@@ -857,7 +739,6 @@ const firebaseConfig = {
             if (existingReg) {
                 document.getElementById('stuUniv').value = existingReg.university;
                 document.getElementById('stuDept').value = existingReg.department;
-                document.getElementById('stuDocLink').value = existingReg.docLink || '';
                 document.getElementById('activeStudentUnivDept').innerText = `${existingReg.university} ${existingReg.department}`;
             }
 
@@ -879,14 +760,13 @@ const firebaseConfig = {
         window.handleBookSlot = async function(dateStr, periodStr) {
             const authUser = window.state.studentAuth;
             if (!authUser) {
-                showToast("STEP 1에서 학번, 이름, PIN을 입력하고 로그인해주세요.", "warning");
+                showToast("상단 STEP 1에서 학번, 이름, PIN을 입력하고 접속해주세요.", "warning");
                 document.getElementById('stuNum').focus();
                 return;
             }
 
             const univ = document.getElementById('stuUniv').value.trim();
             const dept = document.getElementById('stuDept').value.trim();
-            const docLink = document.getElementById('stuDocLink').value.trim();
 
             if (!univ || !dept) {
                 showToast("희망 대학교와 학과를 먼저 입력해 주세요.", "warning");
@@ -915,7 +795,6 @@ const firebaseConfig = {
                 passcode: authUser.pin,
                 university: univ,
                 department: dept,
-                docLink: docLink,
                 date: dateStr,
                 period: periodStr,
                 interviewer1: '',
@@ -925,28 +804,18 @@ const firebaseConfig = {
             if (isFirebaseAvailable && db) {
                 try {
                     await setDoc(doc(REGISTRATIONS_COLLECTION, newReg.id), newReg);
+                    showToast("면접 연습 신청이 완료되었습니다!", "success");
                 } catch (err) {
                     showToast("신청 저장 중 오류가 발생했습니다.", "error");
                 }
             } else {
                 window.state.registrations.push(newReg);
                 localStorage.setItem('mock_interview_regs', JSON.stringify(window.state.registrations));
+                showToast("면접 연습 신청이 완료되었습니다.", "success");
                 renderApp();
             }
 
-            // Open Confirmation Ticket Popup
-            document.getElementById('ticketStuInfo').innerText = `${authUser.studentNum} ${authUser.name}`;
-            document.getElementById('ticketDate').innerText = dateStr;
-            document.getElementById('ticketPeriod').innerText = `${periodStr} (${periodStr === '8교시' ? '16:40~17:30' : '17:40~18:30'})`;
-            document.getElementById('ticketUnivDept').innerText = `${univ} ${dept}`;
-            document.getElementById('ticketPin').innerText = authUser.pin;
-            document.getElementById('ticketModal').classList.remove('hidden');
-
             document.getElementById('activeStudentUnivDept').innerText = `${univ} ${dept}`;
-        };
-
-        window.closeTicketModal = function() {
-            document.getElementById('ticketModal').classList.add('hidden');
         };
 
         window.handleCancelSlot = async function(regId) {
@@ -973,22 +842,11 @@ const firebaseConfig = {
                 document.getElementById('teacherAuthBox').classList.add('hidden');
                 document.getElementById('teacherDashboard').classList.remove('hidden');
                 renderTeacherTable();
-                renderTeacherStats();
                 showToast("교사 관리자 대시보드에 접속하였습니다.", "success");
             } else {
                 showToast("교사 비밀번호가 일치하지 않습니다.", "error");
             }
         };
-
-        function renderTeacherStats() {
-            const total = window.state.registrations.length;
-            const unassigned = window.state.registrations.filter(r => !r.interviewer1 || !r.interviewer2).length;
-            const days = window.state.operatingDates.length;
-
-            document.getElementById('statTotalStudents').innerText = `${total}명`;
-            document.getElementById('statUnassignedCount').innerText = `${unassigned}건`;
-            document.getElementById('statOperatingDays').innerText = `${days}일`;
-        }
 
         window.renderTeacherTable = function() {
             const tbody = document.getElementById('teacherTableBody');
@@ -1010,7 +868,7 @@ const firebaseConfig = {
             if (filteredRegs.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="p-8 text-center text-slate-400">
+                        <td colspan="9" class="p-8 text-center text-slate-400">
                             신청 완료된 면접 명단이 없습니다.
                         </td>
                     </tr>
@@ -1033,9 +891,6 @@ const firebaseConfig = {
                     <td class="p-3.5 text-slate-700">${escapeHtml(reg.university)}</td>
                     <td class="p-3.5 text-slate-700">${escapeHtml(reg.department)}</td>
                     <td class="p-3.5">
-                        ${reg.docLink ? `<a href="${escapeHtml(reg.docLink)}" target="_blank" class="text-indigo-600 hover:underline"><i class="fa-solid fa-link"></i> 링크</a>` : '<span class="text-slate-300">-</span>'}
-                    </td>
-                    <td class="p-3.5">
                         ${reg.interviewer1 ? `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">${escapeHtml(reg.interviewer1)}</span>` : '<span class="text-slate-400">미배정</span>'}
                     </td>
                     <td class="p-3.5">
@@ -1043,7 +898,7 @@ const firebaseConfig = {
                     </td>
                     <td class="p-3.5 text-center space-x-1">
                         <button onclick="openAssignTeacherModal('${reg.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold transition">
-                            배정
+                            면접관 배정
                         </button>
                         <button onclick="handleAdminDeleteReg('${reg.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg text-xs transition">
                             <i class="fa-solid fa-trash"></i>
@@ -1085,101 +940,10 @@ const firebaseConfig = {
                 } else {
                     localStorage.setItem('mock_interview_regs', JSON.stringify(window.state.registrations));
                     renderTeacherTable();
-                    renderTeacherStats();
                 }
                 showToast("면접관 배정이 저장되었습니다.", "success");
             }
             closeAssignTeacherModal();
-        };
-
-        window.openPrintAreaModal = function() {
-            const select = document.getElementById('printDateSelect');
-            select.innerHTML = '';
-            window.state.operatingDates.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d;
-                opt.innerText = d;
-                select.appendChild(opt);
-            });
-            renderPrintTable();
-            document.getElementById('printModal').classList.remove('hidden');
-        };
-
-        window.closePrintModal = function() {
-            document.getElementById('printModal').classList.add('hidden');
-        };
-
-        window.renderPrintTable = function() {
-            const dateStr = document.getElementById('printDateSelect').value;
-            const area = document.getElementById('printArea');
-            if (!dateStr || !area) return;
-
-            const list8 = window.state.registrations.find(r => r.date === dateStr && r.period === '8교시');
-            const list9 = window.state.registrations.find(r => r.date === dateStr && r.period === '9교시');
-
-            area.innerHTML = `
-                <div class="text-center mb-6">
-                    <h2 class="text-xl font-bold text-slate-900">[${dateStr}] 대입 면접 연습 시간표 및 출석 명단</h2>
-                    <p class="text-xs text-slate-500 mt-1">장소: 면접실 | 진행시간: 8교시(16:40~17:30), 9교시(17:40~18:30)</p>
-                </div>
-                <table class="w-full text-xs border-collapse border border-slate-300 text-center">
-                    <thead>
-                        <tr class="bg-slate-100 font-bold border-b border-slate-300">
-                            <th class="p-2 border border-slate-300">구분</th>
-                            <th class="p-2 border border-slate-300">시간</th>
-                            <th class="p-2 border border-slate-300">학번</th>
-                            <th class="p-2 border border-slate-300">이름</th>
-                            <th class="p-2 border border-slate-300">지원 대학 / 학과</th>
-                            <th class="p-2 border border-slate-300">배정 면접관 1</th>
-                            <th class="p-2 border border-slate-300">배정 면접관 2</th>
-                            <th class="p-2 border border-slate-300">확인 서명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="p-3 border border-slate-300 font-bold">8교시</td>
-                            <td class="p-3 border border-slate-300 font-mono">16:40 ~ 17:30</td>
-                            <td class="p-3 border border-slate-300 font-bold">${list8 ? escapeHtml(list8.studentNum) : '-'}</td>
-                            <td class="p-3 border border-slate-300 font-bold">${list8 ? escapeHtml(list8.studentName) : '미신청'}</td>
-                            <td class="p-3 border border-slate-300">${list8 ? escapeHtml(list8.university + ' ' + list8.department) : '-'}</td>
-                            <td class="p-3 border border-slate-300">${list8 ? escapeHtml(list8.interviewer1) || '미배정' : '-'}</td>
-                            <td class="p-3 border border-slate-300">${list8 ? escapeHtml(list8.interviewer2) || '미배정' : '-'}</td>
-                            <td class="p-3 border border-slate-300"></td>
-                        </tr>
-                        <tr>
-                            <td class="p-3 border border-slate-300 font-bold">9교시</td>
-                            <td class="p-3 border border-slate-300 font-mono">17:40 ~ 18:30</td>
-                            <td class="p-3 border border-slate-300 font-bold">${list9 ? escapeHtml(list9.studentNum) : '-'}</td>
-                            <td class="p-3 border border-slate-300 font-bold">${list9 ? escapeHtml(list9.studentName) : '미신청'}</td>
-                            <td class="p-3 border border-slate-300">${list9 ? escapeHtml(list9.university + ' ' + list9.department) : '-'}</td>
-                            <td class="p-3 border border-slate-300">${list9 ? escapeHtml(list9.interviewer1) || '미배정' : '-'}</td>
-                            <td class="p-3 border border-slate-300">${list9 ? escapeHtml(list9.interviewer2) || '미배정' : '-'}</td>
-                            <td class="p-3 border border-slate-300"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-        };
-
-        window.openNoticeModal = function() {
-            const notice = prompt("학생들에게 보여줄 면접 공지사항을 입력하세요:", window.state.announcement);
-            if (notice !== null) {
-                window.state.announcement = notice;
-                document.getElementById('announcementText').innerText = notice;
-                document.getElementById('announcementBanner').classList.remove('hidden');
-                showToast("공지사항이 업데이트되었습니다.", "success");
-            }
-        };
-
-        window.backupJSONData = function() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.state.registrations, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `면접_신청_백업데이터_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-            showToast("JSON 백업 파일이 다운로드되었습니다.", "success");
         };
 
         window.openAddDateModal = function() {
@@ -1200,6 +964,10 @@ const firebaseConfig = {
             if (!window.state.operatingDates.includes(newDate)) {
                 window.state.operatingDates.push(newDate);
                 window.state.operatingDates.sort();
+
+                if (isFirebaseAvailable && db) {
+                    await setDoc(doc(DATES_COLLECTION, 'date_' + newDate), { date: newDate });
+                }
                 renderApp();
                 showToast("새 운영 날짜가 추가되었습니다.", "success");
             }
@@ -1219,9 +987,9 @@ const firebaseConfig = {
                 return;
             }
 
-            let csvContent = "\uFEFF날짜,교시,학번,학생이름,PIN코드,지원대학교,지원학과,준비자료링크,면접관1,면접관2\n";
+            let csvContent = "\uFEFF날짜,교시,학번,학생이름,PIN코드,지원대학교,지원학과,면접관1,면접관2\n";
             window.state.registrations.forEach(r => {
-                csvContent += `"${r.date}","${r.period}","${r.studentNum || ''}","${r.studentName}","${r.passcode}","${r.university}","${r.department}","${r.docLink || ''}","${r.interviewer1 || ''}","${r.interviewer2 || ''}"\n`;
+                csvContent += `"${r.date}","${r.period}","${r.studentNum || ''}","${r.studentName}","${r.passcode}","${r.university}","${r.department}","${r.interviewer1 || ''}","${r.interviewer2 || ''}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1232,7 +1000,7 @@ const firebaseConfig = {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("CSV 엑셀 다운로드가 완료되었습니다.", "success");
+            showToast("엑셀(CSV) 다운로드가 완료되었습니다.", "success");
         };
 
         window.changeFontTheme = function(fontClass) {
@@ -1262,31 +1030,6 @@ const firebaseConfig = {
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         };
-
-        // Secret Shortcut to open Teacher Mode (Ctrl+Shift+K)
-        window.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                window.state.isTeacherMode = true;
-                document.getElementById('studentSection').classList.add('hidden');
-                document.getElementById('teacherSection').classList.remove('hidden');
-                document.getElementById('roleBadge').classList.remove('hidden');
-                showToast("교사 전용 접속 모드가 활성화되었습니다.", "info");
-            }
-        });
-
-        // Triple Click on Footer Text to trigger Teacher Mode
-        document.getElementById('secretFooterTrigger')?.addEventListener('click', () => {
-            window.state.clickFooterCount++;
-            if (window.state.clickFooterCount >= 3) {
-                window.state.clickFooterCount = 0;
-                window.state.isTeacherMode = true;
-                document.getElementById('studentSection').classList.add('hidden');
-                document.getElementById('teacherSection').classList.remove('hidden');
-                document.getElementById('roleBadge').classList.remove('hidden');
-                showToast("교사 전용 접속 모드가 활성화되었습니다.", "info");
-            }
-        });
 
         function formatDateDisplay(dateStr) {
             const parts = dateStr.split('-');
