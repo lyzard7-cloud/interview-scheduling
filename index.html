@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>고등학교 대입 면접 연습 배정 시스템</title>
+  <title>대입 면접 연습 배정 시스템 - 입학지원 포털</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -14,9 +14,14 @@
         extend: {
           fontFamily: { sans: ['Pretendard', 'sans-serif'] },
           colors: {
-            sidebar: '#1C1917',
-            cream: '#FBF9F5',
-            burgundy: { DEFAULT: '#8B263E', hover: '#721F32', light: '#FDF2F4' }
+            brand: {
+              navy: '#1e1e2d',
+              purple: '#7c3aed',
+              purpleLight: '#f3e8ff',
+              orange: '#ff7a00',
+              orangeHover: '#e66e00',
+              bgLight: '#f8f9fc'
+            }
           }
         }
       }
@@ -26,7 +31,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
@@ -40,112 +45,156 @@
     try {
       const app = initializeApp(firebaseConfig);
       window.db = getFirestore(app);
-      window.isFirebaseReady = true;
     } catch(e) {
-      console.warn("Firebase Init fallback to LocalStorage", e);
-      window.isFirebaseReady = false;
+      console.warn("Firebase Init fallback", e);
     }
   </script>
 </head>
-<body class="bg-cream text-slate-800 min-h-screen flex font-sans antialiased">
-  <!-- 좌측 사이드바 -->
-  <aside class="w-64 bg-sidebar text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-stone-800">
-    <div class="p-6 border-b border-stone-800 flex items-center space-x-3">
-      <div class="w-9 h-9 bg-burgundy rounded-xl flex items-center justify-center text-white font-bold shadow-md">결</div>
-      <div>
-        <h1 class="font-bold text-white text-base tracking-tight">대입 면접 배정</h1>
-        <p class="text-xs text-stone-400">학생부 맞춤형 연습</p>
+<body class="bg-brand-bgLight text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- 상단 네이비 입학 포털 헤더 -->
+  <header class="bg-brand-navy text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center text-xs border-b border-slate-700/60">
+      <div class="flex items-center space-x-3 text-slate-300">
+        <span class="font-bold text-white"><i class="fa-solid fa-graduation-cap text-brand-orange mr-1"></i> 고등학교 대입 지원센터</span>
+        <span>|</span>
+        <span>2026학년도 수시 맞춤형 면접 연습</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="bg-brand-purple px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white">입학지원 포털</span>
       </div>
     </div>
-    <nav class="p-4 space-y-1.5 flex-1">
-      <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl bg-stone-800/80 text-white font-medium">
-        <i class="fa-solid fa-calendar-check text-burgundy"></i>
-        <span id="navTitle">면접 신청 포털</span>
-      </a>
-    </nav>
-  </aside>
-
-  <!-- 메인 영역 -->
-  <div class="flex-1 flex flex-col min-w-0">
-    <header class="bg-white/80 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-30 px-8 py-4 flex justify-between items-center">
+    
+    <!-- 메인 타이틀 영역 -->
+    <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-end">
       <div>
-        <div class="text-xs text-stone-500 mb-1" id="subHeaderBadge">면접 연습 시스템 / 학생 포털</div>
-        <h2 class="text-2xl font-bold text-stone-900" id="mainHeaderTitle">면접 연습 신청</h2>
+        <p class="text-xs text-brand-orange font-bold uppercase tracking-wider mb-1">High School Mock Interview System</p>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">대입 면접 연습 배정 시스템</h1>
       </div>
-      <div id="authStatus" class="text-xs font-semibold text-stone-500"></div>
-    </header>
+      <div id="authStatus" class="text-xs text-slate-300 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
+        로그인 필요 (STEP 1 작성)
+      </div>
+    </div>
+  </header>
 
-    <main class="p-8 max-w-5xl space-y-6" id="appMain">
-      <!-- Step 1: 학생 인증 -->
-      <section class="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-burgundy-light text-burgundy">STEP 1</span>
+  <!-- 본문 컨테이너 (사이드바 + 메인 영역) -->
+  <div class="max-w-7xl w-full mx-auto px-6 py-8 flex-1 flex gap-8">
+    
+    <!-- 좌측 LNB 사이드바 -->
+    <aside class="w-64 shrink-0 space-y-4">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-2">
+        <div class="bg-brand-purple text-white p-3.5 rounded-xl font-bold text-sm flex items-center justify-between">
+          <span id="sideNavCategory">모집/신청 안내</span>
+          <i class="fa-solid fa-bars"></i>
         </div>
-        <h3 class="text-lg font-bold text-stone-900">학생 인증 및 접속</h3>
+        <nav class="space-y-1 text-sm font-medium pt-2">
+          <a href="#" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
+            <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약 신청</span>
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </a>
+          <a href="#" onclick="alert('교사 비밀번호가 있으신 경우 Ctrl+Shift+K를 눌러 로그인하세요.')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+            <span><i class="fa-solid fa-user-shield mr-2"></i>교사 전용 포털</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- 고객지원/안내 박스 -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 text-xs space-y-2">
+        <p class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
+        <p class="text-slate-500">3학년 진학지도부 교무실</p>
+        <p class="text-slate-700 font-semibold">053-850-1234 (내선 301)</p>
+      </div>
+    </aside>
+
+    <!-- 우측 메인 콘텐츠 -->
+    <main class="flex-1 space-y-6" id="mainContent">
+      
+      <!-- STEP 1: 학생 인증 -->
+      <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+        <div class="flex items-center space-x-2">
+          <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
+          <h3 class="text-lg font-bold text-slate-900">학생 인증 및 접속</h3>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-burgundy">
-          <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-burgundy">
-          <input type="password" id="sPin" placeholder="PIN (4자리)" autocomplete="off" maxlength="4" class="px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-burgundy">
-          <button onclick="handleStudentLogin()" class="bg-burgundy hover:bg-burgundy-hover text-white text-sm font-semibold rounded-xl py-2.5 shadow-sm transition-all">접속하기</button>
+          <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="password" id="sPin" placeholder="PIN (4자리)" autocomplete="off" maxlength="4" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <button onclick="handleStudentLogin()" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
+            접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
+          </button>
         </div>
       </section>
 
-      <!-- Step 2 & 3 영역 (접속 전 숨김) -->
+      <!-- STEP 2 & 3: 접속 후 펼쳐짐 -->
       <div id="stepDetails" class="hidden space-y-6">
-        <section class="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm space-y-4">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-burgundy-light text-burgundy">STEP 2</span>
-          <h3 class="text-lg font-bold text-stone-900">희망 대학 및 학과 작성</h3>
+        
+        <!-- STEP 2: 희망 대학 작성 -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+          <div class="flex items-center space-x-2">
+            <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 2</span>
+            <h3 class="text-lg font-bold text-slate-900">희망 대학 및 학과 작성</h3>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-stone-600 mb-1">희망 대학교</label>
-              <input type="text" id="sUniv" placeholder="예: 한국대학교 / 서울대학교" class="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-burgundy">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">희망 대학교 <span class="text-red-500">*</span></label>
+              <input type="text" id="sUniv" placeholder="예: 한국대학교 / 서울대학교" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
             </div>
             <div>
-              <label class="block text-xs font-medium text-stone-600 mb-1">희망 학과/전공</label>
-              <input type="text" id="sDept" placeholder="예: 컴퓨터공학과 / 경영학과" class="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-burgundy">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">희망 학과/전공 <span class="text-red-500">*</span></label>
+              <input type="text" id="sDept" placeholder="예: 컴퓨터공학과 / 경영학과" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
             </div>
           </div>
         </section>
 
-        <section class="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm space-y-4">
+        <!-- STEP 3: 날짜 및 교시 선택 달력 -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
           <div class="flex justify-between items-center">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-burgundy-light text-burgundy">STEP 3</span>
-            <div class="space-x-2">
-              <button onclick="changeMonth(-1)" class="px-3 py-1 border rounded-lg text-xs">◀ 이전달</button>
-              <span id="calMonthText" class="font-bold text-sm">2026년 10월</span>
-              <button onclick="changeMonth(1)" class="px-3 py-1 border rounded-lg text-xs">다음달 ▶</button>
+            <div class="flex items-center space-x-2">
+              <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 3</span>
+              <h3 class="text-lg font-bold text-slate-900">면접 희망 날짜 및 교시 선택</h3>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="changeMonth(-1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 font-medium">◀ 이전달</button>
+              <span id="calMonthText" class="font-bold text-sm px-2 text-brand-navy">2026년 10월</span>
+              <button onclick="changeMonth(1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 font-medium">다음달 ▶</button>
             </div>
           </div>
-          <h3 class="text-lg font-bold text-stone-900">면접 희망 날짜 및 교시 선택</h3>
-          
-          <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-stone-500 py-2 border-b">
+
+          <!-- 달력 그리드 -->
+          <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 py-2 border-b border-slate-100">
             <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
           </div>
           <div id="calGrid" class="grid grid-cols-7 gap-2"></div>
 
-          <div id="slotPicker" class="hidden border-t pt-4 mt-4 space-y-3">
-            <h4 class="font-bold text-sm text-stone-800" id="selectedDateTitle">날짜 선택됨</h4>
-            <div class="flex gap-3">
-              <button onclick="submitReservation(8)" class="flex-1 py-3 border-2 border-burgundy text-burgundy font-bold rounded-xl hover:bg-burgundy hover:text-white transition-all">
+          <!-- 하단 교시 신청 버튼 영역 -->
+          <div id="slotPicker" class="hidden border-t border-slate-200 pt-5 mt-4 space-y-3">
+            <div class="text-sm font-bold text-slate-800" id="selectedDateTitle">선택된 날짜: -</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onclick="submitReservation(8)" class="py-3.5 border-2 border-brand-purple text-brand-purple font-bold rounded-2xl hover:bg-brand-purple hover:text-white transition-all shadow-sm">
                 8교시 (16:40 ~ 17:30) 신청
               </button>
-              <button onclick="submitReservation(9)" class="flex-1 py-3 border-2 border-burgundy text-burgundy font-bold rounded-xl hover:bg-burgundy hover:text-white transition-all">
+              <button onclick="submitReservation(9)" class="py-3.5 border-2 border-brand-purple text-brand-purple font-bold rounded-2xl hover:bg-brand-purple hover:text-white transition-all shadow-sm">
                 9교시 (17:40 ~ 18:30) 신청
               </button>
             </div>
           </div>
         </section>
       </div>
+
     </main>
   </div>
+
+  <!-- 푸터 -->
+  <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto">
+    <p>© 고등학교 대입 면접 연습 배정 시스템. All rights reserved.</p>
+  </footer>
 
   <script>
     let state = {
       user: null,
       year: 2026,
       month: 10,
-      selectedDate: null,
-      regs: []
+      selectedDate: null
     };
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -153,9 +202,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       if (isTeacher) {
-        document.getElementById('navTitle').textContent = '교사 관리자 포털';
-        document.getElementById('subHeaderBadge').textContent = '교사 전용 대시보드';
-        document.getElementById('mainHeaderTitle').textContent = '전체 면접 배정 및 인쇄';
+        document.getElementById('headerTitle').textContent = '교사 전용 면접 배정 관리 시스템';
+        document.getElementById('sideNavCategory').textContent = '교사 관리 포털';
         renderTeacherView();
       } else {
         renderCalendar();
@@ -173,9 +221,9 @@
       }
 
       state.user = { num, name, pin };
-      document.getElementById('authStatus').textContent = `${name} (${num}) 학생 접속됨`;
+      document.getElementById('authStatus').innerHTML = `<span class="text-brand-orange font-bold"><i class="fa-solid fa-user-check mr-1"></i>${name} (${num})</span> 학생 접속됨`;
       document.getElementById('stepDetails').classList.remove('hidden');
-      alert(`${name} 학생으로 접속되었습니다. STEP 2와 STEP 3를 작성해 주세요.`);
+      alert(`${name} 학생으로 로그인되었습니다. 희망 대학/학과를 입력하고 희망 날짜를 선택해 주세요.`);
     }
 
     function changeMonth(delta) {
@@ -195,16 +243,16 @@
       const lastDate = new Date(state.year, state.month, 0).getDate();
 
       for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div class="h-16"></div>`;
+        grid.innerHTML += `<div class="h-20"></div>`;
       }
 
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isSelected = state.selectedDate === dateStr;
         grid.innerHTML += `
-          <button onclick="selectDate('${dateStr}')" class="h-16 border rounded-xl p-2 text-left flex flex-col justify-between transition-all ${isSelected ? 'border-burgundy bg-burgundy-light font-bold' : 'hover:border-stone-400 bg-white'}">
-            <span class="text-xs text-stone-700">${d}</span>
-            <span class="text-[10px] text-burgundy font-semibold">예약가능</span>
+          <button onclick="selectDate('${dateStr}')" class="h-20 border rounded-2xl p-2.5 text-left flex flex-col justify-between transition-all ${isSelected ? 'border-brand-purple bg-brand-purpleLight font-bold ring-2 ring-brand-purple/30' : 'hover:border-slate-400 bg-white border-slate-200'}">
+            <span class="text-xs text-slate-700 font-semibold">${d}</span>
+            <span class="text-[11px] text-brand-purple font-semibold"><i class="fa-regular fa-circle-check mr-0.5"></i>예약가능</span>
           </button>
         `;
       }
@@ -226,7 +274,7 @@
       const dept = document.getElementById('sDept').value.trim();
 
       if (!univ || !dept) {
-        alert('희망 대학교와 학과/전공을 작성해 주세요.');
+        alert('희망 대학교와 학과/전공을 먼저 입력해 주세요.');
         return;
       }
 
@@ -234,14 +282,16 @@
     }
 
     function renderTeacherView() {
-      const app = document.getElementById('appMain');
-      app.innerHTML = `
-        <section class="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm space-y-4">
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold text-stone-900">교사 관리자 대시보드</h3>
-            <button onclick="window.print()" class="bg-burgundy text-white text-xs px-4 py-2 rounded-xl font-bold">시간표 인쇄 (A4)</button>
+      const main = document.getElementById('mainContent');
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <div class="flex justify-between items-center border-b pb-4">
+            <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
+            <button onclick="window.print()" class="bg-brand-purple text-white text-xs px-4 py-2 rounded-xl font-bold hover:bg-brand-purple/90">
+              <i class="fa-solid fa-print mr-1"></i> A4 시간표 인쇄
+            </button>
           </div>
-          <p class="text-sm text-stone-600">학생들의 신청 내역 및 면접관 배정 관리를 진행하실 수 있습니다.</p>
+          <p class="text-sm text-slate-600">학생들의 면접 연습 신청 현황 확인 및 면접관(교사) 배정이 가능합니다.</p>
         </section>
       `;
     }
