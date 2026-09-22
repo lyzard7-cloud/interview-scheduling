@@ -110,24 +110,23 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- STEP 1: 학생 인증 -->
+      <!-- STEP 1: 학생 인증 (전화번호 제거, 학번/이름/접속코드 방식) -->
       <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center space-x-2">
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
           <h3 class="text-lg font-bold text-slate-900">학생 인증 및 접속</h3>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="tel" id="sPhone" placeholder="연락처 (예: 010-1234-5678)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="password" id="sPin" placeholder="PIN (4자리)" autocomplete="off" maxlength="4" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="password" id="sPin" placeholder="개인 부여 코드 (4자리)" autocomplete="off" maxlength="6" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <button onclick="handleStudentLogin()" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
             접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
           </button>
         </div>
       </section>
 
-      <!-- 학생 예약 내역 확인 (면접교사 정보 숨김) -->
+      <!-- 학생 예약 내역 확인 (면접교사 정보 완벽 비노출) -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-brand-purple"></i> 내가 신청한 면접 내역
@@ -194,7 +193,7 @@
       selectedDate: null,
       teacherTab: 'list',
       editingTeacherId: null,
-      selectedTeacherDates: [], // 교사 달력 다중 선택 날짜 배열
+      selectedTeacherDates: [],
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || '[]'),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
@@ -270,11 +269,10 @@
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
-      const phone = document.getElementById('sPhone').value.trim();
       const pin = document.getElementById('sPin').value.trim();
 
-      if (!num || !name || !phone || pin.length !== 4) {
-        alert('학번, 이름, 연락처, PIN 4자리를 모두 정확히 입력해 주세요.');
+      if (!num || !name || pin.length < 4) {
+        alert('학번, 이름, 부여받은 코드 4자리를 정확히 입력해 주세요.');
         return;
       }
 
@@ -282,18 +280,19 @@
       if (existingUserRegs.length > 0) {
         const storedPin = existingUserRegs[0].pin;
         if (storedPin && storedPin !== pin) {
-          alert('비밀번호(PIN)가 일치하지 않습니다. 최초 신청 시 사용했던 PIN 4자리를 입력해 주세요.');
+          alert('접속 코드가 일치하지 않습니다. 부여받은 고유 코드를 확인해 주세요.');
           return;
         }
       }
 
-      state.user = { num, name, phone, pin };
+      state.user = { num, name, pin };
       document.getElementById('authStatus').innerHTML = `<span class="text-brand-orange font-bold"><i class="fa-solid fa-user-check mr-1"></i>${name} (${num})</span> 학생 접속됨`;
       document.getElementById('stepDetails').classList.remove('hidden');
       checkMyRegistrations();
-      alert(`${name} 학생으로 로그인되었습니다.`);
+      alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
+    // 학생 화면: 면접교사 이름 완전 제거
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -373,7 +372,7 @@
 
     function selectDate(dateStr) {
       if (!state.user) {
-        alert('STEP 1에서 학번, 이름, 연락처, PIN 입력 후 [접속하기]를 먼저 눌러주세요.');
+        alert('STEP 1에서 학번, 이름, 고유 코드를 입력 후 [접속하기]를 먼저 눌러주세요.');
         return;
       }
       state.selectedDate = dateStr;
@@ -417,7 +416,6 @@
         period: period,
         num: state.user.num,
         name: state.user.name,
-        phone: state.user.phone || '미입력',
         pin: state.user.pin,
         univ: univ,
         dept: dept,
@@ -446,9 +444,9 @@
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,연락처,지원대학교,지원학과,면접교사1,면접교사2\n';
+      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,면접교사1,면접교사2\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},${r.phone || ''},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -566,22 +564,13 @@
           `;
         }
 
-        const phoneCallBtn = r.phone ? `
-          <a href="tel:${r.phone}" title="${r.phone} 전화걸기" class="inline-flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-7 h-7 rounded-full transition-all">
-            <i class="fa-solid fa-phone text-xs"></i>
-          </a>
-        ` : `<span class="text-slate-300">-</span>`;
-
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
             <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-3 px-3 font-bold text-brand-navy">${r.date}</td>
             <td class="py-3 px-3 font-bold text-brand-purple">${r.period}교시</td>
             <td class="py-3 px-3 font-semibold">${r.num}</td>
-            <td class="py-3 px-3 font-bold text-slate-900 flex items-center gap-1.5">
-              <span>${r.name}</span>
-              ${phoneCallBtn}
-            </td>
+            <td class="py-3 px-3 font-bold text-slate-900">${r.name}</td>
             <td class="py-3 px-3">${r.univ}</td>
             <td class="py-3 px-3">${r.dept}</td>
             <td class="py-3 px-3">${teacherCellHtml}</td>
@@ -624,7 +613,7 @@
                   <th class="py-3 px-3">면접 희망일</th>
                   <th class="py-3 px-3">교시</th>
                   <th class="py-3 px-3">학번</th>
-                  <th class="py-3 px-3">이름 (통화)</th>
+                  <th class="py-3 px-3">이름</th>
                   <th class="py-3 px-3">지원 대학교</th>
                   <th class="py-3 px-3">지원 학과</th>
                   <th class="py-3 px-3">담당 면접교사 (2인)</th>
@@ -640,7 +629,6 @@
       `;
     }
 
-    // ★ 달력 다중 클릭 선택 및 일괄 마감/해제 관리 ★
     function renderTeacherCalendarView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -695,7 +683,6 @@
             </div>
           </div>
 
-          <!-- 클릭 다중 선택 기반 일괄 제어 컨트롤 바 -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
             <div class="flex items-center justify-between flex-wrap gap-3">
               <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
@@ -734,7 +721,6 @@
       `;
     }
 
-    // 날짜 클릭 다중 토글
     function toggleTeacherDateSelect(dateStr) {
       if (state.selectedTeacherDates.includes(dateStr)) {
         state.selectedTeacherDates = state.selectedTeacherDates.filter(d => d !== dateStr);
@@ -759,7 +745,6 @@
       renderTeacherCalendarView();
     }
 
-    // 클릭으로 선택된 날짜들 일괄 마감/해제 실행
     function applySelectedBulkClose(isClose) {
       if (state.selectedTeacherDates.length === 0) {
         alert('달력에서 일괄 변경할 날짜를 먼저 클릭하여 선택해 주세요.');
