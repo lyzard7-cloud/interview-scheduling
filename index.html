@@ -194,6 +194,7 @@
       selectedDate: null,
       teacherTab: 'list',
       editingTeacherId: null,
+      selectedTeacherDates: [], // 교사 달력 다중 선택 날짜 배열
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || '[]'),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
@@ -312,7 +313,6 @@
       }
     }
 
-    // 9월 등 자유로운 달 이동 가능하도록 오버플로우 연도/월 로직 적용
     function changeMonth(delta) {
       state.month += delta;
       if (state.month < 1) {
@@ -326,6 +326,7 @@
       const monText = document.getElementById('calMonthText');
       if (monText) monText.textContent = `${state.year}년 ${state.month}월`;
       
+      state.selectedTeacherDates = [];
       if (isTeacher && state.teacherTab === 'calendar') renderTeacherCalendarView();
       else renderCalendar();
     }
@@ -639,7 +640,7 @@
       `;
     }
 
-    // ★ 수정된 제목: "달력 일정 및 마감 관리" ★
+    // ★ 달력 다중 클릭 선택 및 일괄 마감/해제 관리 ★
     function renderTeacherCalendarView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -655,6 +656,7 @@
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isClosed = state.closedDates.includes(dateStr);
+        const isChecked = state.selectedTeacherDates.includes(dateStr);
         const dayRegs = state.regs.filter(r => r.date === dateStr);
 
         let regsSummary = dayRegs.map(r => `
@@ -664,10 +666,13 @@
         `).join('');
 
         calGridHtml += `
-          <div onclick="selectTeacherCalDate('${dateStr}')" class="h-24 border ${isClosed ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-2 cursor-pointer flex flex-col justify-between transition-all">
+          <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-24 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : isClosed ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-2 cursor-pointer flex flex-col justify-between transition-all relative">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
-              ${isClosed ? '<span class="text-[10px] bg-red-100 text-red-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-400">${dayRegs.length}건</span>`}
+              <div class="flex items-center gap-1">
+                ${isChecked ? '<span class="bg-brand-purple text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">✓ 선택</span>' : ''}
+                ${isClosed ? '<span class="text-[10px] bg-red-100 text-red-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-400">${dayRegs.length}건</span>`}
+              </div>
             </div>
             <div class="space-y-1 overflow-hidden">
               ${regsSummary}
@@ -676,15 +681,12 @@
         `;
       }
 
-      const defaultStartDate = `${state.year}-${String(state.month).padStart(2, '0')}-01`;
-      const defaultEndDate = `${state.year}-${String(state.month).padStart(2, '0')}-${String(lastDate).padStart(2, '0')}`;
-
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
               <h3 class="text-lg font-bold text-slate-900">📅 달력 일정 및 마감 관리</h3>
-              <p class="text-xs text-slate-500 mt-0.5">희망하는 기간을 지정하여 한 번에 마감/해제하거나 특정 날짜를 직접 관리할 수 있습니다.</p>
+              <p class="text-xs text-slate-500 mt-0.5">날짜를 클릭하여 다중 선택한 후, 한 번에 일괄 마감 또는 마감 해제 처리를 할 수 있습니다.</p>
             </div>
             <div class="flex items-center space-x-2">
               <button onclick="changeMonth(-1)" class="px-3 py-1.5 border rounded-lg text-xs font-bold">◀ 이전달</button>
@@ -693,22 +695,25 @@
             </div>
           </div>
 
-          <!-- 기간지정 일괄 마감 컨트롤 바 -->
+          <!-- 클릭 다중 선택 기반 일괄 제어 컨트롤 바 -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
             <div class="flex items-center justify-between flex-wrap gap-3">
               <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
-                <i class="fa-solid fa-sliders text-brand-purple"></i>
-                <span>일괄 마감 설정:</span>
-                <input type="date" id="bulkStartDate" value="${defaultStartDate}" class="px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-normal">
-                <span>~</span>
-                <input type="date" id="bulkEndDate" value="${defaultEndDate}" class="px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-normal">
+                <i class="fa-solid fa-hand-pointer text-brand-purple"></i>
+                <span>선택된 날짜: <strong class="text-brand-purple text-sm">${state.selectedTeacherDates.length}개</strong></span>
               </div>
               <div class="flex items-center space-x-2">
-                <button onclick="applyBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all">
-                  <i class="fa-solid fa-lock mr-1"></i> 선택기간 일괄 마감
+                <button onclick="selectAllTeacherMonthDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
+                  전체 선택
                 </button>
-                <button onclick="applyBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all">
-                  <i class="fa-solid fa-lock-open mr-1"></i> 선택기간 일괄 해제
+                <button onclick="clearSelectedTeacherDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
+                  선택 해제
+                </button>
+                <button onclick="applySelectedBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all shadow-sm">
+                  <i class="fa-solid fa-lock mr-1"></i> 선택한 날짜 일괄 마감
+                </button>
+                <button onclick="applySelectedBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all shadow-sm">
+                  <i class="fa-solid fa-lock-open mr-1"></i> 선택한 날짜 일괄 해제
                 </button>
                 <button onclick="applyWeekendClose(true)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
                   토/일 주말 마감
@@ -729,26 +734,40 @@
       `;
     }
 
-    function applyBulkClose(isClose) {
-      const sVal = document.getElementById('bulkStartDate').value;
-      const eVal = document.getElementById('bulkEndDate').value;
-
-      if (!sVal || !eVal) {
-        alert('시작일과 종료일을 올바르게 선택해 주세요.');
-        return;
+    // 날짜 클릭 다중 토글
+    function toggleTeacherDateSelect(dateStr) {
+      if (state.selectedTeacherDates.includes(dateStr)) {
+        state.selectedTeacherDates = state.selectedTeacherDates.filter(d => d !== dateStr);
+      } else {
+        state.selectedTeacherDates.push(dateStr);
       }
+      renderTeacherCalendarView();
+      showTeacherDateDetail(dateStr);
+    }
 
-      let curr = new Date(sVal);
-      const end = new Date(eVal);
+    function selectAllTeacherMonthDates() {
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+      state.selectedTeacherDates = [];
+      for (let d = 1; d <= lastDate; d++) {
+        state.selectedTeacherDates.push(`${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+      }
+      renderTeacherCalendarView();
+    }
 
-      if (curr > end) {
-        alert('시작일이 종료일보다 늦을 수 없습니다.');
+    function clearSelectedTeacherDates() {
+      state.selectedTeacherDates = [];
+      renderTeacherCalendarView();
+    }
+
+    // 클릭으로 선택된 날짜들 일괄 마감/해제 실행
+    function applySelectedBulkClose(isClose) {
+      if (state.selectedTeacherDates.length === 0) {
+        alert('달력에서 일괄 변경할 날짜를 먼저 클릭하여 선택해 주세요.');
         return;
       }
 
       let count = 0;
-      while (curr <= end) {
-        const dStr = curr.toISOString().slice(0, 10);
+      state.selectedTeacherDates.forEach(dStr => {
         if (isClose) {
           if (!state.closedDates.includes(dStr)) {
             state.closedDates.push(dStr);
@@ -760,11 +779,11 @@
             count++;
           }
         }
-        curr.setDate(curr.getDate() + 1);
-      }
+      });
 
       localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
-      alert(`총 ${count}개 날짜가 일괄 ${isClose ? '마감' : '해제'} 처리되었습니다.`);
+      alert(`선택한 ${state.selectedTeacherDates.length}개 중 ${count}개 날짜가 일괄 ${isClose ? '마감' : '해제'} 처리되었습니다.`);
+      state.selectedTeacherDates = [];
       renderTeacherCalendarView();
     }
 
@@ -791,7 +810,7 @@
       renderTeacherCalendarView();
     }
 
-    function selectTeacherCalDate(dateStr) {
+    function showTeacherDateDetail(dateStr) {
       const container = document.getElementById('teacherCalDetail');
       if (!container) return;
 
@@ -834,7 +853,7 @@
       }
       localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
       renderTeacherCalendarView();
-      selectTeacherCalDate(dateStr);
+      showTeacherDateDetail(dateStr);
     }
 
     async function saveTeachers(id) {
