@@ -198,7 +198,7 @@
         <div class="bg-white p-3 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
           <p class="font-bold text-brand-purple">📌 모의면접 유의사항</p>
           <p>· 지정된 면접 장소로 시작 10분 전까지 반드시 입실하여 주시기 바랍니다.</p>
-          <p>· 개인 생활기록부 지참 필수 및 깔끔한 복장 착용 권장</p>
+          <p>· 깔끔한 복장 착용 권장</p>
         </div>
       </div>
 
@@ -513,6 +513,7 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
+    // 유의사항 문구 단순화 반영 (깔끔한 복장 착용 권장만 제공)
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -581,17 +582,21 @@
         const p8Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 8);
         const p9Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 9);
 
+        const p8Rem = Math.max(0, maxTeams - p8Regs.length);
+        const p9Rem = Math.max(0, maxTeams - p9Regs.length);
+        const totalRemaining = p8Rem + p9Rem;
+
         const isClosed = state.closedDates.includes(dateStr) || maxTeams === 0;
 
-        let statusText = `<span class="text-brand-purple font-semibold">8/9교시 가능 (${maxTeams}팀)</span>`;
+        let statusText = `<span class="text-brand-purple font-semibold">8/9교시 [잔여 ${totalRemaining}석]</span>`;
         if (isClosed) {
           statusText = '<span class="text-slate-500 font-bold">운영 마감</span>';
-        } else if (p8Regs.length >= maxTeams && p9Regs.length >= maxTeams) {
-          statusText = '<span class="text-red-500 font-bold">전체 마감</span>';
-        } else if (p8Regs.length >= maxTeams) {
-          statusText = '<span class="text-amber-600 font-medium">8교시 마감</span>';
-        } else if (p9Regs.length >= maxTeams) {
-          statusText = '<span class="text-amber-600 font-medium">9교시 마감</span>';
+        } else if (p8Rem === 0 && p9Rem === 0) {
+          statusText = '<span class="text-red-500 font-bold">전체 마감 [0석]</span>';
+        } else if (p8Rem === 0) {
+          statusText = `<span class="text-amber-600 font-medium">8교시 마감 [잔여 ${p9Rem}석]</span>`;
+        } else if (p9Rem === 0) {
+          statusText = `<span class="text-amber-600 font-medium">9교시 마감 [잔여 ${p8Rem}석]</span>`;
         }
 
         grid.innerHTML += `
