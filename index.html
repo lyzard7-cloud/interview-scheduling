@@ -99,8 +99,8 @@
           <i class="fa-solid fa-bars"></i>
         </div>
         <nav class="space-y-1 text-sm font-medium pt-2" id="sidebarNav">
-          <a href="#" onclick="switchTeacherTab('list')" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
-            <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약 현황</span>
+          <a href="#" onclick="switchTeacherTab('calendar')" class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-purpleLight text-brand-purple font-bold">
+            <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
             <i class="fa-solid fa-chevron-right text-xs"></i>
           </a>
         </nav>
@@ -199,7 +199,6 @@
     const HIGH_EXP_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const LOW_EXP_TEACHERS = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
-    // 일자별 참여 가능 교사 일정표 (로컬 스토리지 수정 가능 구조)
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -243,7 +242,7 @@
       year: 2026,
       month: 10,
       selectedDate: null,
-      teacherTab: 'list',
+      teacherTab: 'calendar',
       editingTeacherId: null,
       selectedTeacherDates: [],
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
@@ -276,12 +275,13 @@
       renderTeacherView();
     }
 
+    // ★ 메뉴 탭 순서 조정: 달력 일정 ➔ 날짜별 교사 ➔ 통계 ➔ 목록 ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
       nav.innerHTML = `
-        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
-          <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
+        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+          <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="switchTeacherTab('schedule')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'schedule' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
@@ -292,8 +292,8 @@
           <span><i class="fa-solid fa-chart-pie mr-2"></i>면접교사 배정 통계</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
-          <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
+        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+          <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t">
@@ -564,7 +564,6 @@
       renderTeacherListView();
     }
 
-    // ★ 신규 탭: 날짜별 참여 교사 관리 대시보드 렌더링 ★
     function renderTeacherScheduleView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -584,9 +583,9 @@
         const teacherCheckboxes = ALL_TEACHERS.map(t => {
           const isChecked = activeList.includes(t);
           return `
-            <label class="inline-flex items-center space-x-1 text-[11px] cursor-pointer hover:bg-slate-100 p-0.5 rounded">
-              <input type="checkbox" onchange="toggleTeacherForDate('${dateStr}', '${t}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3 h-3 text-brand-purple rounded">
-              <span class="${isChecked ? 'font-bold text-slate-800' : 'text-slate-400'}">${t}</span>
+            <label class="inline-flex items-center space-x-1 text-[11px] whitespace-nowrap cursor-pointer hover:bg-slate-100 p-0.5 rounded">
+              <input type="checkbox" onchange="toggleTeacherForDate('${dateStr}', '${t}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3 h-3 text-brand-purple rounded shrink-0">
+              <span class="${isChecked ? 'font-bold text-slate-800' : 'text-slate-400'} leading-none">${t}</span>
             </label>
           `;
         }).join('');
@@ -598,7 +597,7 @@
                 <span class="font-extrabold text-slate-900">${d}일</span>
                 <span class="text-[10px] font-bold text-brand-purple bg-brand-purpleLight px-1.5 py-0.5 rounded-full">${activeList.length}명 가능</span>
               </div>
-              <div class="grid grid-cols-2 gap-0.5">
+              <div class="grid grid-cols-2 gap-x-1 gap-y-0.5">
                 ${teacherCheckboxes}
               </div>
             </div>
