@@ -85,6 +85,7 @@
       <div>
         <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">강일여고 면접 예약 사이트</h1>
       </div>
+      <!-- 형광 노랑 라이브 접속 뱃지 -->
       <div id="authStatus" class="text-xs text-slate-300 bg-slate-800/90 px-4 py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner">
         <span class="relative flex h-2.5 w-2.5">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
@@ -318,7 +319,15 @@
       window.location.href = window.location.pathname;
     }
 
+    // 관리자 보안 탭 클릭 시 비밀번호 검증 (01054568795)
     function switchTeacherTab(tabName) {
+      if (tabName === 'admin') {
+        const inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
+        if (inputPwd !== '01054568795') {
+          alert('비밀번호가 올바르지 않습니다.');
+          return;
+        }
+      }
       state.teacherTab = tabName;
       updateSidebarNavForTeacher();
       renderTeacherView();
@@ -417,7 +426,6 @@
       return Math.min(countA, countB);
     }
 
-    // 197명 전체 학생 명단 데이터베이스 검증
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
@@ -428,7 +436,6 @@
         return;
       }
 
-      // 명단 존재 여부 검증
       const foundStudent = STUDENT_LIST.find(s => s.num === num && s.name === name);
       if (!foundStudent) {
         alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
@@ -639,7 +646,6 @@
       link.click();
     }
 
-    // 197명 실명 엑셀 다운로드 처리
     function exportStudentPinListCSV() {
       let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
       STUDENT_LIST.forEach((s, idx) => {
@@ -758,7 +764,6 @@
       }
     }
 
-    // 신규 탭: 교사 관리자 전용 뷰
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1094,7 +1099,6 @@
       `;
     }
 
-    // 제목 변경: "면접 예약 현황 목록"으로 개편
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
