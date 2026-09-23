@@ -319,7 +319,6 @@
       window.location.href = window.location.pathname;
     }
 
-    // 관리자 보안 탭 클릭 시 비밀번호 검증 (01054568795)
     function switchTeacherTab(tabName) {
       if (tabName === 'admin') {
         const inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
@@ -733,6 +732,9 @@
       `).join('');
 
       window.print();
+      setTimeout(() => {
+        printArea.innerHTML = '';
+      }, 500);
     }
 
     function openSmsModal() {
@@ -1099,6 +1101,7 @@
       `;
     }
 
+    // ★ 줄바꿈 방지(whitespace-nowrap) 및 버튼 명칭 '평가 기록지' 최적화 적용 ★
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1128,7 +1131,7 @@
           const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t} (B)</option>`).join('');
 
           teacherCellHtml = `
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1 whitespace-nowrap">
               <select id="t1Input_${r.id}" class="px-1.5 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-brand-purple">
                 <option value="">교사1(A) 선택</option>
                 ${t1Options}
@@ -1142,7 +1145,7 @@
           `;
         } else {
           teacherCellHtml = `
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between whitespace-nowrap">
               <div class="space-x-1">
                 ${r.teacher1 ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher1}(A)</span>` : ''}
                 ${r.teacher2 ? `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher2}(B)</span>` : ''}
@@ -1154,20 +1157,22 @@
 
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
-            <td class="py-3 px-3 font-semibold text-slate-500">${idx + 1}</td>
-            <td class="py-3 px-3 font-bold text-brand-navy">${r.date}</td>
-            <td class="py-3 px-3 font-bold text-brand-purple">${r.period}교시</td>
-            <td class="py-3 px-3 font-semibold">${r.num}</td>
-            <td class="py-3 px-3 font-bold text-slate-900">${r.name}</td>
-            <td class="py-3 px-3">${r.univ}</td>
-            <td class="py-3 px-3">${r.dept}</td>
-            <td class="py-3 px-3">${teacherCellHtml}</td>
-            <td class="py-3 px-3">
-              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1.5 py-1 text-[11px] border border-slate-200 rounded focus:border-brand-purple">
+            <td class="py-3.5 px-3 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
+            <td class="py-3.5 px-3 font-bold text-brand-navy whitespace-nowrap">${r.date}</td>
+            <td class="py-3.5 px-3 font-bold text-brand-purple whitespace-nowrap">${r.period}교시</td>
+            <td class="py-3.5 px-3 font-semibold whitespace-nowrap">${r.num}</td>
+            <td class="py-3.5 px-3 font-bold text-slate-900 whitespace-nowrap">${r.name}</td>
+            <td class="py-3.5 px-3 whitespace-nowrap">${r.univ}</td>
+            <td class="py-3.5 px-3 whitespace-nowrap">${r.dept}</td>
+            <td class="py-3.5 px-3 whitespace-nowrap">${teacherCellHtml}</td>
+            <td class="py-3.5 px-3 whitespace-nowrap">
+              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-28 px-2 py-1 text-[11px] border border-slate-200 rounded focus:border-brand-purple">
             </td>
-            <td class="py-3 px-3 text-center whitespace-nowrap space-x-2">
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="text-brand-purple hover:text-brand-purple/80 font-bold underline">인쇄</button>
-              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline">취소</button>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap space-x-2">
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all">
+                평가 기록지
+              </button>
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[11px]">취소</button>
             </td>
           </tr>
         `;
@@ -1219,19 +1224,19 @@
           </div>
 
           <div class="overflow-x-auto rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[950px]">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
-                  <th class="py-3 px-3">No</th>
-                  <th class="py-3 px-3">면접 희망일</th>
-                  <th class="py-3 px-3">교시</th>
-                  <th class="py-3 px-3">학번</th>
-                  <th class="py-3 px-3">이름</th>
-                  <th class="py-3 px-3">지원 대학교</th>
-                  <th class="py-3 px-3">지원 학과</th>
-                  <th class="py-3 px-3">담당 면접교사 (교사1:A그룹, 교사2:B그룹)</th>
-                  <th class="py-3 px-3">면접 장소</th>
-                  <th class="py-3 px-3 text-center">관리</th>
+                  <th class="py-3 px-3 text-center whitespace-nowrap">No</th>
+                  <th class="py-3 px-3 whitespace-nowrap">면접 희망일</th>
+                  <th class="py-3 px-3 whitespace-nowrap">교시</th>
+                  <th class="py-3 px-3 whitespace-nowrap">학번</th>
+                  <th class="py-3 px-3 whitespace-nowrap">이름</th>
+                  <th class="py-3 px-3 whitespace-nowrap">지원 대학교</th>
+                  <th class="py-3 px-3 whitespace-nowrap">지원 학과</th>
+                  <th class="py-3 px-3 whitespace-nowrap">담당 면접교사 (교사1:A, 교사2:B)</th>
+                  <th class="py-3 px-3 whitespace-nowrap">면접 장소</th>
+                  <th class="py-3 px-3 text-center whitespace-nowrap">관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -1455,7 +1460,7 @@
             </div>
             <div class="flex items-center space-x-3">
               ${teacherBadge}
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="text-brand-purple hover:text-brand-purple/80 font-bold underline">인쇄</button>
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2.5 py-1 rounded-lg font-bold transition-all text-xs">평가 기록지</button>
               <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-2">삭제</button>
             </div>
           </div>
