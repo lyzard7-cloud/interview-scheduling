@@ -140,7 +140,7 @@
         </form>
       </section>
 
-      <!-- 학생 예약 내역 확인 (면접장소 및 D-Day 추가) -->
+      <!-- 학생 예약 내역 확인 -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <div class="flex justify-between items-center border-b border-brand-purple/20 pb-3">
           <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -212,7 +212,6 @@
 
   <script>
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
-    // 용어 변경: 고경력 -> A그룹 / 저경력 -> B그룹
     const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const TEACHER_B_GROUP = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
@@ -262,7 +261,7 @@
       teacherTab: 'calendar',
       editingTeacherId: null,
       selectedTeacherDates: [],
-      searchKeyword: '', // 대학/전공 검색 키워드
+      searchKeyword: '',
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
@@ -427,7 +426,6 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
-    // 학생용 D-Day 계산 및 장소 표시
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -438,7 +436,6 @@
       if (myRegs.length > 0) {
         container.classList.remove('hidden');
 
-        // 제일 빠른 날짜 D-Day
         const sortedDates = myRegs.map(r => new Date(r.date)).sort((a,b)=>a-b);
         const today = new Date();
         today.setHours(0,0,0,0);
@@ -449,7 +446,7 @@
           <div class="flex justify-between items-center py-2 border-b border-slate-200/50 last:border-0">
             <span class="font-semibold text-slate-800">
               📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept} 
-              <span class="ml-2 text-brand-purple font-bold"><i class="fa-solid fa-location-dot"></i> ${r.location || '3학년 교무실 지정실'}</span>
+              <span class="ml-2 text-brand-purple font-bold"><i class="fa-solid fa-location-dot"></i> ${r.location || '3학년 교무실'}</span>
             </span>
             <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline ml-4">신청 취소</button>
           </div>
@@ -576,7 +573,7 @@
         dept: dept,
         teacher1: '',
         teacher2: '',
-        location: '3학년 교무실 지정실',
+        location: '3학년 교무실',
         createdAt: new Date().toLocaleString()
       };
 
@@ -612,10 +609,13 @@
       link.click();
     }
 
-    // 기능 2: A4 규격 면접 평가 기록지 인쇄
-    function printEvaluationSheet(targetDate = null) {
+    // 학생 개별/날짜별/전체 인쇄 지원
+    function printEvaluationSheet(targetDate = null, singleStudentId = null) {
       let printRegs = state.regs;
-      if (targetDate) {
+
+      if (singleStudentId) {
+        printRegs = state.regs.filter(r => r.id === singleStudentId);
+      } else if (targetDate) {
         printRegs = state.regs.filter(r => r.date === targetDate);
       }
 
@@ -644,7 +644,7 @@
             <thead>
               <tr class="bg-slate-200">
                 <th class="border border-slate-400 py-1.5 px-2">평가 항목</th>
-                <th class="border border-slate-400 py-1.5 px-2 w-24 text-center">평가 (상/중/하)</th>
+                <th class="border border-slate-400 py-1.5 px-2 w-28 text-center">평가 (상/중/하)</th>
                 <th class="border border-slate-400 py-1.5 px-2">면접관 주요 피드백 및 질문 내용</th>
               </tr>
             </thead>
@@ -686,7 +686,6 @@
       window.print();
     }
 
-    // 기능 3: SMS/알림톡 문구 창 오픈
     function openSmsModal() {
       if (state.regs.length === 0) {
         alert('안내 문자를 발송할 학생 내역이 없습니다.');
@@ -1023,7 +1022,7 @@
       `;
     }
 
-    // 면접 현황 목록 (기능 4: 장소지정 + 기능 5: 통합 검색창 추가)
+    // 학생 개별 [인쇄] 버튼이 취소 옆에 배치된 목록 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1031,7 +1030,6 @@
       const uniqueDates = Array.from(new Set(state.regs.map(r => r.date))).sort();
       const dateSelectOptions = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
 
-      // 검색어 필터링
       const filteredRegs = state.regs.filter(r => {
         if (!state.searchKeyword) return true;
         const kw = state.searchKeyword.toLowerCase();
@@ -1091,8 +1089,9 @@
             <td class="py-3 px-3">
               <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1.5 py-1 text-[11px] border border-slate-200 rounded focus:border-brand-purple">
             </td>
-            <td class="py-3 px-3 text-center">
-              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold text-[11px] underline">취소</button>
+            <td class="py-3 px-3 text-center whitespace-nowrap space-x-2">
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="text-brand-purple hover:text-brand-purple/80 font-bold underline">인쇄</button>
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline">취소</button>
             </td>
           </tr>
         `;
@@ -1114,7 +1113,7 @@
                 📱 SMS 안내문
               </button>
               <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all">
-                📄 평가 기록지 인쇄
+                📄 전체 인쇄
               </button>
               <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <select id="targetAssignDate" class="px-2 py-1 text-xs border border-slate-300 rounded-lg focus:outline-none">
@@ -1135,7 +1134,6 @@
             </div>
           </div>
 
-          <!-- 대학/학과/학생 실시간 검색창 -->
           <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div class="flex items-center space-x-2 w-full max-w-sm">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
@@ -1381,6 +1379,7 @@
             </div>
             <div class="flex items-center space-x-3">
               ${teacherBadge}
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="text-brand-purple hover:text-brand-purple/80 font-bold underline">인쇄</button>
               <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-2">삭제</button>
             </div>
           </div>
@@ -1396,7 +1395,7 @@
           </div>
           <div class="flex items-center space-x-2">
             <button onclick="printEvaluationSheet('${dateStr}')" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-sm">
-              📄 이 날짜 평가 기록지 인쇄
+              📄 이 날짜 전체 평가 기록지 인쇄
             </button>
             <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
               ${isClosed ? '마감 해제 (운영 재개)' : '해당 날짜 개별 마감 처리'}
