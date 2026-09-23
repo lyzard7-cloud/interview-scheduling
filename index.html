@@ -8,6 +8,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
+  <style>
+    /* 자동완성 방지용 PIN 보안 처리 스타일상 */
+    .pin-masked {
+      -webkit-text-security: disc;
+    }
+  </style>
+
   <script>
     tailwind.config = {
       theme: {
@@ -110,23 +117,27 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- STEP 1: 학생 인증 -->
+      <!-- STEP 1: 학생 인증 (자동 완성 차단형) -->
       <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center space-x-2">
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
           <h3 class="text-lg font-bold text-slate-900">학생 인증 및 접속</h3>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="off" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="password" id="sPin" placeholder="개인 부여 코드 (4자리)" autocomplete="off" maxlength="6" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <button onclick="handleStudentLogin()" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
+        <form onsubmit="event.preventDefault(); handleStudentLogin();" class="grid grid-cols-1 sm:grid-cols-4 gap-3" autocomplete="off">
+          <!-- 브라우저 자동완성 속임용 더미 트랩 -->
+          <input type="text" style="display:none">
+          <input type="password" style="display:none">
+
+          <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="text" id="sPin" placeholder="개인 부여 코드 (4자리)" autocomplete="new-password" maxlength="6" class="pin-masked px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <button type="submit" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
             접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
           </button>
-        </div>
+        </form>
       </section>
 
-      <!-- 학생 예약 내역 확인 (면접교사 정보 숨김) -->
+      <!-- 학생 예약 내역 확인 -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-brand-purple/30 bg-brand-purpleLight/30 space-y-3">
         <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
           <i class="fa-solid fa-circle-check text-brand-purple"></i> 내가 신청한 면접 내역
@@ -186,11 +197,9 @@
   </footer>
 
   <script>
-    // 교사 경력 구분 정의
     const HIGH_EXP_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const LOW_EXP_TEACHERS = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
-    // 날짜별 가능 교사 일정표
     const TEACHER_SCHEDULE = {
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -513,7 +522,6 @@
       renderTeacherListView();
     }
 
-    // ★ 고경력 + 저경력 교사 1:1 조합 랜덤 자동 배정 알고리즘 ★
     async function autoAssignRandomTeachers() {
       if (state.regs.length === 0) {
         alert('배정할 면접 신청 학생 내역이 없습니다.');
@@ -536,12 +544,10 @@
         let availHigh = availList.filter(t => HIGH_EXP_TEACHERS.includes(t));
         let availLow = availList.filter(t => LOW_EXP_TEACHERS.includes(t));
 
-        // 랜덤 셔플 함수
         const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
         availHigh = shuffle([...availHigh]);
         availLow = shuffle([...availLow]);
 
-        // 팀(2인 1조) 생성
         const teams = [];
         const maxTeams = Math.min(availHigh.length, availLow.length);
         for (let i = 0; i < maxTeams; i++) {
@@ -554,7 +560,6 @@
         const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
         const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
 
-        // 8교시 학생 배정
         p8Students.forEach((st, idx) => {
           if (teams[idx]) {
             st.teacher1 = teams[idx].t1;
@@ -563,7 +568,6 @@
           }
         });
 
-        // 9교시 학생 배정 (동일한 팀 매칭 유지)
         p9Students.forEach((st, idx) => {
           if (teams[idx]) {
             st.teacher1 = teams[idx].t1;
