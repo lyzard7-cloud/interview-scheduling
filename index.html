@@ -79,13 +79,13 @@
     
     <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-end">
       <div>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">강일여고 교사용 면접 관리 시스템</h1>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">강일여고 면접 예약 사이트</h1>
       </div>
-      <!-- 반짝이는 라이브 접속 표시 박스 -->
+      <!-- 형광 노랑 라이브 접속 표시 박스 -->
       <div id="authStatus" class="text-xs text-slate-300 bg-slate-800/90 px-4 py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner">
         <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
         </span>
         <span>로그인 필요 (STEP 1 작성)</span>
       </div>
@@ -259,11 +259,11 @@
         document.getElementById('headerTitle').textContent = '강일여고 교사용 면접 관리 시스템';
         document.getElementById('sideNavCategory').textContent = '교사 관리 포털';
         
-        // 반짝이는 교사 라이브 접속 뱃지
+        // 형광 노랑 반짝이는 교사 라이브 접속 뱃지
         document.getElementById('authStatus').innerHTML = `
           <span class="relative flex h-2.5 w-2.5">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-orange opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-orange"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
           </span>
           <span class="text-brand-orange font-bold flex items-center gap-1">
             <i class="fa-solid fa-user-shield text-xs"></i> 교사 관리자 접속됨
@@ -272,6 +272,7 @@
         updateSidebarNavForTeacher();
         renderTeacherView();
       } else {
+        document.getElementById('headerTitle').textContent = '강일여고 면접 예약 사이트';
         renderCalendar();
       }
     });
@@ -396,13 +397,13 @@
 
       state.user = { num, name, pin };
       
-      // 반짝이는 학생 라이브 접속 뱃지
+      // 학생 형광 노랑 반짝이는 접속 뱃지
       document.getElementById('authStatus').innerHTML = `
         <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
         </span>
-        <span class="text-emerald-400 font-bold flex items-center gap-1">
+        <span class="text-yellow-300 font-bold flex items-center gap-1">
           <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
         </span>
       `;
