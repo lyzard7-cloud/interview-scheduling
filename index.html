@@ -121,7 +121,7 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- STEP 1: 학생 인증 -->
+      <!-- STEP 1: 학생 인증 (숫자 6자리 PIN) -->
       <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center space-x-2">
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
@@ -133,7 +133,7 @@
 
           <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="text" id="sPin" placeholder="개인 부여 코드 (4자리)" autocomplete="new-password" maxlength="6" class="pin-masked px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="text" id="sPin" placeholder="개인 부여 코드 (숫자 6자리)" autocomplete="new-password" maxlength="6" class="pin-masked px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <button type="submit" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
             접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
           </button>
@@ -203,7 +203,7 @@
     </main>
   </div>
 
-  <!-- 인쇄 전용 숨김 영역 -->
+  <!-- 인쇄 영역 -->
   <div id="printArea" class="p-8 space-y-6"></div>
 
   <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs mt-auto no-print">
@@ -391,13 +391,14 @@
       return Math.min(countA, countB);
     }
 
+    // 6자리 PIN 로그인 처리
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
       const pin = document.getElementById('sPin').value.trim();
 
-      if (!num || !name || pin.length < 4) {
-        alert('학번, 이름, 부여받은 코드 4자리를 정확히 입력해 주세요.');
+      if (!num || !name || pin.length < 6 || !/^\d{6}$/.test(pin)) {
+        alert('학번, 이름, 부여받은 숫자 6자리 코드를 정확히 입력해 주세요.');
         return;
       }
 
@@ -405,7 +406,7 @@
       if (existingUserRegs.length > 0) {
         const storedPin = existingUserRegs[0].pin;
         if (storedPin && storedPin !== pin) {
-          alert('접속 코드가 일치하지 않습니다. 부여받은 고유 코드를 확인해 주세요.');
+          alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 확인해 주세요.');
           return;
         }
       }
@@ -609,7 +610,28 @@
       link.click();
     }
 
-    // 학생 개별/날짜별/전체 인쇄 지원
+    // 학생 전체 1:1 PIN 명렬표 엑셀 다운로드 기능
+    function exportStudentPinListCSV() {
+      const studentPins = [
+        { num: '30101', name: '김강일', pin: '184920' },
+        { num: '30102', name: '박서연', pin: '730291' },
+        { num: '30103', name: '이강민', pin: '592810' },
+        { num: '30104', name: '최지우', pin: '481029' },
+        { num: '30105', name: '홍길동', pin: '629104' }
+      ];
+
+      let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
+      studentPins.forEach((s, idx) => {
+        csvStr += `${idx+1},${s.num},${s.name},${s.pin}\n`;
+      });
+
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_3학년_학생_고유코드_명렬표_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
     function printEvaluationSheet(targetDate = null, singleStudentId = null) {
       let printRegs = state.regs;
 
@@ -1022,7 +1044,7 @@
       `;
     }
 
-    // 학생 개별 [인쇄] 버튼이 취소 옆에 배치된 목록 렌더링
+    // [학생 PIN 엑셀 다운로드] 버튼 탑재 목록 화면
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1106,9 +1128,12 @@
           <div class="flex justify-between items-center border-b border-slate-100 pb-4 flex-wrap gap-3">
             <div>
               <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
-              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 고경력+저경력 1:1 자동 균등 배정 (총 ${filteredRegs.length}건)</p>
+              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 A/B그룹 1:1 자동 균등 배정 (총 ${filteredRegs.length}건)</p>
             </div>
             <div class="flex items-center space-x-2 flex-wrap gap-2">
+              <button onclick="exportStudentPinListCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all">
+                📥 학생 PIN 엑셀 다운로드
+              </button>
               <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all">
                 📱 SMS 안내문
               </button>
