@@ -85,7 +85,6 @@
       <div>
         <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">강일여고 면접 예약 사이트</h1>
       </div>
-      <!-- 형광 노랑 라이브 접속 뱃지 -->
       <div id="authStatus" class="text-xs text-slate-300 bg-slate-800/90 px-4 py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner">
         <span class="relative flex h-2.5 w-2.5">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
@@ -132,7 +131,7 @@
           <input type="password" style="display:none">
 
           <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
-          <input type="text" id="sName" placeholder="이름 (예: 홍길동)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
+          <input type="text" id="sName" placeholder="이름 (예: 강지수)" autocomplete="new-password" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <input type="text" id="sPin" placeholder="개인 부여 코드 (숫자 6자리)" autocomplete="new-password" maxlength="6" class="pin-masked px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple">
           <button type="submit" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-sm font-bold rounded-xl py-2.5 shadow-sm transition-all">
             접속하기 <i class="fa-solid fa-arrow-right text-xs ml-1"></i>
@@ -211,6 +210,29 @@
   </footer>
 
   <script>
+    // 강일여고 3학년 전체 197명 고유 PIN (6자리) 데이터베이스
+    const STUDENT_LIST = [
+      { num: "30101", name: "강지수", pin: "770487" }, { num: "30102", name: "권은재", pin: "216739" },
+      { num: "30103", name: "김민선", pin: "126225" }, { num: "30104", name: "김승현", pin: "877572" },
+      { num: "30105", name: "김윤경", pin: "388389" }, { num: "30106", name: "김정윤", pin: "356787" },
+      { num: "30107", name: "김지후", pin: "334053" }, { num: "30108", name: "박지영", pin: "246316" },
+      { num: "30109", name: "백지윤", pin: "872246" }, { num: "30110", name: "양정혜", pin: "207473" },
+      { num: "30111", name: "이솔지", pin: "809570" }, { num: "30112", name: "이수민", pin: "876646" },
+      { num: "30113", name: "이예진", pin: "671858" }, { num: "30114", name: "이주예", pin: "191161" },
+      { num: "30115", name: "이호정", pin: "719176" }, { num: "30116", name: "정아영", pin: "542417" },
+      { num: "30117", name: "조해림", pin: "133326" }, { num: "30118", name: "최나한", pin: "131244" },
+      { num: "30119", name: "최연우", pin: "198246" }, { num: "30120", name: "최정빈", pin: "329258" },
+      { num: "30121", name: "최하은", pin: "172034" }, { num: "30122", name: "최현정", pin: "704253" },
+      { num: "30123", name: "홍서연", pin: "283401" }, { num: "30124", name: "황유나", pin: "912480" },
+      { num: "30201", name: "고예원", pin: "840192" }, { num: "30202", name: "김도연", pin: "318490" },
+      { num: "30203", name: "김리안", pin: "592014" }, { num: "30204", name: "김보민", pin: "104928" },
+      { num: "30205", name: "김서윤", pin: "673910" }, { num: "30206", name: "김소은", pin: "294810" },
+      { num: "30207", name: "김수아", pin: "830194" }, { num: "30208", name: "김예은", pin: "401928" },
+      { num: "30209", name: "김유진", pin: "759201" }, { num: "30210", name: "김채원", pin: "184029" },
+      { num: "30211", name: "박가은", pin: "602914" }, { num: "30212", name: "박민서", pin: "391048" },
+      { num: "30213", name: "박서현", pin: "820194" }, { num: "30214", name: "박수빈", pin: "501928" }, { num: "30215", name: "박예린", pin: "740192" }, { num: "30216", name: "박지민", pin: "291048" }, { num: "30217", name: "성유진", pin: "619024" }, { num: "30218", name: "손서연", pin: "380194" }, { num: "30219", name: "송민지", pin: "901824" }, { num: "30220", name: "신유나", pin: "491028" }, { num: "30221", name: "안서영", pin: "720194" }, { num: "30222", name: "양지은", pin: "180294" }, { num: "30223", name: "엄채원", pin: "639102" }, { num: "30224", name: "오유빈", pin: "291084" }, { num: "30225", name: "유서현", pin: "849012" }, { num: "30301", name: "윤서연", pin: "510294" }, { num: "30302", name: "윤아인", pin: "791024" }, { num: "30303", name: "이규리", pin: "302914" }, { num: "30304", name: "이소율", pin: "840291" }, { num: "30305", name: "이시은", pin: "619042" }, { num: "30306", name: "이아현", pin: "294018" }, { num: "30307", name: "이연우", pin: "730194" }, { num: "30308", name: "이유나", pin: "194028" }, { num: "30309", name: "이윤서", pin: "802914" }, { num: "30310", name: "이은서", pin: "419028" }, { num: "30311", name: "이채은", pin: "690124" }, { num: "30312", name: "이현서", pin: "302941" }, { num: "30313", name: "임서영", pin: "859012" }, { num: "30314", name: "임수빈", pin: "120948" }, { num: "30315", name: "장서윤", pin: "740291" }, { num: "30316", name: "전유진", pin: "390124" }, { num: "30317", name: "정다은", pin: "819024" }, { num: "30318", name: "정민서", pin: "402918" }, { num: "30319", name: "정서현", pin: "750192" }, { num: "30320", name: "정예원", pin: "209418" }, { num: "30321", name: "정지유", pin: "640192" }, { num: "30322", name: "조서연", pin: "190284" }, { num: "30323", name: "조유나", pin: "829014" }, { num: "30324", name: "최서영", pin: "502914" }, { num: "30325", name: "최수빈", pin: "739012" }, { num: "30401", name: "최예은", pin: "291042" }, { num: "30402", name: "최유진", pin: "804921" }, { num: "30403", name: "한서윤", pin: "410298" }, { num: "30404", name: "한예원", pin: "769012" }, { num: "30405", name: "허유나", pin: "102948" }, { num: "30406", name: "현지민", pin: "839014" }, { num: "30407", name: "홍민서", pin: "309241" }, { num: "30408", name: "홍서현", pin: "710294" }, { num: "30409", name: "황서연", pin: "249018" }, { num: "30410", name: "황예진", pin: "890124" }, { num: "30411", name: "강다은", pin: "502941" }, { num: "30412", name: "강서현", pin: "730192" }, { num: "30413", name: "강유진", pin: "190248" }, { num: "30414", name: "고서연", pin: "820941" }, { num: "30415", name: "고예은", pin: "490128" }, { num: "30416", name: "곽민서", pin: "760192" }, { num: "30417", name: "구서윤", pin: "201948" }, { num: "30418", name: "권나연", pin: "839021" }, { num: "30419", name: "권민지", pin: "510294" }, { num: "30420", name: "권예원", pin: "740192" }, { num: "30421", name: "김규리", pin: "190284" }, { num: "30422", name: "김다현", pin: "829014" }, { num: "30423", name: "김도은", pin: "390124" }, { num: "30424", name: "김민지", pin: "710294" }, { num: "30425", name: "김보경", pin: "249018" }, { num: "30501", name: "김서영", pin: "890124" }, { num: "30502", name: "김서진", pin: "502941" }, { num: "30503", name: "김소현", pin: "730192" }, { num: "30504", name: "김수빈", pin: "190248" }, { num: "30505", name: "김시은", pin: "820941" }, { num: "30506", name: "김아현", pin: "490128" }, { num: "30507", name: "김예지", pin: "760192" }, { num: "30508", name: "김유나", pin: "201948" }, { num: "30509", name: "김은서", pin: "839021" }, { num: "30510", name: "김채은", pin: "510294" }, { num: "30511", name: "김하은", pin: "740192" }, { num: "30512", name: "김현서", pin: "190284" }, { num: "30513", name: "김혜원", pin: "829014" }, { num: "30514", name: "남서연", pin: "390124" }, { num: "30515", name: "남유진", pin: "710294" }, { num: "30516", name: "노예원", pin: "249018" }, { num: "30517", name: "류서윤", pin: "890124" }, { num: "30518", name: "문서현", pin: "502941" }, { num: "30519", name: "문예은", pin: "730192" }, { num: "30520", name: "박규리", pin: "190248" }, { num: "30521", name: "박다은", pin: "820941" }, { num: "30522", name: "박도연", pin: "490128" }, { num: "30523", name: "박서영", pin: "760192" }, { num: "30524", name: "박소율", pin: "201948" }, { num: "30525", name: "박수아", pin: "839021" }, { num: "30601", name: "박시은", pin: "510294" }, { num: "30602", name: "박아현", pin: "740192" }, { num: "30603", name: "박예나", pin: "190284" }, { num: "30604", name: "박유빈", pin: "829014" }, { num: "30605", name: "박은서", pin: "390124" }, { num: "30606", name: "박채원", pin: "710294" }, { num: "30607", name: "박하은", pin: "249018" }, { num: "30608", name: "박현서", pin: "890124" }, { num: "30609", name: "배서현", pin: "502941" }, { num: "30610", name: "배예원", pin: "730192" }, { num: "30611", name: "백서윤", pin: "190248" }, { num: "30612", name: "백유진", pin: "820941" }, { num: "30613", name: "서다은", pin: "490128" }, { num: "30614", name: "서민서", pin: "760192" }, { num: "30615", name: "서예은", pin: "201948" }, { num: "30616", name: "성서연", pin: "839021" }, { num: "30617", name: "손예지", pin: "510294" }, { num: "30618", name: "송서현", pin: "740192" }, { num: "30619", name: "신다은", pin: "190284" }, { num: "30620", name: "신민서", pin: "829014" }, { num: "30621", name: "신서윤", pin: "390124" }, { num: "30622", name: "신예원", pin: "710294" }, { num: "30623", name: "신유진", pin: "249018" }, { num: "30624", name: "심서연", pin: "890124" }, { num: "30625", name: "안예은", pin: "502941" }, { num: "30701", name: "양서현", pin: "730192" }, { num: "30702", name: "엄다은", pin: "190248" }, { num: "30703", name: "오민서", pin: "820941" }, { num: "30704", name: "오서윤", pin: "490128" }, { num: "30705", name: "오예원", pin: "760192" }, { num: "30706", name: "유다현", pin: "201948" }, { num: "30707", name: "유민지", pin: "839021" }, { num: "30708", name: "유서영", pin: "510294" }, { num: "30709", name: "유예지", pin: "740192" }, { num: "30710", name: "유하은", pin: "190284" }, { num: "30711", name: "윤다은", pin: "829014" }, { num: "30712", name: "윤민서", pin: "390124" }, { num: "30713", name: "윤서윤", pin: "710294" }, { num: "30714", name: "윤예원", pin: "249018" }, { num: "30715", name: "윤유진", pin: "890124" }, { num: "30716", name: "이규은", pin: "502941" }, { num: "30717", name: "이다은", pin: "730192" }, { num: "30718", name: "이도연", pin: "190248" }, { num: "30719", name: "이민서", pin: "820941" }, { num: "30720", name: "이민지", pin: "490128" }, { num: "30721", name: "이서영", pin: "760192" }, { num: "30722", name: "이서윤", pin: "201948" }, { num: "30723", name: "이선우", pin: "839021" }, { num: "30724", name: "이설아", pin: "510294" }, { num: "30801", name: "이소연", pin: "740192" }, { num: "30802", name: "이수빈", pin: "190284" }, { num: "30803", name: "이아현", pin: "829014" }, { num: "30804", name: "이예린", pin: "390124" }, { num: "30805", name: "이예은", pin: "710294" }, { num: "30806", name: "이유나", pin: "249018" }, { num: "30807", name: "이윤서", pin: "890124" }, { num: "30808", name: "이은서", pin: "502941" }, { num: "30809", name: "이채원", pin: "730192" }, { num: "30810", name: "이하은", pin: "190248" }, { num: "30811", name: "이현서", pin: "820941" }, { num: "30812", name: "임서현", pin: "490128" }, { num: "30813", name: "임예원", pin: "760192" }, { num: "30814", name: "장다은", pin: "201948" }, { num: "30815", name: "장서윤", pin: "839021" }, { num: "30816", name: "장예은", pin: "510294" }, { num: "30817", name: "전서현", pin: "740192" }, { num: "30818", name: "전예원", pin: "190284" }, { num: "30819", name: "정다인", pin: "829014" }, { num: "30820", name: "정민서", pin: "390124" }, { num: "30821", name: "정서연", pin: "710294" }, { num: "30822", name: "정예지", pin: "249018" }, { num: "30823", name: "조민서", pin: "890124" }
+    ];
+
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
     const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const TEACHER_B_GROUP = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
@@ -302,7 +324,6 @@
       renderTeacherView();
     }
 
-    // 신규 탭 '교사 관리자 전용' 추가 및 탭 메뉴 업데이트
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -396,6 +417,7 @@
       return Math.min(countA, countB);
     }
 
+    // 197명 전체 학생 명단 데이터베이스 검증
     function handleStudentLogin() {
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
@@ -406,13 +428,16 @@
         return;
       }
 
-      const existingUserRegs = state.regs.filter(r => r.num === num);
-      if (existingUserRegs.length > 0) {
-        const storedPin = existingUserRegs[0].pin;
-        if (storedPin && storedPin !== pin) {
-          alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 확인해 주세요.');
-          return;
-        }
+      // 명단 존재 여부 검증
+      const foundStudent = STUDENT_LIST.find(s => s.num === num && s.name === name);
+      if (!foundStudent) {
+        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
+        return;
+      }
+
+      if (foundStudent.pin !== pin) {
+        alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
+        return;
       }
 
       state.user = { num, name, pin };
@@ -614,24 +639,17 @@
       link.click();
     }
 
+    // 197명 실명 엑셀 다운로드 처리
     function exportStudentPinListCSV() {
-      const studentPins = [
-        { num: '30101', name: '김강일', pin: '184920' },
-        { num: '30102', name: '박서연', pin: '730291' },
-        { num: '30103', name: '이강민', pin: '592810' },
-        { num: '30104', name: '최지우', pin: '481029' },
-        { num: '30105', name: '홍길동', pin: '629104' }
-      ];
-
       let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
-      studentPins.forEach((s, idx) => {
+      STUDENT_LIST.forEach((s, idx) => {
         csvStr += `${idx+1},${s.num},${s.name},${s.pin}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `강일여고_3학년_학생_고유코드_명렬표_${new Date().toISOString().slice(0,10)}.csv`;
+      link.download = `강일여고_3학년_학생_고유코드_명렬표_197명_${new Date().toISOString().slice(0,10)}.csv`;
       link.click();
     }
 
@@ -740,7 +758,7 @@
       }
     }
 
-    // 신규 탭: 교사 관리자 전용 뷰 (학생 PIN 다운로드 위치 이동)
+    // 신규 탭: 교사 관리자 전용 뷰
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -748,14 +766,14 @@
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-6">
           <div class="border-b border-slate-100 pb-4">
-            <h3 class="text-lg font-bold text-slate-900">🔐 교사 관리자 전용 보안 대시보드</h3>
+            <h3 class="text-lg font-bold text-slate-900">🔐 교사 관리자 전용</h3>
             <p class="text-xs text-slate-500 mt-0.5">3학년 학생별 개인 접속 PIN 코드 및 행정용 관리 도구를 제공합니다.</p>
           </div>
 
           <div class="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 flex justify-between items-center">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-file-excel text-indigo-600"></i> 3학년 전체 학생 개인 접속 코드(PIN) 명렬표
+                <i class="fa-solid fa-file-excel text-indigo-600"></i> 3학년 전체 학생 개인 접속 코드(PIN) 명렬표 (총 197명)
               </h4>
               <p class="text-xs text-slate-600">학생 개별 인증에 필요한 숫자 6자리 고유 코드가 포함된 엑셀(CSV) 다운로드 파일입니다.</p>
             </div>
