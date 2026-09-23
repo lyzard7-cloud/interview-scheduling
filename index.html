@@ -9,9 +9,13 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
   <style>
-    /* 자동완성 방지용 PIN 보안 처리 스타일상 */
     .pin-masked {
       -webkit-text-security: disc;
+    }
+    /* 비활성/마감 날짜 대각선 음영 패턴 */
+    .closed-day-bg {
+      background-color: #f1f5f9;
+      background-image: repeating-linear-gradient(45deg, #e2e8f0 0, #e2e8f0 10px, #f1f5f9 0, #f1f5f9 20px);
     }
   </style>
 
@@ -117,14 +121,13 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- STEP 1: 학생 인증 (자동 완성 차단형) -->
+      <!-- STEP 1: 학생 인증 -->
       <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center space-x-2">
           <span class="bg-brand-purple text-white text-xs font-bold px-3 py-1 rounded-full">STEP 1</span>
           <h3 class="text-lg font-bold text-slate-900">학생 인증 및 접속</h3>
         </div>
         <form onsubmit="event.preventDefault(); handleStudentLogin();" class="grid grid-cols-1 sm:grid-cols-4 gap-3" autocomplete="off">
-          <!-- 브라우저 자동완성 속임용 더미 트랩 -->
           <input type="text" style="display:none">
           <input type="password" style="display:none">
 
@@ -314,7 +317,29 @@
               checkMyRegistrations();
             }
           });
+
+          // 마감 날짜 실시간 연동
+          onSnapshot(collection(window.db, 'interview_settings'), (snapshot) => {
+            snapshot.forEach(doc => {
+              if (doc.id === 'closed_dates') {
+                state.closedDates = doc.data().dates || [];
+                localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+                if (isTeacher && state.teacherTab === 'calendar') renderTeacherCalendarView();
+                else renderCalendar();
+              }
+            });
+          });
         } catch(e) { console.warn("Firestore Listener Error", e); }
+      }
+    }
+
+    async function saveClosedDatesToDb() {
+      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_settings', 'closed_dates'), { dates: state.closedDates });
+        } catch(e) { console.warn("Firestore Closed Dates Save Error", e); }
       }
     }
 
@@ -396,14 +421,17 @@
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isSelected = state.selectedDate === dateStr;
-        const isClosed = state.closedDates.includes(dateStr);
+        
+        // 9월 전체 또는 일정 없는 날 또는 마감날
+        const availTeachers = TEACHER_SCHEDULE[dateStr] || [];
+        const isClosed = state.closedDates.includes(dateStr) || state.month < 10 || state.month > 11 || availTeachers.length === 0;
 
         const p8Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 8);
         const p9Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 9);
 
         let statusText = '<span class="text-brand-purple font-semibold">8/9교시 가능</span>';
         if (isClosed) {
-          statusText = '<span class="text-slate-400 font-bold">운영 마감</span>';
+          statusText = '<span class="text-slate-500 font-bold">운영 마감</span>';
         } else if (p8Reg && p9Reg) {
           statusText = '<span class="text-red-500 font-bold">전체 마감</span>';
         } else if (p8Reg) {
@@ -413,8 +441,8 @@
         }
 
         grid.innerHTML += `
-          <button onclick="selectDate('${dateStr}')" ${isClosed ? 'disabled' : ''} class="h-20 border rounded-2xl p-2.5 text-left flex flex-col justify-between transition-all ${isClosed ? 'bg-slate-100 border-slate-200 opacity-60 cursor-not-allowed' : isSelected ? 'border-brand-purple bg-brand-purpleLight font-bold ring-2 ring-brand-purple/30' : 'hover:border-slate-400 bg-white border-slate-200'}">
-            <span class="text-xs text-slate-700 font-semibold">${d}</span>
+          <button onclick="selectDate('${dateStr}')" ${isClosed ? 'disabled' : ''} class="h-20 border rounded-2xl p-2.5 text-left flex flex-col justify-between transition-all ${isClosed ? 'closed-day-bg text-slate-400 opacity-70 cursor-not-allowed border-slate-300' : isSelected ? 'border-brand-purple bg-brand-purpleLight font-bold ring-2 ring-brand-purple/30' : 'hover:border-slate-400 bg-white border-slate-200'}">
+            <span class="text-xs ${isClosed ? 'text-slate-400 font-medium' : 'text-slate-800 font-bold'}">${d}</span>
             <span class="text-[10px]">${statusText}</span>
           </button>
         `;
@@ -780,14 +808,14 @@
 
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const isClosed = state.closedDates.includes(dateStr);
+        const isClosed = state.closedDates.includes(dateStr) || state.month < 10 || state.month > 11;
         const isChecked = state.selectedTeacherDates.includes(dateStr);
         const dayRegs = state.regs.filter(r => r.date === dateStr);
         const availTeachers = TEACHER_SCHEDULE[dateStr] || [];
 
         let teacherAvailHtml = availTeachers.length > 0 
-          ? `<div class="text-[9px] text-slate-500 truncate mt-1">가능: ${availTeachers.join(', ')}</div>` 
-          : `<div class="text-[9px] text-red-400 mt-1">가능 교사 없음/휴무</div>`;
+          ? `<div class="text-[9px] text-slate-600 truncate mt-1">가능: ${availTeachers.join(', ')}</div>` 
+          : `<div class="text-[9px] text-red-500 font-bold mt-1">가능 교사 없음/휴무</div>`;
 
         let regsSummary = dayRegs.map(r => `
           <div class="text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1.5 py-0.5 rounded truncate">
@@ -796,13 +824,13 @@
         `).join('');
 
         calGridHtml += `
-          <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : isClosed ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-2 cursor-pointer flex flex-col justify-between transition-all relative">
+          <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : isClosed ? 'closed-day-bg text-slate-400 opacity-70 border-slate-300' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-2 cursor-pointer flex flex-col justify-between transition-all relative">
             <div>
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
                 <div class="flex items-center gap-1">
                   ${isChecked ? '<span class="bg-brand-purple text-white text-[9px] px-1 py-0.5 rounded-full font-bold">✓</span>' : ''}
-                  ${isClosed ? '<span class="text-[10px] bg-red-100 text-red-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-400">${dayRegs.length}건</span>`}
+                  ${isClosed ? '<span class="text-[10px] bg-slate-200 text-slate-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-400">${dayRegs.length}건</span>`}
                 </div>
               </div>
               ${teacherAvailHtml}
@@ -890,7 +918,7 @@
       renderTeacherCalendarView();
     }
 
-    function applySelectedBulkClose(isClose) {
+    async function applySelectedBulkClose(isClose) {
       if (state.selectedTeacherDates.length === 0) {
         alert('달력에서 일괄 변경할 날짜를 먼저 클릭하여 선택해 주세요.');
         return;
@@ -911,13 +939,13 @@
         }
       });
 
-      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      await saveClosedDatesToDb();
       alert(`선택한 ${state.selectedTeacherDates.length}개 중 ${count}개 날짜가 일괄 ${isClose ? '마감' : '해제'} 처리되었습니다.`);
       state.selectedTeacherDates = [];
       renderTeacherCalendarView();
     }
 
-    function applyWeekendClose(isClose) {
+    async function applyWeekendClose(isClose) {
       const lastDate = new Date(state.year, state.month, 0).getDate();
       let count = 0;
 
@@ -935,7 +963,7 @@
         }
       }
 
-      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      await saveClosedDatesToDb();
       alert(`${state.month}월 모든 주말(토/일)이 일괄 마감 처리되었습니다.`);
       renderTeacherCalendarView();
     }
@@ -977,7 +1005,7 @@
       `;
     }
 
-    function toggleDateClosed(dateStr) {
+    async function toggleDateClosed(dateStr) {
       if (state.closedDates.includes(dateStr)) {
         state.closedDates = state.closedDates.filter(d => d !== dateStr);
         alert(`${dateStr} 날짜가 정상 운영(예약 가능)으로 재개되었습니다.`);
@@ -985,7 +1013,7 @@
         state.closedDates.push(dateStr);
         alert(`${dateStr} 날짜가 마감 처리되었습니다.`);
       }
-      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      await saveClosedDatesToDb();
       renderTeacherCalendarView();
       showTeacherDateDetail(dateStr);
     }
