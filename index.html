@@ -79,8 +79,8 @@
     
     <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-end">
       <div>
-        <p class="text-xs text-brand-orange font-bold uppercase tracking-wider mb-1">Kangil Girls' High School Mock Interview</p>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">대입 면접 연습 배정 시스템</h1>
+        <!-- 영문 문구 삭제 및 신규 제목 반영 -->
+        <h1 class="text-3xl font-extrabold text-white tracking-tight" id="headerTitle">강일여고 교사용 면접 관리 시스템</h1>
       </div>
       <div id="authStatus" class="text-xs text-slate-300 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
         로그인 필요 (STEP 1 작성)
@@ -252,7 +252,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       syncDatabase();
       if (isTeacher) {
-        document.getElementById('headerTitle').textContent = '교사 전용 면접 배정 관리 시스템';
+        document.getElementById('headerTitle').textContent = '강일여고 교사용 면접 관리 시스템';
         document.getElementById('sideNavCategory').textContent = '교사 관리 포털';
         document.getElementById('authStatus').innerHTML = `<span class="text-brand-orange font-bold"><i class="fa-solid fa-user-shield mr-1"></i>교사 관리자 접속됨</span>`;
         updateSidebarNavForTeacher();
@@ -326,6 +326,7 @@
                 TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
                 localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
                 if (isTeacher) renderTeacherView();
+                else renderCalendar();
               }
             });
           });
@@ -351,6 +352,13 @@
           await setDoc(doc(window.db, 'interview_settings', 'teacher_schedule'), { schedule: TEACHER_SCHEDULE });
         } catch(e) { console.warn("Firestore Teacher Schedule Save Error", e); }
       }
+    }
+
+    function getMaxTeamsForDate(dateStr) {
+      const availList = TEACHER_SCHEDULE[dateStr] || [];
+      const highCount = availList.filter(t => HIGH_EXP_TEACHERS.includes(t)).length;
+      const lowCount = availList.filter(t => LOW_EXP_TEACHERS.includes(t)).length;
+      return Math.min(highCount, lowCount);
     }
 
     function handleStudentLogin() {
@@ -431,19 +439,21 @@
       for (let d = 1; d <= lastDate; d++) {
         const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isSelected = state.selectedDate === dateStr;
-        const isClosed = state.closedDates.includes(dateStr);
+        
+        const maxTeams = getMaxTeamsForDate(dateStr);
+        const p8Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 8);
+        const p9Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 9);
 
-        const p8Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 8);
-        const p9Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 9);
+        const isClosed = state.closedDates.includes(dateStr) || maxTeams === 0;
 
-        let statusText = '<span class="text-brand-purple font-semibold">8/9교시 가능</span>';
+        let statusText = `<span class="text-brand-purple font-semibold">8/9교시 가능 (${maxTeams}팀)</span>`;
         if (isClosed) {
           statusText = '<span class="text-slate-500 font-bold">운영 마감</span>';
-        } else if (p8Reg && p9Reg) {
+        } else if (p8Regs.length >= maxTeams && p9Regs.length >= maxTeams) {
           statusText = '<span class="text-red-500 font-bold">전체 마감</span>';
-        } else if (p8Reg) {
+        } else if (p8Regs.length >= maxTeams) {
           statusText = '<span class="text-amber-600 font-medium">8교시 마감</span>';
-        } else if (p9Reg) {
+        } else if (p9Regs.length >= maxTeams) {
           statusText = '<span class="text-amber-600 font-medium">9교시 마감</span>';
         }
 
@@ -464,16 +474,20 @@
       state.selectedDate = dateStr;
       document.getElementById('selectedDateTitle').textContent = `선택된 날짜: ${dateStr}`;
 
-      const p8Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 8);
-      const p9Reg = state.regs.find(r => r.date === dateStr && Number(r.period) === 9);
+      const maxTeams = getMaxTeamsForDate(dateStr);
+      const p8Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 8);
+      const p9Regs = state.regs.filter(r => r.date === dateStr && Number(r.period) === 9);
+
+      const p8Full = p8Regs.length >= maxTeams;
+      const p9Full = p9Regs.length >= maxTeams;
 
       const btnGroup = document.getElementById('slotButtonsGroup');
       btnGroup.innerHTML = `
-        <button onclick="submitReservation(8)" ${p8Reg ? 'disabled' : ''} class="py-3.5 border-2 ${p8Reg ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
-          ${p8Reg ? '8교시 마감 (신청 불가)' : '8교시 (16:40 ~ 17:30) 신청'}
+        <button onclick="submitReservation(8)" ${p8Full ? 'disabled' : ''} class="py-3.5 border-2 ${p8Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
+          ${p8Full ? `8교시 마감 (${p8Regs.length}/${maxTeams}팀 정원 초과)` : `8교시 (16:40 ~ 17:30) 신청 [잔여 ${maxTeams - p8Regs.length}석]`}
         </button>
-        <button onclick="submitReservation(9)" ${p9Reg ? 'disabled' : ''} class="py-3.5 border-2 ${p9Reg ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
-          ${p9Reg ? '9교시 마감 (신청 불가)' : '9교시 (17:40 ~ 18:30) 신청'}
+        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
+          ${p9Full ? `9교시 마감 (${p9Regs.length}/${maxTeams}팀 정원 초과)` : `9교시 (17:40 ~ 18:30) 신청 [잔여 ${maxTeams - p9Regs.length}석]`}
         </button>
       `;
 
@@ -490,9 +504,11 @@
         return;
       }
 
-      const existingSlot = state.regs.find(r => r.date === state.selectedDate && Number(r.period) === Number(period));
-      if (existingSlot) {
-        alert(`해당 ${period}교시는 이미 예약이 완료되었습니다.`);
+      const maxTeams = getMaxTeamsForDate(state.selectedDate);
+      const existingRegs = state.regs.filter(r => r.date === state.selectedDate && Number(r.period) === Number(period));
+
+      if (existingRegs.length >= maxTeams) {
+        alert(`해당 ${period}교시는 예약 수용 정원(${maxTeams}명)이 가득 찼습니다.`);
         return;
       }
 
@@ -642,7 +658,17 @@
       renderTeacherScheduleView();
     }
 
-    // ★ 날짜 지정 2인 1조 배정 함수 (8/9교시 팀 유지) ★
+    function getTeacherWorkloadCounts() {
+      const counts = {};
+      ALL_TEACHERS.forEach(t => counts[t] = 0);
+
+      state.regs.forEach(r => {
+        if (r.teacher1) counts[r.teacher1] = (counts[r.teacher1] || 0) + 1;
+        if (r.teacher2) counts[r.teacher2] = (counts[r.teacher2] || 0) + 1;
+      });
+      return counts;
+    }
+
     async function assignRandomTeachersForDate(targetDateStr) {
       const dayStudentList = state.regs.filter(r => r.date === targetDateStr);
       if (dayStudentList.length === 0) {
@@ -659,9 +685,15 @@
         return;
       }
 
-      const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
-      availHigh = shuffle([...availHigh]);
-      availLow = shuffle([...availLow]);
+      const workload = getTeacherWorkloadCounts();
+
+      const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+        const diff = (workload[a] || 0) - (workload[b] || 0);
+        return diff !== 0 ? diff : Math.random() - 0.5;
+      });
+
+      availHigh = sortByWorkload(availHigh);
+      availLow = sortByWorkload(availLow);
 
       const teams = [];
       const maxTeams = Math.min(availHigh.length, availLow.length);
@@ -700,7 +732,7 @@
         } catch(e) { console.warn("Firestore Batch Save Error", e); }
       }
 
-      alert(`[${targetDateStr} 배정 완료]\n총 ${count}명 학생에게 (고경력+저경력) 2인 1조 팀이 고정 배치되었습니다.`);
+      alert(`[${targetDateStr} 균등 배정 완료]\n누적 담당 건수를 종합 계산하여 총 ${count}명 학생에게 2인 1조 팀이 고르게 배정되었습니다.`);
       renderTeacherView();
     }
 
@@ -710,7 +742,7 @@
         return;
       }
 
-      if (!confirm('현재 신청된 전체 학생에게 [고경력 1명 + 저경력 1명] 2인 1조 팀을 자동으로 랜덤 배정하시겠습니까?')) return;
+      if (!confirm('현재 신청된 전체 학생에게 [누적 건수 균등 고려] 2인 1조 팀을 자동으로 배정하시겠습니까?')) return;
 
       const dateGroup = {};
       state.regs.forEach(r => {
@@ -726,9 +758,14 @@
         let availHigh = availList.filter(t => HIGH_EXP_TEACHERS.includes(t));
         let availLow = availList.filter(t => LOW_EXP_TEACHERS.includes(t));
 
-        const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
-        availHigh = shuffle([...availHigh]);
-        availLow = shuffle([...availLow]);
+        const workload = getTeacherWorkloadCounts();
+        const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+          const diff = (workload[a] || 0) - (workload[b] || 0);
+          return diff !== 0 ? diff : Math.random() - 0.5;
+        });
+
+        availHigh = sortByWorkload(availHigh);
+        availLow = sortByWorkload(availLow);
 
         const teams = [];
         const maxTeams = Math.min(availHigh.length, availLow.length);
@@ -770,7 +807,7 @@
         } catch(e) { console.warn("Firestore Batch Save Error", e); }
       }
 
-      alert(`[전체 날짜 2인 1조 배정 완료]\n총 ${assignedCount}건의 면접교사 배정이 수행되었습니다.`);
+      alert(`[전체 날짜 균등 배정 완료]\n누적 건수를 고려하여 총 ${assignedCount}건의 면접교사 배정이 고르게 수행되었습니다.`);
       renderTeacherView();
     }
 
@@ -842,7 +879,6 @@
       `;
     }
 
-    // ★ 드롭다운 분리: 교사1(고경력 전용), 교사2(저경력 전용) ★
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -854,7 +890,6 @@
         const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
         const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
 
-        // 고경력 / 저경력 분리 필터링
         const availHigh = availList.filter(t => HIGH_EXP_TEACHERS.includes(t));
         const availLow = availList.filter(t => LOW_EXP_TEACHERS.includes(t));
         
@@ -914,7 +949,7 @@
           <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
               <h3 class="text-lg font-bold text-slate-900">교사 관리자 전용 대시보드</h3>
-              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 날짜별/전체 고경력+저경력 1:1 자동 배정 (총 ${state.regs.length}건)</p>
+              <p class="text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 고경력+저경력 1:1 자동 균등 배정 (총 ${state.regs.length}건)</p>
             </div>
             <div class="flex items-center space-x-2">
               <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -923,12 +958,12 @@
                   ${dateSelectOptions}
                 </select>
                 <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) assignRandomTeachersForDate(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-xs px-2.5 py-1.5 rounded-lg font-bold transition-all">
-                  선택날짜 배정
+                  선택날짜 균등배정
                 </button>
               </div>
 
               <button onclick="autoAssignRandomTeachers()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-3.5 py-2.5 rounded-xl font-bold shadow-sm transition-all">
-                <i class="fa-solid fa-shuffle mr-1"></i> 전체 2인 1조 배정
+                <i class="fa-solid fa-shuffle mr-1"></i> 전체 균등 배정
               </button>
               <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2.5 rounded-xl font-bold shadow-sm transition-all">
                 <i class="fa-solid fa-file-excel mr-1"></i> 엑셀
@@ -981,6 +1016,7 @@
         const isClosed = state.closedDates.includes(dateStr);
         const isChecked = state.selectedTeacherDates.includes(dateStr);
         const dayRegs = state.regs.filter(r => r.date === dateStr);
+        const maxTeams = getMaxTeamsForDate(dateStr);
 
         let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => `
           <div class="text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1.5 py-0.5 rounded truncate">
@@ -995,7 +1031,7 @@
                 <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
                 <div class="flex items-center gap-1">
                   ${isChecked ? '<span class="bg-brand-purple text-white text-[9px] px-1 py-0.5 rounded-full font-bold">✓</span>' : ''}
-                  ${isClosed ? '<span class="text-[10px] bg-slate-200 text-slate-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-500 font-bold">${dayRegs.length}건</span>`}
+                  ${isClosed ? '<span class="text-[10px] bg-slate-200 text-slate-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[10px] text-slate-500 font-bold">${dayRegs.length}건 (최대${maxTeams*2}명)</span>`}
                 </div>
               </div>
             </div>
@@ -1139,6 +1175,7 @@
       const isClosed = state.closedDates.includes(dateStr);
       const dayRegs = state.regs.filter(r => r.date === dateStr);
       const availTeachers = TEACHER_SCHEDULE[dateStr] || [];
+      const maxTeams = getMaxTeamsForDate(dateStr);
 
       let listHtml = dayRegs.map(r => {
         const assignedTeachers = [r.teacher1, r.teacher2].filter(Boolean);
@@ -1167,7 +1204,7 @@
       container.innerHTML = `
         <div class="flex justify-between items-center bg-brand-purpleLight/50 p-4 rounded-xl border border-brand-purple/20">
           <div>
-            <h4 class="font-bold text-slate-900 text-sm">📅 ${dateStr} 신청 학생 및 담당 면접관 현황</h4>
+            <h4 class="font-bold text-slate-900 text-sm">📅 ${dateStr} 신청 현황 (최대 가능 정원: 8교시 ${maxTeams}명 / 9교시 ${maxTeams}명)</h4>
             <p class="text-xs text-slate-600 mt-1">출근/가능 교사: <strong>${availTeachers.length > 0 ? availTeachers.join(', ') : '없음/공휴일'}</strong></p>
           </div>
           <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
