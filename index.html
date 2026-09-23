@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
-  <!-- 배달의민족 주아체 폰트 -->
+  <!-- 배달의민족 주아체 폰트 추가 -->
   <style>
     @font-face {
       font-family: 'BMJUA';
@@ -103,56 +103,58 @@
     </div>
   </header>
 
-  <!-- 학생 로그인 전용 웰컴 뷰 -->
-  <div id="loginPortalContainer" class="w-full max-w-md mx-auto px-4 py-16 flex-1 flex flex-col justify-center items-center no-print">
+  <!-- 학생 로그인 전용 웰컴 뷰 (인스타그램풍 그라데이션 배경 + 반투명 입력창 적용) -->
+  <div id="loginPortalContainer" class="w-full flex-1 flex flex-col justify-center items-center py-12 px-4 no-print bg-gradient-to-tr from-amber-500 via-rose-500 via-purple-600 to-indigo-600">
     <div class="text-center mb-8 space-y-2">
-      <h2 class="text-3xl sm:text-4xl font-normal text-brand-navy tracking-tight font-jua">강일여고 면접 예약 사이트</h2>
-      <p class="text-xs text-slate-500 font-medium">강일여자고등학교 3학년 대입 면접 연습 배정 포털</p>
+      <h2 class="text-4xl sm:text-5xl font-normal text-white tracking-wider font-jua drop-shadow-md">강일여고 면접 예약 사이트</h2>
+      <p class="text-xs sm:text-sm text-white/90 font-medium drop-shadow-sm">강일여자고등학교 3학년 대입 면접 연습 배정 포털</p>
     </div>
 
-    <!-- 네이버 스타일 메인 로그인 카드 -->
-    <div class="w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-200/80 space-y-6">
-      <div class="border-b border-slate-100 pb-4 flex justify-between items-center">
-        <span class="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-lock text-brand-purple"></i> 학생 본인 인증
+    <!-- 인스타그램 스타일 반투명 로그인 카운터 박스 -->
+    <div class="w-full max-w-sm bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 space-y-6">
+      <div class="border-b border-white/20 pb-4 flex justify-between items-center text-white">
+        <span class="text-sm font-bold flex items-center gap-2">
+          <i class="fa-solid fa-lock text-yellow-300"></i> 학생 본인 인증
         </span>
-        <span class="text-[11px] text-slate-400">부여받은 6자리 코드</span>
+        <span class="text-[11px] text-white/70">부여받은 6자리 코드</span>
       </div>
 
       <form onsubmit="event.preventDefault(); handleStudentLogin();" class="space-y-4" autocomplete="off">
         <input type="text" style="display:none">
         <input type="password" style="display:none">
 
+        <!-- 반투명 입력창 영역 -->
         <div class="space-y-3">
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-white/80 text-xs">
               <i class="fa-solid fa-id-card"></i>
             </span>
-            <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
+            <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full pl-10 pr-4 py-3.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 text-sm text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/30 transition-all font-medium">
           </div>
 
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-white/80 text-xs">
               <i class="fa-solid fa-user"></i>
             </span>
-            <input type="text" id="sName" placeholder="이름 (예: 김강일)" autocomplete="new-password" class="w-full pl-10 pr-4 py-3 bg-slate-50 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
+            <input type="text" id="sName" placeholder="이름 (예: 김강일)" autocomplete="new-password" class="w-full pl-10 pr-4 py-3.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 text-sm text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/30 transition-all font-medium">
           </div>
 
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-white/80 text-xs">
               <i class="fa-solid fa-key"></i>
             </span>
-            <input type="text" id="sPin" placeholder="개인 부여 코드 (숫자 6자리)" autocomplete="new-password" maxlength="6" class="pin-masked w-full pl-10 pr-4 py-3 bg-slate-50 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
+            <input type="text" id="sPin" placeholder="개인 부여 코드 (숫자 6자리)" autocomplete="new-password" maxlength="6" class="pin-masked w-full pl-10 pr-4 py-3.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 text-sm text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/30 transition-all font-medium">
           </div>
         </div>
 
-        <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-base font-extrabold rounded-2xl py-3.5 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2 font-jua">
+        <!-- 로그인 버튼 -->
+        <button type="submit" class="w-full bg-white hover:bg-white/90 text-purple-700 text-base font-bold rounded-2xl py-3.5 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 mt-2 font-jua">
           <span class="text-lg font-normal">면접 예약 접속하기</span>
           <i class="fa-solid fa-arrow-right text-xs"></i>
         </button>
       </form>
 
-      <div class="pt-2 text-center text-xs text-slate-400 flex justify-center items-center space-x-3">
+      <div class="pt-2 text-center text-xs text-white/80 flex justify-center items-center space-x-3 font-medium">
         <span>문의: 3학년 교무실</span>
         <span>•</span>
         <span>033-650-0783</span>
@@ -160,7 +162,7 @@
     </div>
   </div>
 
-  <!-- 메인 본문 컨테이너 (로그인 성공 시 혹은 교사 포털 접속 시 노출) -->
+  <!-- 메인 본문 컨테이너 -->
   <div id="mainDashboardContainer" class="hidden max-w-7xl w-full mx-auto px-6 py-8 flex-1 flex gap-8 no-print">
     
     <!-- 좌측 사이드바 -->
@@ -185,7 +187,7 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6" id="mainContent">
       
-      <!-- 탭 1: 면접 예약 화면 (STEP 1 & STEP 2) -->
+      <!-- 탭 1: 면접 예약 화면 -->
       <div id="studentReservationSection" class="space-y-6">
         <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
           <div class="flex items-center space-x-2">
@@ -326,7 +328,7 @@
       year: 2026,
       month: 10,
       selectedDate: null,
-      studentTab: 'reserve', // 'reserve' | 'myreg'
+      studentTab: 'reserve',
       teacherTab: 'calendar',
       editingTeacherId: null,
       selectedTeacherDates: [],
@@ -366,7 +368,6 @@
       window.location.href = window.location.pathname;
     }
 
-    // 학생용 사이드바 탭 전환 (면접 예약 vs 나의 신청 내역)
     function switchStudentTab(tabName) {
       state.studentTab = tabName;
       updateSidebarNavForStudent();
@@ -660,7 +661,7 @@
         <button onclick="submitReservation(8)" ${p8Full ? 'disabled' : ''} class="py-3.5 border-2 ${p8Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
           ${p8Full ? `8교시 마감 (${p8Regs.length}/${maxTeams}팀 정원 초과)` : `8교시 (16:40 ~ 17:30) 신청 [잔여 ${maxTeams - p8Regs.length}석]`}
         </button>
-        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3.5 border-2 ${p9Full ? 'disabled' : ''} class="py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
+        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-2xl transition-all shadow-sm">
           ${p9Full ? `9교시 마감 (${p9Regs.length}/${maxTeams}팀 정원 초과)` : `9교시 (17:40 ~ 18:30) 신청 [잔여 ${maxTeams - p9Regs.length}석]`}
         </button>
       `;
