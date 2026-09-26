@@ -93,25 +93,25 @@
   <header class="bg-brand-navy text-white shadow-md no-print">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex justify-between items-center text-[11px] sm:text-xs border-b border-slate-700/60">
       <div class="flex items-center space-x-2 sm:space-x-3 text-slate-300 truncate">
-        <span class="font-bold text-white flex items-center gap-1">
+        <span class="font-bold text-white flex items-center gap-1 whitespace-nowrap">
           <i class="fa-solid fa-school text-brand-orange"></i> 강일여고 3학년부
         </span>
         <span>|</span>
-        <span class="truncate">2026 수시 맞춤형 면접</span>
+        <span class="truncate whitespace-nowrap">2026 수시 맞춤형 면접</span>
       </div>
     </div>
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
       <div>
-        <h1 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-jua" id="headerTitle">강일여고 면접 예약 사이트</h1>
+        <h1 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-jua whitespace-nowrap" id="headerTitle">강일여고 면접 예약 사이트</h1>
       </div>
       <!-- 라이브 접속 뱃지 -->
-      <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner">
+      <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner whitespace-nowrap">
         <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
           <span class="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-yellow-400"></span>
         </span>
-        <span>로그인 필요 (학생 인증)</span>
+        <span class="whitespace-nowrap">로그인 필요 (학생 인증)</span>
       </div>
     </div>
   </header>
@@ -120,8 +120,8 @@
   <div id="loginPortalContainer" class="w-full max-w-sm mx-auto px-5 py-12 flex-1 flex flex-col justify-center items-center bg-white no-print">
     
     <div class="text-center mb-12 space-y-2 w-full">
-      <h2 class="text-3xl sm:text-4xl text-brand-orange font-jua tracking-tight">강일여고 면접 예약</h2>
-      <p class="text-xs text-slate-400 font-medium">강일여자고등학교 3학년 대입 면접 배정 포털</p>
+      <h2 class="text-3xl sm:text-4xl text-brand-orange font-jua tracking-tight whitespace-nowrap">강일여고 면접 예약</h2>
+      <p class="text-xs text-slate-400 font-medium whitespace-nowrap">강일여자고등학교 3학년 대입 면접 배정 포털</p>
     </div>
 
     <form onsubmit="event.preventDefault(); handleStudentLogin();" class="w-full space-y-8" autocomplete="off">
@@ -130,29 +130,29 @@
 
       <div class="space-y-6">
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
-          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">학번</label>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">학번</label>
           <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
         </div>
 
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
-          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">이름</label>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">이름</label>
           <input type="text" id="sName" placeholder="이름 (예: 김강일)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
         </div>
 
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
-          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">개인 부여 코드 (숫자 6자리)</label>
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">개인 부여 코드 (숫자 6자리)</label>
           <input type="text" id="sPin" placeholder="숫자 6자리 입력" autocomplete="new-password" maxlength="6" class="pin-masked w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium tracking-widest">
         </div>
       </div>
 
       <div class="pt-2">
         <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-base font-bold rounded-xl py-4 shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-jua">
-          <span class="text-lg font-normal">로그인</span>
+          <span class="text-lg font-normal whitespace-nowrap">로그인</span>
         </button>
       </div>
     </form>
 
-    <div class="mt-12 text-center text-xs text-slate-400 flex justify-center items-center space-x-3 font-medium">
+    <div class="mt-12 text-center text-xs text-slate-400 flex justify-center items-center space-x-3 font-medium whitespace-nowrap">
       <span>문의: 3학년 교무실</span>
       <span>•</span>
       <span>033-650-0783</span>
@@ -165,7 +165,7 @@
     <!-- 좌측 사이드바 -->
     <aside class="w-full md:w-64 shrink-0 space-y-4">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-2">
-        <div class="bg-brand-purple text-white p-3 sm:p-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-between">
+        <div class="bg-brand-purple text-white p-3 sm:p-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-between whitespace-nowrap">
           <span id="sideNavCategory">면접 서비스</span>
           <i class="fa-solid fa-bars"></i>
         </div>
@@ -175,9 +175,9 @@
       </div>
 
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 text-xs space-y-1.5 hidden md:block">
-        <p class="font-bold text-slate-800 text-xs sm:text-sm"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
-        <p class="text-slate-500">3학년 교무실</p>
-        <p class="text-slate-700 font-semibold">033-650-0783 (내선 783)</p>
+        <p class="font-bold text-slate-800 text-xs sm:text-sm whitespace-nowrap"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
+        <p class="text-slate-500 whitespace-nowrap">3학년 교무실</p>
+        <p class="text-slate-700 font-semibold whitespace-nowrap">033-650-0783 (내선 783)</p>
       </div>
     </aside>
 
@@ -189,16 +189,21 @@
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3.5 sm:space-y-4">
           <div class="flex items-center space-x-2 whitespace-nowrap">
             <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 1</span>
-            <h3 class="text-base sm:text-lg font-bold text-slate-900">희망 대학 및 학과 작성</h3>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">희망 대학 및 학과 작성</h3>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">희망 대학교 <span class="text-red-500">*</span></label>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1 whitespace-nowrap">희망 대학교 <span class="text-red-500">*</span></label>
               <input type="text" id="sUniv" placeholder="예: 한국대학교 / 서울대학교" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple">
             </div>
             <div>
-              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">희망 학과/전공 <span class="text-red-500">*</span></label>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1 whitespace-nowrap">희망 학과/전공 <span class="text-red-500">*</span></label>
               <input type="text" id="sDept" placeholder="예: 컴퓨터공학과 / 경영학과" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple">
+            </div>
+            <!-- 요청사항 1번: 학생 제출용 질문/피드백 요청사항 작성란 -->
+            <div class="col-span-1 sm:col-span-2">
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1 whitespace-nowrap">면접관 선생님께 전달할 요청사항 / 희망 질문 <span class="text-slate-400 font-normal">(선택)</span></label>
+              <input type="text" id="sNote" placeholder="예: 생기부 2페이지 자율활동 관련 검증 질문 부탁드립니다." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple">
             </div>
           </div>
         </section>
@@ -210,12 +215,12 @@
                 <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 2</span>
                 <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">면접 희망 날짜 및 교시 선택</h3>
               </div>
-              <p class="text-xs text-brand-purple font-medium mt-1">※ 1인당 최대 3회까지 신청할 수 있습니다.</p>
+              <p class="text-xs text-brand-purple font-medium mt-1 whitespace-nowrap">※ 1인당 최대 3회까지 신청할 수 있습니다.</p>
             </div>
-            <div class="flex items-center space-x-1.5 self-end sm:self-auto">
-              <button onclick="changeMonth(-1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium">◀ 이전달</button>
-              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy">2026년 10월</span>
-              <button onclick="changeMonth(1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium">다음달 ▶</button>
+            <div class="flex items-center space-x-1.5 self-end sm:self-auto whitespace-nowrap">
+              <button onclick="changeMonth(-1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium whitespace-nowrap">◀ 이전달</button>
+              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy whitespace-nowrap">2026년 10월</span>
+              <button onclick="changeMonth(1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium whitespace-nowrap">다음달 ▶</button>
             </div>
           </div>
 
@@ -227,7 +232,7 @@
           <div id="calGrid" class="grid grid-cols-5 gap-1.5 sm:gap-2"></div>
 
           <div id="slotPicker" class="hidden border-t border-slate-200 pt-4 mt-3 space-y-3">
-            <div class="text-xs sm:text-sm font-bold text-slate-800" id="selectedDateTitle">선택된 날짜: -</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap" id="selectedDateTitle">선택된 날짜: -</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4" id="slotButtonsGroup"></div>
           </div>
         </section>
@@ -235,19 +240,52 @@
 
       <!-- 탭 2: 나의 신청 내역 화면 -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3 gap-2 flex-wrap">
           <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
             <i class="fa-solid fa-circle-check text-brand-purple"></i> 나의 신청 내역
           </h3>
-          <span id="dDayBadge" class="bg-brand-purple text-white text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-bold"></span>
+          <!-- 요청사항 4번: D-Day 및 카운트다운 타이머 배지 -->
+          <span id="dDayBadge" class="bg-brand-purple text-white text-[11px] sm:text-xs px-3 py-1 rounded-full font-bold whitespace-nowrap"></span>
         </div>
         
         <div id="myRegContent" class="text-xs text-slate-700 space-y-3"></div>
 
         <div class="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 text-[11px] sm:text-xs text-slate-600 space-y-1">
-          <p class="font-bold text-brand-purple mb-1">📌 모의면접 유의사항</p>
-          <p>· 지정된 면접 장소로 시작 10분 전까지 반드시 입실하여 주시기 바랍니다.</p>
-          <p>· 깔끔한 복장 착용 권장</p>
+          <p class="font-bold text-brand-purple mb-1 whitespace-nowrap">📌 모의면접 유의사항</p>
+          <p class="whitespace-nowrap">· 지정된 면접 장소로 시작 10분 전까지 반드시 입실하여 주시기 바랍니다.</p>
+          <p class="whitespace-nowrap">· 깔끔한 복장 착용 권장</p>
+        </div>
+      </div>
+
+      <!-- 요청사항 2번: 면접 준비 팁 & 예상 질문 가이드 탭 -->
+      <div id="guideSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2 whitespace-nowrap">
+            <i class="fa-solid fa-lightbulb text-amber-500"></i> 면접 준비 팁 & 필수 예상 질문
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생들의 성공적인 면접을 위한 핵심 체크리스트입니다.</p>
+        </div>
+
+        <div class="space-y-4 text-xs text-slate-700">
+          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-2">
+            <h4 class="font-bold text-amber-900 text-sm flex items-center gap-1.5 whitespace-nowrap">
+              <i class="fa-solid fa-star text-amber-500"></i> 면접 기본 에티켓
+            </h4>
+            <p class="whitespace-nowrap">· 입실 시 밝은 미소와 함께 "안녕하십니까, 지원자 OOO입니다" 인사하기</p>
+            <p class="whitespace-nowrap">· 질문을 들을 때는 면접관의 눈과 인중 사이를 편안하게 아이컨택하기</p>
+            <p class="whitespace-nowrap">· 답변은 결론부터 명확히 말하는 두괄식으로 구성하기 (1분 이내)</p>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-900 text-sm whitespace-nowrap">🎯 대학 면접 빈출 공통 질문 5선</h4>
+            <div class="space-y-2">
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">1. 우리 학과(전공)에 지원하게 된 솔직하고 결정적인 동기는 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">2. 고등학교 재학 중 본인이 가장 탐구 깊게 수행한 진로 활동은 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">3. 학업 과정 중 가장 어려웠던 과목이나 순간을 어떻게 극복했나요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">4. 대학 입학 후 학업 계획과 졸업 후 진로 포부는 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">5. 마지막으로 면접관에게 하고 싶은 말이나 꼭 전달하고 싶은 어필은?</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -332,7 +370,7 @@
       year: 2026,
       month: 10,
       selectedDate: null,
-      studentTab: 'reserve',
+      studentTab: 'reserve', // 'reserve' | 'myreg' | 'guide'
       teacherTab: 'calendar',
       editingTeacherId: null,
       selectedTeacherDates: [],
@@ -355,7 +393,7 @@
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
           </span>
-          <span class="text-brand-orange font-bold flex items-center gap-1">
+          <span class="text-brand-orange font-bold flex items-center gap-1 whitespace-nowrap">
             <i class="fa-solid fa-user-shield text-xs"></i> 교사 관리자 접속됨
           </span>
         `;
@@ -372,21 +410,27 @@
       window.location.href = window.location.pathname;
     }
 
+    // 학생용 탭 전환 (면접 예약 / 나의 신청 내역 / 면접 준비 팁)
     function switchStudentTab(tabName) {
       state.studentTab = tabName;
       updateSidebarNavForStudent();
 
       const reserveSec = document.getElementById('studentReservationSection');
       const myRegSec = document.getElementById('myRegSection');
+      const guideSec = document.getElementById('guideSection');
+
+      reserveSec.classList.add('hidden');
+      myRegSec.classList.add('hidden');
+      guideSec.classList.add('hidden');
 
       if (tabName === 'reserve') {
         reserveSec.classList.remove('hidden');
-        myRegSec.classList.add('hidden');
         renderCalendar();
-      } else {
-        reserveSec.classList.add('hidden');
+      } else if (tabName === 'myreg') {
         myRegSec.classList.remove('hidden');
         checkMyRegistrations();
+      } else if (tabName === 'guide') {
+        guideSec.classList.remove('hidden');
       }
     }
 
@@ -394,12 +438,16 @@
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
       nav.innerHTML = `
-        <button onclick="switchStudentTab('reserve')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'reserve' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchStudentTab('reserve')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'reserve' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchStudentTab('myreg')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'myreg' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchStudentTab('myreg')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'myreg' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-clipboard-list mr-2"></i>나의 신청 내역</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchStudentTab('guide')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'guide' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-lightbulb mr-2 text-amber-500"></i>면접 준비 팁 & 족보</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
       `;
@@ -422,27 +470,27 @@
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
       nav.innerHTML = `
-        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchTeacherTab('schedule')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'schedule' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchTeacherTab('schedule')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'schedule' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-user-gear mr-2"></i>날짜별 참여 교사 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-chart-pie mr-2"></i>면접교사 배정 통계</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="switchTeacherTab('admin')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'admin' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1">
+        <button onclick="switchTeacherTab('admin')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'admin' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-user-shield mr-2"></i>교사 관리자 전용</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t">
+        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t whitespace-nowrap">
           <span><i class="fa-solid fa-user-graduate mr-2 text-brand-purple"></i>학생 페이지로 이동</span>
           <i class="fa-solid fa-arrow-right text-xs text-slate-400"></i>
         </button>
@@ -539,7 +587,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
         </span>
-        <span class="text-yellow-300 font-bold flex items-center gap-1">
+        <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
           <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
         </span>
       `;
@@ -552,7 +600,6 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
-    // 학생 개인 예약 확인증 PNG 이미지 생성 및 다운로드 함수
     function downloadTicketImage(id) {
       const card = document.getElementById(`ticketCard_${id}`);
       if (!card) return;
@@ -565,7 +612,7 @@
       });
     }
 
-    // 일시 한줄 고정 표기 적용
+    // 요청사항 4번: D-Day & 실시간 면접 시각 카운트다운 타이머 연결
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -577,33 +624,43 @@
         const sortedDates = myRegs.map(r => new Date(r.date)).sort((a,b)=>a-b);
         const today = new Date();
         today.setHours(0,0,0,0);
+        
         const diffDays = Math.ceil((sortedDates[0] - today) / (1000 * 60 * 60 * 24));
-        if (dDayBadge) dDayBadge.textContent = diffDays === 0 ? "D-Day (오늘)" : diffDays > 0 ? `D-${diffDays}` : `면접 종료`;
+        const diffHours = diffDays * 24;
+
+        if (dDayBadge) {
+          dDayBadge.textContent = diffDays === 0 
+            ? "D-Day (오늘 면접)" 
+            : diffDays > 0 
+              ? `D-${diffDays} (면접까지 약 ${diffHours}시간 남음)` 
+              : `면접 종료`;
+        }
 
         content.innerHTML = myRegs.map(r => `
           <div id="ticketCard_${r.id}" class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-lg space-y-3 relative overflow-hidden border border-slate-800">
             <div class="flex justify-between items-start border-b border-slate-700/80 pb-2.5">
               <div>
-                <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Gangil Girls' High School</span>
-                <h4 class="text-base font-extrabold text-white">모의면접 연습 예약 확인증</h4>
+                <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold whitespace-nowrap">Gangil Girls' High School</span>
+                <h4 class="text-base font-extrabold text-white whitespace-nowrap">모의면접 연습 예약 확인증</h4>
               </div>
-              <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${r.period}교시</span>
+              <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">${r.period}교시</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
-              <div><span class="text-slate-400">학생:</span> <strong>${r.name} (${r.num})</strong></div>
+              <div class="whitespace-nowrap"><span class="text-slate-400">학생:</span> <strong>${r.name} (${r.num})</strong></div>
               <div class="whitespace-nowrap"><span class="text-slate-400">일시:</span> <strong class="whitespace-nowrap">${r.date} [${r.period}교시]</strong></div>
-              <div class="col-span-1 sm:col-span-2"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
-              <div class="col-span-1 sm:col-span-2"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
+              <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
+              ${r.note ? `<div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">요청사항:</span> <strong class="text-amber-200">${r.note}</strong></div>` : ''}
+              <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
             </div>
 
-            <div class="pt-2 flex justify-between items-center no-print">
-              <span class="text-[10px] text-slate-400">접속코드: ${r.pin}</span>
-              <div class="space-x-2">
-                <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
+            <div class="pt-2 flex justify-between items-center no-print flex-wrap gap-2">
+              <span class="text-[10px] text-slate-400 whitespace-nowrap">접속코드: ${r.pin}</span>
+              <div class="space-x-2 whitespace-nowrap">
+                <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
                   🖼️ 확인증 저장
                 </button>
-                <button onclick="deleteRegistration('${r.id}')" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white font-bold px-2.5 py-1.5 rounded-lg text-xs transition-all border border-red-500/30">
+                <button onclick="deleteRegistration('${r.id}')" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white font-bold px-2.5 py-1.5 rounded-lg text-xs transition-all border border-red-500/30 whitespace-nowrap">
                   취소
                 </button>
               </div>
@@ -612,7 +669,7 @@
         `).join('');
       } else {
         if (dDayBadge) dDayBadge.textContent = '신청 내역 없음';
-        content.innerHTML = `<div class="text-slate-400 py-6 text-center text-xs sm:text-sm">아직 신청된 면접 예약 내역이 없습니다. [면접 예약] 탭에서 예약해 주세요.</div>`;
+        content.innerHTML = `<div class="text-slate-400 py-6 text-center text-xs sm:text-sm whitespace-nowrap">아직 신청된 면접 예약 내역이 없습니다. [면접 예약] 탭에서 예약해 주세요.</div>`;
       }
     }
 
@@ -671,14 +728,14 @@
 
         let statusText = '';
         if (isClosed) {
-          statusText = '<span class="text-slate-400 font-bold block text-center">마감</span>';
+          statusText = '<span class="text-slate-400 font-bold block text-center whitespace-nowrap">마감</span>';
         } else {
-          const p8Text = p8Rem > 0 ? `8교시[${p8Rem}석]` : '<span class="text-red-500 font-semibold">8교시[마감]</span>';
-          const p9Text = p9Rem > 0 ? `9교시[${p9Rem}석]` : '<span class="text-red-500 font-semibold">9교시[마감]</span>';
+          const p8Text = p8Rem > 0 ? `8교시[${p8Rem}석]` : '<span class="text-red-500 font-semibold whitespace-nowrap">8교시[마감]</span>';
+          const p9Text = p9Rem > 0 ? `9교시[${p9Rem}석]` : '<span class="text-red-500 font-semibold whitespace-nowrap">9교시[마감]</span>';
           statusText = `
             <div class="flex flex-col gap-0.5 text-[9.5px] sm:text-[11px] leading-tight font-medium text-brand-purple">
-              <span class="block truncate">${p8Text}</span>
-              <span class="block truncate">${p9Text}</span>
+              <span class="block truncate whitespace-nowrap">${p8Text}</span>
+              <span class="block truncate whitespace-nowrap">${p9Text}</span>
             </div>
           `;
         }
@@ -709,10 +766,10 @@
 
       const btnGroup = document.getElementById('slotButtonsGroup');
       btnGroup.innerHTML = `
-        <button onclick="submitReservation(8)" ${p8Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p8Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm">
+        <button onclick="submitReservation(8)" ${p8Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p8Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap">
           ${p8Full ? `8교시 마감 (${p8Regs.length}/${maxTeams}팀 정원 초과)` : `8교시 (16:40 ~ 17:30) 신청 [잔여 ${maxTeams - p8Regs.length}석]`}
         </button>
-        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm">
+        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap">
           ${p9Full ? `9교시 마감 (${p9Regs.length}/${maxTeams}팀 정원 초과)` : `9교시 (17:40 ~ 18:30) 신청 [잔여 ${maxTeams - p9Regs.length}석]`}
         </button>
       `;
@@ -724,6 +781,7 @@
     async function submitReservation(period) {
       const univ = document.getElementById('sUniv').value.trim();
       const dept = document.getElementById('sDept').value.trim();
+      const note = document.getElementById('sNote')?.value.trim() || '';
 
       if (!univ || !dept) {
         alert('희망 대학교와 학과/전공을 먼저 입력해 주세요.');
@@ -763,6 +821,8 @@
         pin: state.user.pin,
         univ: univ,
         dept: dept,
+        note: note,
+        status: '대기', // '대기' | '완료' | '불참'
         teacher1: '',
         teacher2: '',
         location: '3학년 교무실',
@@ -820,9 +880,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,담당면접교사1,담당면접교사2,면접장소\n';
+      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,담당면접교사1,담당면접교사2,면접장소\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3학년 교무실'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3학년 교무실'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -872,6 +932,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <div>■ 면접 장소: <strong>${r.location || '3학년 교무실'}</strong></div>
             <div>■ 지원 학생: <strong>${r.name} (${r.num})</strong></div>
             <div>■ 지원 대학/학과: <strong>${r.univ} ${r.dept}</strong></div>
+            ${r.note ? `<div class="col-span-2">■ 학생 요청사항: <strong>${r.note}</strong></div>` : ''}
             <div class="col-span-2">■ 담당 면접관: <strong>[A그룹] ${r.teacher1 || '미배정'} / [B그룹] ${r.teacher2 || '미배정'}</strong></div>
           </div>
 
@@ -945,16 +1006,16 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
           <div class="border-b border-slate-100 pb-3.5">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900">🔐 교사 관리자 전용</h3>
-            <p class="text-xs text-slate-500 mt-0.5">3학년 학생별 개인 접속 PIN 코드 및 행정용 관리 도구를 제공합니다.</p>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용</h3>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생별 개인 접속 PIN 코드 및 행정용 관리 도구를 제공합니다.</p>
           </div>
 
           <div class="bg-indigo-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="space-y-1">
-              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-file-excel text-indigo-600"></i> 3학년 전체 학생 개인 접속 코드(PIN) 명렬표 (총 197명)
               </h4>
-              <p class="text-[11px] sm:text-xs text-slate-600">학생 개별 인증에 필요한 숫자 6자리 고유 코드가 포함된 엑셀(CSV) 다운로드 파일입니다.</p>
+              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">학생 개별 인증에 필요한 숫자 6자리 고유 코드가 포함된 엑셀(CSV) 다운로드 파일입니다.</p>
             </div>
             <button onclick="exportStudentPinListCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap self-end sm:self-auto">
               📥 학생 PIN 엑셀 다운로드
@@ -966,6 +1027,30 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
     function enableTeacherEdit(id) {
       state.editingTeacherId = id;
+      renderTeacherListView();
+    }
+
+    // 요청사항 3번: 교사용 면접 진행 상태(대기 / 완료 / 불참) 순환 전환 함수
+    async function toggleStudentStatus(id) {
+      const reg = state.regs.find(r => r.id === id);
+      if (!reg) return;
+
+      const current = reg.status || '대기';
+      let nextStatus = '완료';
+      if (current === '대기') nextStatus = '완료';
+      else if (current === '완료') nextStatus = '불참';
+      else nextStatus = '대기';
+
+      reg.status = nextStatus;
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_registrations', id), reg);
+        } catch(e) { console.warn("Firestore Status Save Error", e); }
+      }
+
       renderTeacherListView();
     }
 
@@ -1000,10 +1085,10 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="border rounded-xl p-2 space-y-1.5 text-xs flex flex-col justify-between min-h-[130px] transition-all ${isClosed ? 'bg-slate-100 border-slate-300 opacity-80' : 'bg-white border-slate-200'}">
             <div>
               <div class="flex justify-between items-center border-b border-slate-200 pb-1 mb-1">
-                <span class="font-extrabold ${isClosed ? 'text-slate-500' : 'text-slate-900'} text-xs">${d}일</span>
+                <span class="font-extrabold ${isClosed ? 'text-slate-500' : 'text-slate-900'} text-xs whitespace-nowrap">${d}일</span>
                 ${isClosed 
-                  ? '<span class="text-[9px] font-bold text-slate-600 bg-slate-200 px-1 py-0.5 rounded-full">마감</span>' 
-                  : `<span class="text-[9px] font-bold text-brand-purple bg-brand-purpleLight px-1 py-0.5 rounded-full">${activeList.length}명</span>`}
+                  ? '<span class="text-[9px] font-bold text-slate-600 bg-slate-200 px-1 py-0.5 rounded-full whitespace-nowrap">마감</span>' 
+                  : `<span class="text-[9px] font-bold text-brand-purple bg-brand-purpleLight px-1 py-0.5 rounded-full whitespace-nowrap">${activeList.length}명</span>`}
               </div>
               <div class="grid grid-cols-2 gap-x-0.5 gap-y-0.5">
                 ${teacherCheckboxes}
@@ -1017,13 +1102,13 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">🗓️ 날짜별 참여 교사 관리</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">날짜별 방과후 면접관 교사 지정</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️ 날짜별 참여 교사 관리</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 방과후 면접관 교사 지정</p>
             </div>
-            <div class="flex items-center space-x-1.5">
-              <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold">◀ 이전달</button>
-              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy">${state.year}년 ${state.month}월</span>
-              <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold">다음달 ▶</button>
+            <div class="flex items-center space-x-1.5 whitespace-nowrap">
+              <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">◀ 이전달</button>
+              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy whitespace-nowrap">${state.year}년 ${state.month}월</span>
+              <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">다음달 ▶</button>
             </div>
           </div>
 
@@ -1205,17 +1290,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherView();
     }
 
-    function showTodayTeacherStudents(teacherName) {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const myTodayStudents = state.regs.filter(r => r.date === todayStr && (r.teacher1 === teacherName || r.teacher2 === teacherName));
-
-      alert(`[오늘(${todayStr}) ${teacherName} 선생님 담당 학생]\n총 ${myTodayStudents.length}명\n\n` + 
-        (myTodayStudents.length > 0 
-          ? myTodayStudents.map(r => `· [${r.period}교시] ${r.name}(${r.num}) - ${r.univ} ${r.dept}`).join('\n')
-          : '오늘 배정된 면접 학생이 없습니다.')
-      );
-    }
-
     function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1232,7 +1306,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       
       const cardsHtml = teacherNames.map(t => {
         const studentList = teacherMap[t].map(r => `
-          <div class="flex justify-between items-center text-xs py-1 border-b border-slate-100 last:border-0">
+          <div class="flex justify-between items-center text-xs py-1 border-b border-slate-100 last:border-0 whitespace-nowrap">
             <span class="font-semibold text-slate-800">${r.name} (${r.num})</span>
             <span class="text-slate-500">${r.date} ${r.period}교시</span>
           </div>
@@ -1243,18 +1317,18 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         return `
           <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-              <h4 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <h4 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-user-tie text-brand-purple"></i> ${t} 선생님
                 <span class="text-[10px] px-2 py-0.5 rounded ${isGroupA ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${isGroupA ? 'A그룹' : 'B그룹'}</span>
               </h4>
-              <span class="bg-brand-purpleLight text-brand-purple font-extrabold text-xs px-2.5 py-0.5 rounded-full">
+              <span class="bg-brand-purpleLight text-brand-purple font-extrabold text-xs px-2.5 py-0.5 rounded-full whitespace-nowrap">
                 총 ${teacherMap[t].length}건
               </span>
             </div>
             <div class="space-y-1">
               <div class="flex justify-between items-center mb-1">
-                <p class="text-[11px] font-bold text-slate-400">담당 면접 학생 목록</p>
-                <button onclick="showTodayTeacherStudents('${t}')" class="text-[10px] bg-brand-orange hover:bg-brand-orangeHover text-white font-bold px-2 py-0.5 rounded transition-all">
+                <p class="text-[11px] font-bold text-slate-400 whitespace-nowrap">담당 면접 학생 목록</p>
+                <button onclick="showTodayTeacherStudents('${t}')" class="text-[10px] bg-brand-orange hover:bg-brand-orangeHover text-white font-bold px-2 py-0.5 rounded transition-all whitespace-nowrap">
                   오늘 내 학생 보기
                 </button>
               </div>
@@ -1268,10 +1342,10 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">📊 면접교사별 배정 통계 대시보드</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 목록 관리</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📊 면접교사별 배정 통계 대시보드</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">면접관 선생님별 담당 건수 및 목록 관리</p>
             </div>
-            <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all shrink-0">
+            <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all shrink-0 whitespace-nowrap">
               <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
             </button>
           </div>
@@ -1281,7 +1355,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               ${cardsHtml}
             </div>
           ` : `
-            <div class="text-center py-12 text-slate-400 text-xs">
+            <div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">
               아직 배정된 면접교사가 없습니다. [면접 예약 현황 목록] 탭에서 교사를 배정해 주세요.
             </div>
           `}
@@ -1289,6 +1363,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
+    // 교사 현황 목록 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1327,7 +1402,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 <option value="">교사2(B) 선택</option>
                 ${t2Options}
               </select>
-              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-[11px] font-bold hover:bg-brand-purple/90">저장</button>
+              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-[11px] font-bold hover:bg-brand-purple/90 whitespace-nowrap">저장</button>
             </div>
           `;
         } else {
@@ -1337,10 +1412,16 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 ${r.teacher1 ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher1}(A)</span>` : ''}
                 ${r.teacher2 ? `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold text-[11px]">${r.teacher2}(B)</span>` : ''}
               </div>
-              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[11px] font-semibold ml-2 underline">수정</button>
+              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[11px] font-semibold ml-2 underline whitespace-nowrap">수정</button>
             </div>
           `;
         }
+
+        const statusStyle = r.status === '완료' 
+          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+          : r.status === '불참' 
+            ? 'bg-red-100 text-red-800 border-red-300' 
+            : 'bg-slate-100 text-slate-700 border-slate-300';
 
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
@@ -1351,36 +1432,42 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${r.name}</td>
             <td class="py-3 px-3 whitespace-nowrap">${r.univ}</td>
             <td class="py-3 px-3 whitespace-nowrap">${r.dept}</td>
+            <td class="py-3 px-3 whitespace-nowrap text-slate-500">${r.note || '-'}</td>
+            <td class="py-3 px-3 whitespace-nowrap text-center">
+              <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
+                ${r.status || '대기'}
+              </button>
+            </td>
             <td class="py-3 px-3 whitespace-nowrap">${teacherCellHtml}</td>
             <td class="py-3 px-3 whitespace-nowrap">
               <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1.5 py-1 text-[11px] border border-slate-200 rounded focus:border-brand-purple">
             </td>
             <td class="py-3 px-3 text-center whitespace-nowrap space-x-2">
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2 py-1 rounded-lg text-[11px] font-bold transition-all">
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2 py-1 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap">
                 평가 기록지
               </button>
-              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[11px]">취소</button>
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[11px] whitespace-nowrap">취소</button>
             </td>
           </tr>
         `;
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="10" class="py-8 text-center text-xs text-slate-400">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+        tableRows = `<tr><td colspan="12" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
       }
 
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2 sm:gap-3">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">면접 예약 현황 목록</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 (총 ${filteredRegs.length}건)</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">면접 예약 현황 목록</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">실시간 면접 신청 현황 (총 ${filteredRegs.length}건)</p>
             </div>
             <div class="flex items-center space-x-1.5 flex-wrap gap-1.5">
-              <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
+              <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
                 📱 SMS 안내문 복사
               </button>
-              <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
+              <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
                 📄 전체 인쇄
               </button>
               <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -1388,15 +1475,15 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                   <option value="">날짜 선택</option>
                   ${dateSelectOptions}
                 </select>
-                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) assignRandomTeachersForDate(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-xs px-2 py-1 rounded-lg font-bold transition-all">
+                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) assignRandomTeachersForDate(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-xs px-2 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
                   균등배정
                 </button>
               </div>
 
-              <button onclick="autoAssignRandomTeachers()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
+              <button onclick="autoAssignRandomTeachers()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
                 <i class="fa-solid fa-shuffle mr-1"></i> 전체 배정
               </button>
-              <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
+              <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
                 <i class="fa-solid fa-file-excel mr-1"></i> 엑셀
               </button>
             </div>
@@ -1411,7 +1498,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           </div>
 
           <div class="overflow-x-auto custom-scroll rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse min-w-[850px]">
+            <table class="w-full text-left border-collapse min-w-[950px]">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
                   <th class="py-3 px-3 text-center whitespace-nowrap">No</th>
@@ -1421,6 +1508,8 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                   <th class="py-3 px-3 whitespace-nowrap">이름</th>
                   <th class="py-3 px-3 whitespace-nowrap">지원 대학교</th>
                   <th class="py-3 px-3 whitespace-nowrap">지원 학과</th>
+                  <th class="py-3 px-3 whitespace-nowrap">요청사항</th>
+                  <th class="py-3 px-3 text-center whitespace-nowrap">진행 상태</th>
                   <th class="py-3 px-3 whitespace-nowrap">담당 면접교사 (교사1:A, 교사2:B)</th>
                   <th class="py-3 px-3 whitespace-nowrap">면접 장소</th>
                   <th class="py-3 px-3 text-center whitespace-nowrap">관리</th>
@@ -1471,19 +1560,19 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         const maxTeams = getMaxTeamsForDate(dateStr);
 
         let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => `
-          <div class="text-[9px] sm:text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1 py-0.5 rounded truncate">
+          <div class="text-[9px] sm:text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1 py-0.5 rounded truncate whitespace-nowrap">
             [${r.period}교시] ${r.name}
           </div>
-        `).join('') : `<div class="text-[9px] text-slate-400 mt-1">신청 없음</div>`;
+        `).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
 
         calGridHtml += `
           <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-24 sm:h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : isClosed ? 'bg-slate-100 text-slate-400 opacity-70 border-slate-200' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-1.5 sm:p-2 cursor-pointer flex flex-col justify-between transition-all relative">
             <div>
               <div class="flex justify-between items-center">
-                <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
-                <div class="flex items-center gap-0.5">
-                  ${isChecked ? '<span class="bg-brand-purple text-white text-[8px] px-1 py-0.5 rounded-full font-bold">✓</span>' : ''}
-                  ${isClosed ? '<span class="text-[9px] bg-slate-200 text-slate-600 font-bold px-1 rounded">마감</span>' : `<span class="text-[9px] text-slate-500 font-bold">${dayRegs.length}건</span>`}
+                <span class="text-xs font-bold ${isClosed ? 'text-slate-400' : 'text-slate-800'} whitespace-nowrap">${d}</span>
+                <div class="flex items-center gap-0.5 whitespace-nowrap">
+                  ${isChecked ? '<span class="bg-brand-purple text-white text-[8px] px-1 py-0.5 rounded-full font-bold whitespace-nowrap">✓</span>' : ''}
+                  ${isClosed ? '<span class="text-[9px] bg-slate-200 text-slate-600 font-bold px-1 rounded whitespace-nowrap">마감</span>' : `<span class="text-[9px] text-slate-500 font-bold whitespace-nowrap">${dayRegs.length}건</span>`}
                 </div>
               </div>
             </div>
@@ -1498,36 +1587,36 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">📅 달력 일정 및 마감 관리</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">날짜별 마감 및 상태 지정</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📅 달력 일정 및 마감 관리</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 마감 및 상태 지정</p>
             </div>
-            <div class="flex items-center space-x-1.5">
-              <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold">◀ 이전달</button>
-              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy">${state.year}년 ${state.month}월</span>
-              <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold">다음달 ▶</button>
+            <div class="flex items-center space-x-1.5 whitespace-nowrap">
+              <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">◀ 이전달</button>
+              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy whitespace-nowrap">${state.year}년 ${state.month}월</span>
+              <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">다음달 ▶</button>
             </div>
           </div>
 
           <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-2.5">
             <div class="flex items-center justify-between flex-wrap gap-2">
-              <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
+              <div class="flex items-center space-x-2 text-xs font-bold text-slate-700 whitespace-nowrap">
                 <i class="fa-solid fa-hand-pointer text-brand-purple"></i>
                 <span>선택: <strong class="text-brand-purple text-xs sm:text-sm">${state.selectedTeacherDates.length}개</strong></span>
               </div>
               <div class="flex items-center space-x-1.5 flex-wrap gap-1">
-                <button onclick="selectAllTeacherMonthDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all">
+                <button onclick="selectAllTeacherMonthDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
                   전체 선택
                 </button>
-                <button onclick="clearSelectedTeacherDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all">
+                <button onclick="clearSelectedTeacherDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
                   해제
                 </button>
-                <button onclick="applySelectedBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm">
+                <button onclick="applySelectedBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm whitespace-nowrap">
                   마감
                 </button>
-                <button onclick="applySelectedBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm">
+                <button onclick="applySelectedBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm whitespace-nowrap">
                   해제
                 </button>
-                <button onclick="applyWeekendClose(true)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all">
+                <button onclick="applyWeekendClose(true)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
                   주말 마감
                 </button>
               </div>
@@ -1632,40 +1721,41 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       let listHtml = dayRegs.map(r => {
         const assignedTeachers = [r.teacher1, r.teacher2].filter(Boolean);
         const teacherBadge = assignedTeachers.length > 0 
-          ? `<span class="bg-brand-purpleLight text-brand-purple px-2 py-0.5 rounded font-bold text-xs">담당: ${assignedTeachers.join(', ')}</span>`
-          : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold text-xs">미배정</span>`;
+          ? `<span class="bg-brand-purpleLight text-brand-purple px-2 py-0.5 rounded font-bold text-xs whitespace-nowrap">담당: ${assignedTeachers.join(', ')}</span>`
+          : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold text-xs whitespace-nowrap">미배정</span>`;
 
         return `
           <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs border border-slate-200 flex-wrap gap-2">
             <div class="flex items-center space-x-2">
-              <span class="font-extrabold text-brand-purple bg-white px-2 py-1 rounded border border-brand-purple/30">[${r.period}교시]</span>
+              <span class="font-extrabold text-brand-purple bg-white px-2 py-1 rounded border border-brand-purple/30 whitespace-nowrap">[${r.period}교시]</span>
               <div>
-                <span class="font-bold text-slate-900 text-xs sm:text-sm">${r.name} (${r.num})</span>
-                <span class="text-slate-500 ml-1.5">${r.univ} ${r.dept}</span>
-                <span class="text-brand-purple font-bold ml-1.5">장소: ${r.location || '3학년 교무실'}</span>
+                <span class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">${r.name} (${r.num})</span>
+                <span class="text-slate-500 ml-1.5 whitespace-nowrap">${r.univ} ${r.dept}</span>
+                ${r.note ? `<span class="text-amber-700 font-medium ml-1.5 whitespace-nowrap">(${r.note})</span>` : ''}
+                <span class="text-brand-purple font-bold ml-1.5 whitespace-nowrap">장소: ${r.location || '3학년 교무실'}</span>
               </div>
             </div>
-            <div class="flex items-center space-x-2 self-end sm:self-auto">
+            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
               ${teacherBadge}
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2 py-1 rounded-lg font-bold transition-all text-xs">평가 기록지</button>
-              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1">삭제</button>
+              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2 py-1 rounded-lg font-bold transition-all text-xs whitespace-nowrap">평가 기록지</button>
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1 whitespace-nowrap">삭제</button>
             </div>
           </div>
         `;
-      }).join('') || '<div class="text-xs text-slate-400 py-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">이 날짜에 신청된 면접 예약이 없습니다.</div>';
+      }).join('') || '<div class="text-xs text-slate-400 py-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 whitespace-nowrap">이 날짜에 신청된 면접 예약이 없습니다.</div>';
 
       container.classList.remove('hidden');
       container.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-brand-purpleLight/50 p-3.5 sm:p-4 rounded-xl border border-brand-purple/20 gap-2">
           <div>
-            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">📅 ${dateStr} 신청 현황 (정원: 8교시 ${maxTeams}명 / 9교시 ${maxTeams}명)</h4>
-            <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5">가능 교사: <strong>${availTeachers.length > 0 ? availTeachers.join(', ') : '없음/공휴일'}</strong></p>
+            <h4 class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">📅 ${dateStr} 신청 현황 (정원: 8교시 ${maxTeams}명 / 9교시 ${maxTeams}명)</h4>
+            <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5 whitespace-nowrap">가능 교사: <strong>${availTeachers.length > 0 ? availTeachers.join(', ') : '없음/공휴일'}</strong></p>
           </div>
-          <div class="flex items-center space-x-2 self-end sm:self-auto">
-            <button onclick="printEvaluationSheet('${dateStr}')" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-sm">
+          <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+            <button onclick="printEvaluationSheet('${dateStr}')" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
               📄 평가 기록지 인쇄
             </button>
-            <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm">
+            <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
               ${isClosed ? '마감 해제' : '개별 마감'}
             </button>
           </div>
