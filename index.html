@@ -187,7 +187,7 @@
       <!-- 탭 1: 면접 예약 화면 -->
       <div id="studentReservationSection" class="space-y-4 sm:space-y-6">
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3.5 sm:space-y-4">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-2 whitespace-nowrap">
             <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 1</span>
             <h3 class="text-base sm:text-lg font-bold text-slate-900">희망 대학 및 학과 작성</h3>
           </div>
@@ -205,9 +205,12 @@
 
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3.5 sm:space-y-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <div class="flex items-center space-x-2">
-              <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 2</span>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">면접 희망 날짜 및 교시 선택 <span class="text-xs text-brand-purple font-normal ml-1">(최대 3회 신청 가능)</span></h3>
+            <div>
+              <div class="flex items-center space-x-2 whitespace-nowrap">
+                <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 2</span>
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">면접 희망 날짜 및 교시 선택</h3>
+              </div>
+              <p class="text-xs text-brand-purple font-medium mt-1">※ 1인당 최대 3회까지 신청할 수 있습니다.</p>
             </div>
             <div class="flex items-center space-x-1.5 self-end sm:self-auto">
               <button onclick="changeMonth(-1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium">◀ 이전달</button>
@@ -233,7 +236,7 @@
       <!-- 탭 2: 나의 신청 내역 화면 -->
       <div id="myRegSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-1.5 sm:gap-2">
+          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
             <i class="fa-solid fa-circle-check text-brand-purple"></i> 나의 신청 내역
           </h3>
           <span id="dDayBadge" class="bg-brand-purple text-white text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-bold"></span>
@@ -549,7 +552,7 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
-    // ★ 학생 개인 예약 확인증 PNG 이미지 생성 및 다운로드 함수 ★
+    // 학생 개인 예약 확인증 PNG 이미지 생성 및 다운로드 함수
     function downloadTicketImage(id) {
       const card = document.getElementById(`ticketCard_${id}`);
       if (!card) return;
@@ -562,6 +565,7 @@
       });
     }
 
+    // 일시 한줄 고정 표기 적용
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -580,17 +584,17 @@
           <div id="ticketCard_${r.id}" class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-lg space-y-3 relative overflow-hidden border border-slate-800">
             <div class="flex justify-between items-start border-b border-slate-700/80 pb-2.5">
               <div>
-                <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Kangil Girls' High School</span>
+                <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Gangil Girls' High School</span>
                 <h4 class="text-base font-extrabold text-white">모의면접 연습 예약 확인증</h4>
               </div>
               <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${r.period}교시</span>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
               <div><span class="text-slate-400">학생:</span> <strong>${r.name} (${r.num})</strong></div>
-              <div><span class="text-slate-400">일시:</span> <strong>${r.date} [${r.period}교시]</strong></div>
-              <div class="col-span-2"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
-              <div class="col-span-2"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
+              <div class="whitespace-nowrap"><span class="text-slate-400">일시:</span> <strong class="whitespace-nowrap">${r.date} [${r.period}교시]</strong></div>
+              <div class="col-span-1 sm:col-span-2"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
+              <div class="col-span-1 sm:col-span-2"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
             </div>
 
             <div class="pt-2 flex justify-between items-center no-print">
@@ -717,7 +721,6 @@
       renderCalendar();
     }
 
-    // ★ 1인당 최대 3회 예약 제한 및 시간 중복 체크 추가 ★
     async function submitReservation(period) {
       const univ = document.getElementById('sUniv').value.trim();
       const dept = document.getElementById('sDept').value.trim();
@@ -727,14 +730,12 @@
         return;
       }
 
-      // 1. 학생 기존 총 신청 건수 체크 (최대 3회 제한)
       const myRegs = state.regs.filter(r => r.num === state.user.num);
       if (myRegs.length >= 3) {
         alert(`[신청 제한 안내]\n\n모의면접 연습은 1인당 최대 3회까지만 예약할 수 있습니다.\n(현재 ${myRegs.length}회 예약됨)\n\n기존 예약을 변경하시려면 [나의 신청 내역] 탭에서 취소 후 다시 신청해 주세요.`);
         return;
       }
 
-      // 2. 동일 날짜 및 동일 교시 중복 신청 차단
       const hasConflict = myRegs.some(r => r.date === state.selectedDate && Number(r.period) === Number(period));
       if (hasConflict) {
         alert(`이미 ${state.selectedDate} ${period}교시에 예약된 내역이 있습니다.`);
@@ -783,7 +784,6 @@
       checkMyRegistrations();
     }
 
-    // ★ 선택한 날짜 학생 단체 문자 발송용 문구 일괄 생성기 ★
     function openSmsModal() {
       if (state.regs.length === 0) {
         alert('안내 문자를 발송할 학생 내역이 없습니다.');
@@ -1205,20 +1205,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherView();
     }
 
-    // ★ 면접관 선생님 전용 "오늘의 담당 학생 목록" 모바일 전용 모달/뷰 ★
     function showTodayTeacherStudents(teacherName) {
       const todayStr = new Date().toISOString().slice(0, 10);
       const myTodayStudents = state.regs.filter(r => r.date === todayStr && (r.teacher1 === teacherName || r.teacher2 === teacherName));
-
-      const listHtml = myTodayStudents.map(r => `
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
-          <div class="flex justify-between font-bold text-slate-900">
-            <span>[${r.period}교시] ${r.name} (${r.num})</span>
-            <span class="text-brand-purple">${r.location || '3학년 교무실'}</span>
-          </div>
-          <p class="text-slate-500">${r.univ} ${r.dept}</p>
-        </div>
-      `).join('') || `<div class="text-xs text-slate-400 py-4 text-center">오늘 담당하신 면접 학생이 없습니다.</div>`;
 
       alert(`[오늘(${todayStr}) ${teacherName} 선생님 담당 학생]\n총 ${myTodayStudents.length}명\n\n` + 
         (myTodayStudents.length > 0 
@@ -1280,7 +1269,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
               <h3 class="text-base sm:text-lg font-bold text-slate-900">📊 면접교사별 배정 통계 대시보드</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 오늘 면접 학생 즉시 확인</p>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 목록 관리</p>
             </div>
             <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all shrink-0">
               <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
