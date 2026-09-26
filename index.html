@@ -117,18 +117,18 @@
   </header>
 
   <!-- 학생 전용 모바일 웰컴 로그인 뷰 -->
-  <div id="loginPortalContainer" class="w-full max-w-sm mx-auto px-5 py-12 flex-1 flex flex-col justify-center items-center bg-white no-print">
+  <div id="loginPortalContainer" class="w-full max-w-sm mx-auto px-5 py-8 sm:py-12 flex-1 flex flex-col justify-center items-center bg-white no-print">
     
-    <div class="text-center mb-12 space-y-2 w-full">
+    <div class="text-center mb-8 sm:mb-10 space-y-2 w-full">
       <h2 class="text-3xl sm:text-4xl text-brand-orange font-jua tracking-tight whitespace-nowrap">강일여고 면접 예약</h2>
       <p class="text-xs text-slate-400 font-medium whitespace-nowrap">강일여자고등학교 3학년 대입 면접 배정 포털</p>
     </div>
 
-    <form onsubmit="event.preventDefault(); handleStudentLogin();" class="w-full space-y-8" autocomplete="off">
+    <form onsubmit="event.preventDefault(); handleStudentLogin();" class="w-full space-y-6" autocomplete="off">
       <input type="text" style="display:none">
       <input type="password" style="display:none">
 
-      <div class="space-y-6">
+      <div class="space-y-5">
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
           <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">학번</label>
           <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
@@ -146,13 +146,26 @@
       </div>
 
       <div class="pt-2">
-        <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-base font-bold rounded-xl py-4 shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-jua">
+        <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-base font-bold rounded-xl py-3.5 shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-jua">
           <span class="text-lg font-normal whitespace-nowrap">로그인</span>
         </button>
       </div>
     </form>
 
-    <div class="mt-12 text-center text-xs text-slate-400 flex justify-center items-center space-x-3 font-medium whitespace-nowrap">
+    <!-- 요청사항 4번: 로그인 화면 3학년부 공지사항 카운터/안내 카드 (줄바꿈 허용) -->
+    <div class="mt-8 w-full bg-brand-purpleLight/60 p-4 rounded-2xl border border-brand-purple/20 space-y-1.5 text-xs text-slate-700">
+      <div class="flex items-center gap-1.5 font-bold text-brand-purple">
+        <i class="fa-solid fa-bullhorn text-brand-orange"></i>
+        <span>3학년부 모의면접 안내사항</span>
+      </div>
+      <p class="text-slate-600 leading-relaxed font-normal">
+        · 1인당 최대 3회까지 예약 가능합니다.<br>
+        · 부여받은 개인 6자리 코드로 로그인해 주세요.<br>
+        · 코드 분실 시 담임선생님께 문의 바랍니다.
+      </p>
+    </div>
+
+    <div class="mt-8 text-center text-xs text-slate-400 flex justify-center items-center space-x-3 font-medium whitespace-nowrap">
       <span>문의: 3학년 교무실</span>
       <span>•</span>
       <span>033-650-0783</span>
@@ -200,7 +213,6 @@
               <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1 whitespace-nowrap">희망 학과/전공 <span class="text-red-500">*</span></label>
               <input type="text" id="sDept" placeholder="예: 컴퓨터공학과 / 경영학과" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple">
             </div>
-            <!-- 요청사항 1번: 학생 제출용 질문/피드백 요청사항 작성란 -->
             <div class="col-span-1 sm:col-span-2">
               <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1 whitespace-nowrap">면접관 선생님께 전달할 요청사항 / 희망 질문 <span class="text-slate-400 font-normal">(선택)</span></label>
               <input type="text" id="sNote" placeholder="예: 생기부 2페이지 자율활동 관련 검증 질문 부탁드립니다." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple">
@@ -244,7 +256,6 @@
           <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
             <i class="fa-solid fa-circle-check text-brand-purple"></i> 나의 신청 내역
           </h3>
-          <!-- 요청사항 4번: D-Day 및 카운트다운 타이머 배지 -->
           <span id="dDayBadge" class="bg-brand-purple text-white text-[11px] sm:text-xs px-3 py-1 rounded-full font-bold whitespace-nowrap"></span>
         </div>
         
@@ -257,33 +268,33 @@
         </div>
       </div>
 
-      <!-- 요청사항 2번: 면접 준비 팁 & 예상 질문 가이드 탭 -->
+      <!-- 면접 준비 팁 & 예상 질문 가이드 탭 -->
       <div id="guideSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
         <div class="border-b border-slate-100 pb-3">
-          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2 whitespace-nowrap">
+          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
             <i class="fa-solid fa-lightbulb text-amber-500"></i> 면접 준비 팁 & 필수 예상 질문
           </h3>
-          <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생들의 성공적인 면접을 위한 핵심 체크리스트입니다.</p>
+          <p class="text-xs text-slate-500 mt-0.5">3학년 학생들의 성공적인 면접을 위한 핵심 체크리스트입니다.</p>
         </div>
 
         <div class="space-y-4 text-xs text-slate-700">
           <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-2">
-            <h4 class="font-bold text-amber-900 text-sm flex items-center gap-1.5 whitespace-nowrap">
+            <h4 class="font-bold text-amber-900 text-sm flex items-center gap-1.5">
               <i class="fa-solid fa-star text-amber-500"></i> 면접 기본 에티켓
             </h4>
-            <p class="whitespace-nowrap">· 입실 시 밝은 미소와 함께 "안녕하십니까, 지원자 OOO입니다" 인사하기</p>
-            <p class="whitespace-nowrap">· 질문을 들을 때는 면접관의 눈과 인중 사이를 편안하게 아이컨택하기</p>
-            <p class="whitespace-nowrap">· 답변은 결론부터 명확히 말하는 두괄식으로 구성하기 (1분 이내)</p>
+            <p>· 입실 시 밝은 미소와 함께 "안녕하십니까, 지원자 OOO입니다" 인사하기</p>
+            <p>· 질문을 들을 때는 면접관의 눈과 인중 사이를 편안하게 아이컨택하기</p>
+            <p>· 답변은 결론부터 명확히 말하는 두괄식으로 구성하기 (1분 이내)</p>
           </div>
 
           <div class="space-y-2">
-            <h4 class="font-bold text-slate-900 text-sm whitespace-nowrap">🎯 대학 면접 빈출 공통 질문 5선</h4>
+            <h4 class="font-bold text-slate-900 text-sm">🎯 대학 면접 빈출 공통 질문 5선</h4>
             <div class="space-y-2">
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">1. 우리 학과(전공)에 지원하게 된 솔직하고 결정적인 동기는 무엇인가요?</div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">2. 고등학교 재학 중 본인이 가장 탐구 깊게 수행한 진로 활동은 무엇인가요?</div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">3. 학업 과정 중 가장 어려웠던 과목이나 순간을 어떻게 극복했나요?</div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">4. 대학 입학 후 학업 계획과 졸업 후 진로 포부는 무엇인가요?</div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium whitespace-nowrap">5. 마지막으로 면접관에게 하고 싶은 말이나 꼭 전달하고 싶은 어필은?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium leading-relaxed">1. 우리 학과(전공)에 지원하게 된 솔직하고 결정적인 동기는 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium leading-relaxed">2. 고등학교 재학 중 본인이 가장 탐구 깊게 수행한 진로 활동은 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium leading-relaxed">3. 학업 과정 중 가장 어려웠던 과목이나 순간을 어떻게 극복했나요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium leading-relaxed">4. 대학 입학 후 학업 계획과 졸업 후 진로 포부는 무엇인가요?</div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium leading-relaxed">5. 마지막으로 면접관에게 하고 싶은 말이나 꼭 전달하고 싶은 어필은?</div>
             </div>
           </div>
         </div>
@@ -370,7 +381,7 @@
       year: 2026,
       month: 10,
       selectedDate: null,
-      studentTab: 'reserve', // 'reserve' | 'myreg' | 'guide'
+      studentTab: 'reserve',
       teacherTab: 'calendar',
       editingTeacherId: null,
       selectedTeacherDates: [],
@@ -410,7 +421,6 @@
       window.location.href = window.location.pathname;
     }
 
-    // 학생용 탭 전환 (면접 예약 / 나의 신청 내역 / 면접 준비 팁)
     function switchStudentTab(tabName) {
       state.studentTab = tabName;
       updateSidebarNavForStudent();
@@ -612,7 +622,6 @@
       });
     }
 
-    // 요청사항 4번: D-Day & 실시간 면접 시각 카운트다운 타이머 연결
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -822,7 +831,7 @@
         univ: univ,
         dept: dept,
         note: note,
-        status: '대기', // '대기' | '완료' | '불참'
+        status: '대기',
         teacher1: '',
         teacher2: '',
         location: '3학년 교무실',
@@ -903,6 +912,66 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       link.href = URL.createObjectURL(blob);
       link.download = `강일여고_3학년_학생_고유코드_명렬표_197명_${new Date().toISOString().slice(0,10)}.csv`;
       link.click();
+    }
+
+    function backupFullDataJSON() {
+      const backupData = {
+        version: "2026.1",
+        exportedAt: new Date().toLocaleString(),
+        closedDates: state.closedDates,
+        teacherSchedule: TEACHER_SCHEDULE,
+        registrations: state.regs
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const link = document.createElement('a');
+      link.setAttribute("href", dataStr);
+      link.setAttribute("download", `강일여고_면접시스템_전체백업_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    async function restoreFullDataJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const restored = JSON.parse(e.target.result);
+          if (!restored.registrations) {
+            alert('올바른 백업 파일 형식이 아닙니다.');
+            return;
+          }
+
+          if (!confirm('복원 시 현재 등록된 모든 면접 예약 및 설정 데이터가 백업 파일 내용으로 즉시 교체됩니다. 계속하시겠습니까?')) return;
+
+          state.closedDates = restored.closedDates || [];
+          TEACHER_SCHEDULE = restored.teacherSchedule || TEACHER_SCHEDULE;
+          state.regs = restored.registrations || [];
+
+          localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+          localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
+          localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+          await saveClosedDatesToDb();
+          await saveTeacherScheduleToDb();
+
+          if (window.isFirebaseReady && window.dbTools) {
+            const { doc, setDoc } = window.dbTools;
+            for (const reg of state.regs) {
+              await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
+            }
+          }
+
+          alert('전체 데이터 복원이 성공적으로 완료되었습니다!');
+          renderTeacherView();
+        } catch(err) {
+          alert('파일을 읽는 도중 오류가 발생했습니다.');
+        }
+      };
+      reader.readAsText(file);
     }
 
     function printEvaluationSheet(targetDate = null, singleStudentId = null) {
@@ -1007,7 +1076,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
           <div class="border-b border-slate-100 pb-3.5">
             <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용</h3>
-            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생별 개인 접속 PIN 코드 및 행정용 관리 도구를 제공합니다.</p>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생별 개인 접속 PIN 코드 및 데이터 백업/복원 도구를 제공합니다.</p>
           </div>
 
           <div class="bg-indigo-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -1021,6 +1090,24 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               📥 학생 PIN 엑셀 다운로드
             </button>
           </div>
+
+          <div class="bg-amber-50/60 p-4 sm:p-5 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-box-archive text-amber-600"></i> 전체 시스템 데이터 1초 백업 / 복원
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">현재 신청된 모든 예약 데이터와 교사 스케줄을 안전하게 저장하고 파일로 바로 복원합니다.</p>
+            </div>
+            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+              <button onclick="backupFullDataJSON()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                💾 전체 데이터 백업
+              </button>
+              <label class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap">
+                📂 데이터 복원
+                <input type="file" accept=".json" onchange="restoreFullDataJSON(event)" class="hidden">
+              </label>
+            </div>
+          </div>
         </section>
       `;
     }
@@ -1030,7 +1117,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // 요청사항 3번: 교사용 면접 진행 상태(대기 / 완료 / 불참) 순환 전환 함수
     async function toggleStudentStatus(id) {
       const reg = state.regs.find(r => r.id === id);
       if (!reg) return;
@@ -1290,6 +1376,17 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherView();
     }
 
+    function showTodayTeacherStudents(teacherName) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const myTodayStudents = state.regs.filter(r => r.date === todayStr && (r.teacher1 === teacherName || r.teacher2 === teacherName));
+
+      alert(`[오늘(${todayStr}) ${teacherName} 선생님 담당 학생]\n총 ${myTodayStudents.length}명\n\n` + 
+        (myTodayStudents.length > 0 
+          ? myTodayStudents.map(r => `· [${r.period}교시] ${r.name}(${r.num}) - ${r.univ} ${r.dept}`).join('\n')
+          : '오늘 배정된 면접 학생이 없습니다.')
+      );
+    }
+
     function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1363,7 +1460,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
-    // 교사 현황 목록 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
