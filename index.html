@@ -7,7 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  
+  <!-- HTML2Canvas 라이브러리 (학생 예약 확인증 이미지 저장용) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <!-- 배달의민족 주아체 폰트 -->
   <style>
     @font-face {
@@ -205,7 +207,7 @@
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div class="flex items-center space-x-2">
               <span class="bg-brand-purple text-white text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">STEP 2</span>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">면접 희망 날짜 및 교시 선택</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900">면접 희망 날짜 및 교시 선택 <span class="text-xs text-brand-purple font-normal ml-1">(최대 3회 신청 가능)</span></h3>
             </div>
             <div class="flex items-center space-x-1.5 self-end sm:self-auto">
               <button onclick="changeMonth(-1)" class="px-2.5 py-1 sm:px-3 sm:py-1.5 border border-slate-200 rounded-lg text-[11px] sm:text-xs hover:bg-slate-50 font-medium">◀ 이전달</button>
@@ -236,7 +238,9 @@
           </h3>
           <span id="dDayBadge" class="bg-brand-purple text-white text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-bold"></span>
         </div>
-        <div id="myRegContent" class="text-xs text-slate-700 space-y-2"></div>
+        
+        <div id="myRegContent" class="text-xs text-slate-700 space-y-3"></div>
+
         <div class="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 text-[11px] sm:text-xs text-slate-600 space-y-1">
           <p class="font-bold text-brand-purple mb-1">📌 모의면접 유의사항</p>
           <p>· 지정된 면접 장소로 시작 10분 전까지 반드시 입실하여 주시기 바랍니다.</p>
@@ -545,6 +549,19 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
+    // ★ 학생 개인 예약 확인증 PNG 이미지 생성 및 다운로드 함수 ★
+    function downloadTicketImage(id) {
+      const card = document.getElementById(`ticketCard_${id}`);
+      if (!card) return;
+
+      html2canvas(card, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `강일여고_모의면접_예약확인증_${state.user.name}_${state.user.num}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -560,12 +577,33 @@
         if (dDayBadge) dDayBadge.textContent = diffDays === 0 ? "D-Day (오늘)" : diffDays > 0 ? `D-${diffDays}` : `면접 종료`;
 
         content.innerHTML = myRegs.map(r => `
-          <div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0">
-            <span class="font-semibold text-slate-800 text-xs sm:text-sm">
-              📅 <strong>${r.date}</strong> [${r.period}교시] - ${r.univ} ${r.dept} 
-              <span class="ml-1.5 sm:ml-2 text-brand-purple font-bold"><i class="fa-solid fa-location-dot"></i> ${r.location || '3학년 교무실'}</span>
-            </span>
-            <button onclick="deleteRegistration('${r.id}')" class="text-red-500 font-bold hover:underline ml-2 sm:ml-4 text-xs shrink-0">신청 취소</button>
+          <div id="ticketCard_${r.id}" class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-lg space-y-3 relative overflow-hidden border border-slate-800">
+            <div class="flex justify-between items-start border-b border-slate-700/80 pb-2.5">
+              <div>
+                <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Kangil Girls' High School</span>
+                <h4 class="text-base font-extrabold text-white">모의면접 연습 예약 확인증</h4>
+              </div>
+              <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${r.period}교시</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+              <div><span class="text-slate-400">학생:</span> <strong>${r.name} (${r.num})</strong></div>
+              <div><span class="text-slate-400">일시:</span> <strong>${r.date} [${r.period}교시]</strong></div>
+              <div class="col-span-2"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
+              <div class="col-span-2"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
+            </div>
+
+            <div class="pt-2 flex justify-between items-center no-print">
+              <span class="text-[10px] text-slate-400">접속코드: ${r.pin}</span>
+              <div class="space-x-2">
+                <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
+                  🖼️ 확인증 저장
+                </button>
+                <button onclick="deleteRegistration('${r.id}')" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white font-bold px-2.5 py-1.5 rounded-lg text-xs transition-all border border-red-500/30">
+                  취소
+                </button>
+              </div>
+            </div>
           </div>
         `).join('');
       } else {
@@ -592,7 +630,6 @@
       else renderCalendar();
     }
 
-    // 8교시/9교시 2줄 형태 잔여석 직관적 표시
     function renderCalendar() {
       const grid = document.getElementById('calGrid');
       if (!grid) return;
@@ -628,7 +665,6 @@
 
         const isClosed = state.closedDates.includes(dateStr) || maxTeams === 0;
 
-        // 2줄 형태 잔여석 표기 HTML 조합 (운영 마감 -> 마감 2글자로 간결 축약)
         let statusText = '';
         if (isClosed) {
           statusText = '<span class="text-slate-400 font-bold block text-center">마감</span>';
@@ -681,7 +717,7 @@
       renderCalendar();
     }
 
-    // 예약 전 재확인 팝업(예/아니오) 모달 지원
+    // ★ 1인당 최대 3회 예약 제한 및 시간 중복 체크 추가 ★
     async function submitReservation(period) {
       const univ = document.getElementById('sUniv').value.trim();
       const dept = document.getElementById('sDept').value.trim();
@@ -691,11 +727,23 @@
         return;
       }
 
-      const isConfirmed = confirm(`[예약 신청 확인]\n\n· 선택 날짜: ${state.selectedDate}\n· 선택 교시: ${period}교시\n· 지원 대학: ${univ} ${dept}\n\n위 일정으로 모의면접 연습을 예약하시겠습니까?`);
-      
-      if (!isConfirmed) {
+      // 1. 학생 기존 총 신청 건수 체크 (최대 3회 제한)
+      const myRegs = state.regs.filter(r => r.num === state.user.num);
+      if (myRegs.length >= 3) {
+        alert(`[신청 제한 안내]\n\n모의면접 연습은 1인당 최대 3회까지만 예약할 수 있습니다.\n(현재 ${myRegs.length}회 예약됨)\n\n기존 예약을 변경하시려면 [나의 신청 내역] 탭에서 취소 후 다시 신청해 주세요.`);
         return;
       }
+
+      // 2. 동일 날짜 및 동일 교시 중복 신청 차단
+      const hasConflict = myRegs.some(r => r.date === state.selectedDate && Number(r.period) === Number(period));
+      if (hasConflict) {
+        alert(`이미 ${state.selectedDate} ${period}교시에 예약된 내역이 있습니다.`);
+        return;
+      }
+
+      const isConfirmed = confirm(`[예약 신청 확인]\n\n· 선택 날짜: ${state.selectedDate}\n· 선택 교시: ${period}교시\n· 지원 대학: ${univ} ${dept}\n\n(현재 신청 가능 횟수: ${myRegs.length + 1}/3회)\n위 일정으로 모의면접 연습을 예약하시겠습니까?`);
+      
+      if (!isConfirmed) return;
 
       const maxTeams = getMaxTeamsForDate(state.selectedDate);
       const existingRegs = state.regs.filter(r => r.date === state.selectedDate && Number(r.period) === Number(period));
@@ -730,9 +778,41 @@
         } catch(e) { console.warn("Firestore Save Error", e); }
       }
 
-      alert(`[신청 완료]\n\n· 날짜: ${state.selectedDate}\n· 교시: ${period}교시\n· 학생: ${state.user.name} (${state.user.num})\n· 지원: ${univ} ${dept}\n\n정상 접수되었습니다!`);
+      alert(`[신청 완료]\n\n· 날짜: ${state.selectedDate}\n· 교시: ${period}교시\n· 학생: ${state.user.name} (${state.user.num})\n· 지원: ${univ} ${dept}\n\n정상 접수되었습니다! (총 ${myRegs.length + 1}/3회 예약됨)`);
       selectDate(state.selectedDate);
       checkMyRegistrations();
+    }
+
+    // ★ 선택한 날짜 학생 단체 문자 발송용 문구 일괄 생성기 ★
+    function openSmsModal() {
+      if (state.regs.length === 0) {
+        alert('안내 문자를 발송할 학생 내역이 없습니다.');
+        return;
+      }
+
+      const targetDate = document.getElementById('targetAssignDate')?.value;
+      let targetRegs = state.regs;
+
+      if (targetDate) {
+        targetRegs = state.regs.filter(r => r.date === targetDate);
+      }
+
+      if (targetRegs.length === 0) {
+        alert('선택한 조건에 해당하는 예약 학생이 없습니다.');
+        return;
+      }
+
+      const sampleMsg = targetRegs.map((r, idx) => `[강일여고 3학년부 모의면접]
+${idx + 1}. ${r.name}학생 (${r.num})
+· 일시: ${r.date} [${r.period}교시]
+· 지원: ${r.univ} ${r.dept}
+· 장소: ${r.location || '3학년 교무실'}`).join('\n\n--------------------\n\n');
+
+      navigator.clipboard.writeText(sampleMsg).then(() => {
+        alert(`[단체 문자 문구 복사 완료]\n\n총 ${targetRegs.length}명 학생의 면접 안내 문구가 클립보드에 자동 복사되었습니다!\n학교 알리미나 문자 발송 시스템에 [붙여넣기]해서 발송하세요.`);
+      }).catch(() => {
+        prompt("아래 텍스트를 복사해서 발송하세요:", sampleMsg);
+      });
     }
 
     function exportToCSV() {
@@ -842,21 +922,6 @@
       setTimeout(() => {
         printArea.innerHTML = '';
       }, 500);
-    }
-
-    function openSmsModal() {
-      if (state.regs.length === 0) {
-        alert('안내 문자를 발송할 학생 내역이 없습니다.');
-        return;
-      }
-
-      const sampleMsg = state.regs.slice(0, 5).map(r => `[강일여고 3학년부]\n${r.name}학생, 대입 모의면접 예약이 완료되었습니다.\n일시: ${r.date} [${r.period}교시]\n장소: ${r.location || '3학년 교무실'}\n접속코드: ${r.pin}`).join('\n\n---\n\n');
-
-      const modalText = prompt(`[SMS/알림톡 발송용 문구 예시]\n아래 텍스트를 복사하여 문자로 발송하세요:\n\n${sampleMsg}\n\n전체 텍스트 복사를 위해 OK를 눌러주세요.`);
-      if (modalText !== null) {
-        navigator.clipboard.writeText(sampleMsg);
-        alert('문자 발송 텍스트가 클립보드에 자동 복사되었습니다!');
-      }
     }
 
     function renderTeacherView() {
@@ -1140,6 +1205,28 @@
       renderTeacherView();
     }
 
+    // ★ 면접관 선생님 전용 "오늘의 담당 학생 목록" 모바일 전용 모달/뷰 ★
+    function showTodayTeacherStudents(teacherName) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const myTodayStudents = state.regs.filter(r => r.date === todayStr && (r.teacher1 === teacherName || r.teacher2 === teacherName));
+
+      const listHtml = myTodayStudents.map(r => `
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+          <div class="flex justify-between font-bold text-slate-900">
+            <span>[${r.period}교시] ${r.name} (${r.num})</span>
+            <span class="text-brand-purple">${r.location || '3학년 교무실'}</span>
+          </div>
+          <p class="text-slate-500">${r.univ} ${r.dept}</p>
+        </div>
+      `).join('') || `<div class="text-xs text-slate-400 py-4 text-center">오늘 담당하신 면접 학생이 없습니다.</div>`;
+
+      alert(`[오늘(${todayStr}) ${teacherName} 선생님 담당 학생]\n총 ${myTodayStudents.length}명\n\n` + 
+        (myTodayStudents.length > 0 
+          ? myTodayStudents.map(r => `· [${r.period}교시] ${r.name}(${r.num}) - ${r.univ} ${r.dept}`).join('\n')
+          : '오늘 배정된 면접 학생이 없습니다.')
+      );
+    }
+
     function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1176,7 +1263,12 @@
               </span>
             </div>
             <div class="space-y-1">
-              <p class="text-[11px] font-bold text-slate-400 mb-1">담당 면접 학생 목록</p>
+              <div class="flex justify-between items-center mb-1">
+                <p class="text-[11px] font-bold text-slate-400">담당 면접 학생 목록</p>
+                <button onclick="showTodayTeacherStudents('${t}')" class="text-[10px] bg-brand-orange hover:bg-brand-orangeHover text-white font-bold px-2 py-0.5 rounded transition-all">
+                  오늘 내 학생 보기
+                </button>
+              </div>
               ${studentList}
             </div>
           </div>
@@ -1188,7 +1280,7 @@
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
               <h3 class="text-base sm:text-lg font-bold text-slate-900">📊 면접교사별 배정 통계 대시보드</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 목록 관리</p>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">면접관 선생님별 담당 건수 및 오늘 면접 학생 즉시 확인</p>
             </div>
             <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all shrink-0">
               <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
@@ -1297,7 +1389,7 @@
             </div>
             <div class="flex items-center space-x-1.5 flex-wrap gap-1.5">
               <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
-                📱 SMS
+                📱 SMS 안내문 복사
               </button>
               <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
                 📄 전체 인쇄
