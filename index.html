@@ -592,7 +592,7 @@
       else renderCalendar();
     }
 
-    // ★ 8교시/9교시 잔여석 2줄 직관적 표시 처리 ★
+    // 8교시/9교시 2줄 형태 잔여석 직관적 표시
     function renderCalendar() {
       const grid = document.getElementById('calGrid');
       if (!grid) return;
@@ -628,10 +628,10 @@
 
         const isClosed = state.closedDates.includes(dateStr) || maxTeams === 0;
 
-        // 2줄 형태 잔여석 표기 HTML 조합
+        // 2줄 형태 잔여석 표기 HTML 조합 (운영 마감 -> 마감 2글자로 간결 축약)
         let statusText = '';
         if (isClosed) {
-          statusText = '<span class="text-slate-400 font-bold block text-center">운영 마감</span>';
+          statusText = '<span class="text-slate-400 font-bold block text-center">마감</span>';
         } else {
           const p8Text = p8Rem > 0 ? `8교시[${p8Rem}석]` : '<span class="text-red-500 font-semibold">8교시[마감]</span>';
           const p9Text = p9Rem > 0 ? `9교시[${p9Rem}석]` : '<span class="text-red-500 font-semibold">9교시[마감]</span>';
@@ -681,7 +681,7 @@
       renderCalendar();
     }
 
-    // ★ 예약 전 재확인 팝업(예/아니오) 모달 지원 ★
+    // 예약 전 재확인 팝업(예/아니오) 모달 지원
     async function submitReservation(period) {
       const univ = document.getElementById('sUniv').value.trim();
       const dept = document.getElementById('sDept').value.trim();
@@ -691,11 +691,10 @@
         return;
       }
 
-      // 예약 의사 다시 한번 재확인 팝업
       const isConfirmed = confirm(`[예약 신청 확인]\n\n· 선택 날짜: ${state.selectedDate}\n· 선택 교시: ${period}교시\n· 지원 대학: ${univ} ${dept}\n\n위 일정으로 모의면접 연습을 예약하시겠습니까?`);
       
       if (!isConfirmed) {
-        return; // '아니오(취소)' 클릭 시 중단
+        return;
       }
 
       const maxTeams = getMaxTeamsForDate(state.selectedDate);
