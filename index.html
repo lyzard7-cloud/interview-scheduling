@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
-  <!-- 배달의민족 주아체 폰트 추가 -->
+  <!-- 배달의민족 주아체 폰트 -->
   <style>
     @font-face {
       font-family: 'BMJUA';
@@ -85,9 +85,9 @@
     }
   </script>
 </head>
-<body class="bg-brand-bgLight text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-purple/20">
+<body class="bg-white text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-purple/20">
 
-  <!-- 상단 네이비 헤더 (모바일 가로 분리 및 최적화) -->
+  <!-- 상단 네이비 헤더 (교사 포털 및 헤더용) -->
   <header class="bg-brand-navy text-white shadow-md no-print">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex justify-between items-center text-[11px] sm:text-xs border-b border-slate-700/60">
       <div class="flex items-center space-x-2 sm:space-x-3 text-slate-300 truncate">
@@ -103,7 +103,7 @@
       <div>
         <h1 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-jua" id="headerTitle">강일여고 면접 예약 사이트</h1>
       </div>
-      <!-- 형광 노랑 라이브 접속 뱃지 -->
+      <!-- 라이브 접속 뱃지 -->
       <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner">
         <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
@@ -114,67 +114,59 @@
     </div>
   </header>
 
-  <!-- 학생 로그인 전용 웰컴 뷰 (모바일 최적화) -->
-  <div id="loginPortalContainer" class="w-full max-w-md mx-auto px-4 py-8 sm:py-16 flex-1 flex flex-col justify-center items-center no-print">
-    <div class="text-center mb-6 sm:mb-8 space-y-2">
-      <h2 class="text-3xl sm:text-4xl font-normal text-brand-navy tracking-tight font-jua">강일여고 면접 예약 사이트</h2>
-      <p class="text-xs text-slate-500 font-medium">강일여자고등학교 3학년 대입 면접 연습 배정 포털</p>
+  <!-- 학생 전용 모바일 웰컴 로그인 뷰 (네이버 화이트 스타일) -->
+  <div id="loginPortalContainer" class="w-full max-w-sm mx-auto px-5 py-12 flex-1 flex flex-col justify-center items-center bg-white no-print">
+    
+    <!-- 메인 타이틀 영역 -->
+    <div class="text-center mb-12 space-y-2 w-full">
+      <h2 class="text-3xl sm:text-4xl text-brand-orange font-jua tracking-tight">강일여고 면접 예약</h2>
+      <p class="text-xs text-slate-400 font-medium">강일여자고등학교 3학년 대입 면접 배정 포털</p>
     </div>
 
-    <!-- 네이버 스타일 메인 로그인 카드 -->
-    <div class="w-full bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 space-y-5 sm:space-y-6">
-      <div class="border-b border-slate-100 pb-3.5 flex justify-between items-center">
-        <span class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-lock text-brand-purple"></i> 학생 본인 인증
-        </span>
-        <span class="text-[10px] sm:text-[11px] text-slate-400">부여받은 6자리 코드</span>
-      </div>
+    <!-- 네이버 로그인 레이아웃 본딴 깔끔한 라인형 Form -->
+    <form onsubmit="event.preventDefault(); handleStudentLogin();" class="w-full space-y-8" autocomplete="off">
+      <input type="text" style="display:none">
+      <input type="password" style="display:none">
 
-      <form onsubmit="event.preventDefault(); handleStudentLogin();" class="space-y-3.5" autocomplete="off">
-        <input type="text" style="display:none">
-        <input type="password" style="display:none">
-
-        <div class="space-y-2.5">
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
-              <i class="fa-solid fa-id-card"></i>
-            </span>
-            <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full pl-9 pr-4 py-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
-          </div>
-
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
-              <i class="fa-solid fa-user"></i>
-            </span>
-            <input type="text" id="sName" placeholder="이름 (예: 김강일)" autocomplete="new-password" class="w-full pl-9 pr-4 py-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
-          </div>
-
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
-              <i class="fa-solid fa-key"></i>
-            </span>
-            <input type="text" id="sPin" placeholder="개인 부여 코드 (숫자 6자리)" autocomplete="new-password" maxlength="6" class="pin-masked w-full pl-9 pr-4 py-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-brand-purple focus:bg-white transition-all font-medium">
-          </div>
+      <div class="space-y-6">
+        <!-- 학번 입력란 (네이버 라인형) -->
+        <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">학번</label>
+          <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
         </div>
 
-        <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-sm sm:text-base font-extrabold rounded-xl sm:rounded-2xl py-3 sm:py-3.5 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2 font-jua">
-          <span class="text-base sm:text-lg font-normal">면접 예약 접속하기</span>
-          <i class="fa-solid fa-arrow-right text-xs"></i>
-        </button>
-      </form>
+        <!-- 이름 입력란 (네이버 라인형) -->
+        <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">이름</label>
+          <input type="text" id="sName" placeholder="이름 (예: 김강일)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
+        </div>
 
-      <div class="pt-1 text-center text-[11px] sm:text-xs text-slate-400 flex justify-center items-center space-x-2.5">
-        <span>문의: 3학년 교무실</span>
-        <span>•</span>
-        <span>033-650-0783</span>
+        <!-- 개인 부여 코드 6자리 입력란 (네이버 라인형) -->
+        <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
+          <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors">개인 부여 코드 (숫자 6자리)</label>
+          <input type="text" id="sPin" placeholder="숫자 6자리 입력" autocomplete="new-password" maxlength="6" class="pin-masked w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium tracking-widest">
+        </div>
       </div>
+
+      <!-- 메인 시그니처 버튼 -->
+      <div class="pt-2">
+        <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white text-base font-bold rounded-xl py-4 shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-jua">
+          <span class="text-lg font-normal">로그인</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-12 text-center text-xs text-slate-400 flex justify-center items-center space-x-3 font-medium">
+      <span>문의: 3학년 교무실</span>
+      <span>•</span>
+      <span>033-650-0783</span>
     </div>
   </div>
 
-  <!-- 메인 본문 컨테이너 (반응형 모바일 flex-col 지원) -->
+  <!-- 메인 본문 대시보드 컨테이너 -->
   <div id="mainDashboardContainer" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-8 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 no-print">
     
-    <!-- 사이드바 (모바일 반응형 수평 배치 지원) -->
+    <!-- 좌측 사이드바 -->
     <aside class="w-full md:w-64 shrink-0 space-y-4">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-2">
         <div class="bg-brand-purple text-white p-3 sm:p-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-between">
@@ -196,7 +188,7 @@
     <!-- 메인 콘텐츠 -->
     <main class="flex-1 space-y-6 min-w-0" id="mainContent">
       
-      <!-- 탭 1: 면접 예약 화면 (STEP 1 & STEP 2) -->
+      <!-- 탭 1: 면접 예약 화면 -->
       <div id="studentReservationSection" class="space-y-4 sm:space-y-6">
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-3.5 sm:space-y-4">
           <div class="flex items-center space-x-2">
@@ -1199,7 +1191,6 @@
       `;
     }
 
-    // 모바일 터치 수평 스크롤 가호 목록 테이블
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
