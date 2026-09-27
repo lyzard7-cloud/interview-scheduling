@@ -152,7 +152,7 @@
       </div>
     </form>
 
-    <!-- 요청사항 4번: 로그인 화면 3학년부 공지사항 카운터/안내 카드 (줄바꿈 허용) -->
+    <!-- 로그인 화면 3학년부 공지사항 카운터/안내 카드 -->
     <div class="mt-8 w-full bg-brand-purpleLight/60 p-4 rounded-2xl border border-brand-purple/20 space-y-1.5 text-xs text-slate-700">
       <div class="flex items-center gap-1.5 font-bold text-brand-purple">
         <i class="fa-solid fa-bullhorn text-brand-orange"></i>
@@ -622,6 +622,30 @@
       });
     }
 
+    // 4번 기능: 학생 모의면접 경험 피드백/후기 제출 팝업
+    async function submitStudentFeedback(id) {
+      const reg = state.regs.find(r => r.id === id);
+      if (!reg) return;
+
+      const currentFb = reg.feedback || '';
+      const feedbackInput = prompt(`[${reg.date} ${reg.period}교시 모의면접 후기 작성]\n\n· 실제 받았던 주요 면접 질문 및 본인의 느낌/아쉬웠던 점을 솔직하게 기록해 주세요:`, currentFb);
+
+      if (feedbackInput !== null) {
+        reg.feedback = feedbackInput.trim();
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+        if (window.isFirebaseReady && window.dbTools) {
+          try {
+            const { doc, setDoc } = window.dbTools;
+            await setDoc(doc(window.db, 'interview_registrations', id), reg);
+          } catch(e) { console.warn("Firestore Feedback Save Error", e); }
+        }
+
+        alert('모의면접 후기가 성공적으로 등록/수정되었습니다!');
+        checkMyRegistrations();
+      }
+    }
+
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -652,7 +676,7 @@
                 <span class="text-[10px] uppercase tracking-wider text-amber-400 font-bold whitespace-nowrap">Gangil Girls' High School</span>
                 <h4 class="text-base font-extrabold text-white whitespace-nowrap">모의면접 연습 예약 확인증</h4>
               </div>
-              <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">${r.period}교시</span>
+              <span class="bg-brand-orange text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">${r.period}교시 (${r.status || '대기'})</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
@@ -660,12 +684,19 @@
               <div class="whitespace-nowrap"><span class="text-slate-400">일시:</span> <strong class="whitespace-nowrap">${r.date} [${r.period}교시]</strong></div>
               <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
               ${r.note ? `<div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">요청사항:</span> <strong class="text-amber-200">${r.note}</strong></div>` : ''}
+              ${r.feedback ? `<div class="col-span-1 sm:col-span-2"><span class="text-amber-400 font-bold">내 면접 후기:</span> <span class="text-slate-200">${r.feedback}</span></div>` : ''}
+              ${r.teacherEvaluation ? `<div class="col-span-1 sm:col-span-2 p-2 bg-indigo-900/60 rounded border border-indigo-500/40"><span class="text-amber-300 font-bold">💬 교사 총평:</span> <span class="text-white">${r.teacherEvaluation}</span></div>` : ''}
               <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
             </div>
 
             <div class="pt-2 flex justify-between items-center no-print flex-wrap gap-2">
               <span class="text-[10px] text-slate-400 whitespace-nowrap">접속코드: ${r.pin}</span>
               <div class="space-x-2 whitespace-nowrap">
+                ${r.status === '완료' ? `
+                  <button onclick="submitStudentFeedback('${r.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
+                    📝 면접 후기 작성
+                  </button>
+                ` : ''}
                 <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
                   🖼️ 확인증 저장
                 </button>
@@ -889,9 +920,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,담당면접교사1,담당면접교사2,면접장소\n';
+      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,학생후기,교사총평,담당면접교사1,담당면접교사2,면접장소\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3학년 교무실'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},"${r.feedback || ''}","${r.teacherEvaluation || ''}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3학년 교무실'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -1039,7 +1070,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
           <div class="border border-slate-400 p-3 text-xs space-y-1">
             <p class="font-bold text-slate-800">※ 종합 평가 소견 및 개선 권고사항:</p>
-            <div class="h-20"></div>
+            <div class="h-20">${r.teacherEvaluation ? `<p class="p-2 text-slate-800">${r.teacherEvaluation}</p>` : ''}</div>
           </div>
 
           <div class="flex justify-end pt-2 text-xs font-bold">
@@ -1138,6 +1169,29 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
 
       renderTeacherListView();
+    }
+
+    // 4번 기능: 교사 총평/피드백 입력 함수
+    async function editTeacherEvaluation(id) {
+      const reg = state.regs.find(r => r.id === id);
+      if (!reg) return;
+
+      const currentEval = reg.teacherEvaluation || '';
+      const inputEval = prompt(`[${reg.name} 학생 면접 총평 및 피드백 작성]\n\n총평 및 조언을 입력해 주세요:`, currentEval);
+
+      if (inputEval !== null) {
+        reg.teacherEvaluation = inputEval.trim();
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+        if (window.isFirebaseReady && window.dbTools) {
+          try {
+            const { doc, setDoc } = window.dbTools;
+            await setDoc(doc(window.db, 'interview_registrations', id), reg);
+          } catch(e) { console.warn("Firestore Teacher Eval Save Error", e); }
+        }
+
+        renderTeacherListView();
+      }
     }
 
     function renderTeacherScheduleView() {
@@ -1387,9 +1441,15 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       );
     }
 
+    // 1번 기능: 평가 결과 통계 및 종합 리포트 뷰 포함
     function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
+
+      const totalRegs = state.regs.length;
+      const completedRegs = state.regs.filter(r => r.status === '완료').length;
+      const feedbackRegs = state.regs.filter(r => r.feedback).length;
+      const absentRegs = state.regs.filter(r => r.status === '불참').length;
 
       const teacherMap = {};
       state.regs.forEach(r => {
@@ -1436,19 +1496,44 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }).join('');
 
       main.innerHTML = `
-        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📊 면접교사별 배정 통계 대시보드</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">면접관 선생님별 담당 건수 및 목록 관리</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📊 면접교사별 배정 통계 및 종합 리포트</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 면접 운영 성과 및 교사별 담당 실적 요약</p>
             </div>
-            <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all shrink-0 whitespace-nowrap">
-              <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
-            </button>
+            <div class="flex items-center space-x-2">
+              <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap">
+                📄 종합 결과 보고서 인쇄
+              </button>
+              <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
+              </button>
+            </div>
+          </div>
+
+          <!-- 1번 기능: 운영 종합 리포트 메트릭 카드 -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-center space-y-1">
+              <p class="text-[11px] text-slate-500 font-bold whitespace-nowrap">총 예약 신청</p>
+              <p class="text-xl sm:text-2xl font-black text-brand-navy whitespace-nowrap">${totalRegs}건</p>
+            </div>
+            <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-center space-y-1">
+              <p class="text-[11px] text-emerald-700 font-bold whitespace-nowrap">면접 실시 완료</p>
+              <p class="text-xl sm:text-2xl font-black text-emerald-700 whitespace-nowrap">${completedRegs}건</p>
+            </div>
+            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-center space-y-1">
+              <p class="text-[11px] text-amber-700 font-bold whitespace-nowrap">학생 후기 작성</p>
+              <p class="text-xl sm:text-2xl font-black text-amber-700 whitespace-nowrap">${feedbackRegs}건</p>
+            </div>
+            <div class="bg-red-50 p-3.5 rounded-2xl border border-red-200 text-center space-y-1">
+              <p class="text-[11px] text-red-600 font-bold whitespace-nowrap">미진행/불참</p>
+              <p class="text-xl sm:text-2xl font-black text-red-600 whitespace-nowrap">${absentRegs}건</p>
+            </div>
           </div>
 
           ${teacherNames.length > 0 ? `
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
               ${cardsHtml}
             </div>
           ` : `
@@ -1534,11 +1619,17 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 ${r.status || '대기'}
               </button>
             </td>
+            <td class="py-3 px-3 whitespace-nowrap text-slate-600">
+              ${r.feedback ? `<span class="text-amber-800 font-medium">후기 있음</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
             <td class="py-3 px-3 whitespace-nowrap">${teacherCellHtml}</td>
             <td class="py-3 px-3 whitespace-nowrap">
               <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1.5 py-1 text-[11px] border border-slate-200 rounded focus:border-brand-purple">
             </td>
-            <td class="py-3 px-3 text-center whitespace-nowrap space-x-2">
+            <td class="py-3 px-3 text-center whitespace-nowrap space-x-1">
+              <button onclick="editTeacherEvaluation('${r.id}')" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-1 rounded text-[11px] font-bold border border-indigo-200 whitespace-nowrap">
+                💬 총평
+              </button>
               <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-brand-purpleLight text-brand-purple hover:bg-brand-purple hover:text-white px-2 py-1 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap">
                 평가 기록지
               </button>
@@ -1549,7 +1640,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="12" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
       }
 
       main.innerHTML = `
@@ -1594,7 +1685,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           </div>
 
           <div class="overflow-x-auto custom-scroll rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse min-w-[950px]">
+            <table class="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
                   <th class="py-3 px-3 text-center whitespace-nowrap">No</th>
@@ -1606,6 +1697,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                   <th class="py-3 px-3 whitespace-nowrap">지원 학과</th>
                   <th class="py-3 px-3 whitespace-nowrap">요청사항</th>
                   <th class="py-3 px-3 text-center whitespace-nowrap">진행 상태</th>
+                  <th class="py-3 px-3 whitespace-nowrap">학생 후기</th>
                   <th class="py-3 px-3 whitespace-nowrap">담당 면접교사 (교사1:A, 교사2:B)</th>
                   <th class="py-3 px-3 whitespace-nowrap">면접 장소</th>
                   <th class="py-3 px-3 text-center whitespace-nowrap">관리</th>
