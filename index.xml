@@ -1,0 +1,17 @@
+<GenerateWidget type="inline_visualization" height="600px">
+<skills>chart</skills>
+
+**Idea:** 모의면접 전체 운영 현황과 피드백 피드백 순환 구조를 한눈에 파악할 수 있는 시각화 대시보드입니다.
+**Visual type:** bar chart and stat cards
+**Data specification:**
+- **Data structure:** categories (전체 신청, 면접 완료, 후기 제출, 진행 대기), numeric counts
+- **Initial values:**
+  - 전체 신청: 142건
+  - 면접 완료: 98건
+  - 후기 제출: 76건
+  - 진행 대기: 44건
+- **Mapping:** Category to X-axis, Count to Y-axis
+**User controls:** None — hover/click for details
+**Interactivity:** Hover bar for specific statistics
+**Animation:** Smooth bar transition
+</GenerateWidget>
