@@ -306,6 +306,58 @@
   <!-- 인쇄 영역 -->
   <div id="printArea" class="p-8 space-y-6"></div>
 
+  <!-- 교사용 매뉴얼 가이드 카드 모달 (선생님이 언제든 확인 및 캡처 가능) -->
+  <div id="teacherManualModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
+    <div class="bg-white max-w-2xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-chalkboard-user text-brand-purple"></i> 3학년 담임교사 포털 활용 안내 카드
+        </h3>
+        <button onclick="closeTeacherManual()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
+      </div>
+
+      <!-- 포스터 양식 본문 -->
+      <div id="manualCardBody" class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs text-slate-700">
+        <div class="bg-brand-purple text-white p-4 rounded-xl space-y-1">
+          <p class="font-extrabold text-sm sm:text-base">📌 강일여고 대입 모의면접 배정 시스템 매뉴얼</p>
+          <p class="text-[11px] text-purple-200">교사 전용 접속: https://lyzard7-cloud.github.io/interview-scheduling/?role=teacher</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
+            <p class="font-bold text-brand-purple text-xs">1️⃣ 참여 교사 지정 (2번째 탭)</p>
+            <p class="text-slate-600 leading-relaxed">날짜 상자 안에서 참여 가능한 선생님 체크박스(☑) 지정 ➔ 날짜별 정원 자동 수용 계산</p>
+          </div>
+
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
+            <p class="font-bold text-brand-purple text-xs">2️⃣ 2인 1조 균등 배정 (4번째 탭)</p>
+            <p class="text-slate-600 leading-relaxed">[전체 배정] 버튼 클릭 ➔ 누적 담당 건수 기반 A/B그룹 면접관 2인 1조 자동 균등 배치</p>
+          </div>
+
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
+            <p class="font-bold text-brand-purple text-xs">3️⃣ 평가지 인쇄 & SMS 복사 (4번째 탭)</p>
+            <p class="text-slate-600 leading-relaxed">[평가 기록지] 인쇄 출력 및 [📱 SMS 안내문 복사] 버튼으로 알리미 발송 문구 즉시 붙여넣기</p>
+          </div>
+
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
+            <p class="font-bold text-brand-purple text-xs">4️⃣ 면접 진행 & 총평 기록 (4번째 탭)</p>
+            <p class="text-slate-600 leading-relaxed">상태를 [완료]로 변경 후 [💬 총평] 버튼 클릭 ➔ 면접 조언 등록시 학생 화면에 즉시 공유</p>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-amber-900 font-medium">
+          💡 <strong>오늘 내 학생 보기 (3번째 탭):</strong> 면접 당일 [오늘 내 학생 보기] 버튼 클릭 시 오늘 담당할 면접 명단만 스마트폰에 뜹니다!
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeTeacherManual()" class="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs">
+          확인 / 닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <footer class="bg-slate-900 text-slate-400 py-5 sm:py-6 text-center text-[11px] sm:text-xs mt-auto no-print">
     <p>© 강일여자고등학교 3학년부 대입 면접 연습 배정 시스템. All rights reserved.</p>
   </footer>
@@ -421,6 +473,14 @@
       window.location.href = window.location.pathname;
     }
 
+    function openTeacherManual() {
+      document.getElementById('teacherManualModal').classList.remove('hidden');
+    }
+
+    function closeTeacherManual() {
+      document.getElementById('teacherManualModal').classList.add('hidden');
+    }
+
     function switchStudentTab(tabName) {
       state.studentTab = tabName;
       updateSidebarNavForStudent();
@@ -500,7 +560,11 @@
           <span><i class="fa-solid fa-user-shield mr-2"></i>교사 관리자 전용</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t whitespace-nowrap">
+        <button onclick="openTeacherManual()" class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 font-bold transition-all mt-2 whitespace-nowrap">
+          <span><i class="fa-solid fa-book-open mr-1.5 text-amber-600"></i>교사 매뉴얼 카드</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-2 pt-2 border-t whitespace-nowrap">
           <span><i class="fa-solid fa-user-graduate mr-2 text-brand-purple"></i>학생 페이지로 이동</span>
           <i class="fa-solid fa-arrow-right text-xs text-slate-400"></i>
         </button>
@@ -1541,7 +1605,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
-    // 면접 현황 목록 가로 폭 100% 자동 정렬 및 스크롤 제거 처리
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1681,7 +1744,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <span class="text-xs text-slate-500 whitespace-nowrap">결과: <strong>${filteredRegs.length}건</strong></span>
           </div>
 
-          <!-- 스크롤 없는 타이트 100% 한 화면 꽉 차는 테이블 -->
           <div class="w-full overflow-hidden rounded-xl border border-slate-200">
             <table class="w-full text-left border-collapse table-auto">
               <thead>
