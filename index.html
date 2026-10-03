@@ -187,7 +187,7 @@
         </nav>
       </div>
 
-      <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 text-xs space-y-1.5 hidden md:block">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 text-xs space-y-1.5 hidden md:block">
         <p class="font-bold text-slate-800 text-xs sm:text-sm whitespace-nowrap"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
         <p class="text-slate-500 whitespace-nowrap">3학년 교무실</p>
         <p class="text-slate-700 font-semibold whitespace-nowrap">033-650-0783 (내선 783)</p>
@@ -446,7 +446,7 @@
       reader.readAsText(file, 'utf-8');
     }
 
-    // ★ 2단계: 전학생 등 개별 학생 1명 추가 기능 (기존 PIN 유지) ★
+    // 2단계: 전학생 등 개별 학생 1명 추가 기능 (기존 PIN 유지)
     function addSingleStudent() {
       const numInput = document.getElementById('singleAddNum')?.value.trim();
       const nameInput = document.getElementById('singleAddName')?.value.trim();
@@ -462,7 +462,6 @@
         return;
       }
 
-      // 중복 없는 신규 6자리 PIN 번호 즉시 생성
       const usedPins = new Set(STUDENT_LIST.map(s => String(s.pin)));
       let newPin;
       do {
@@ -483,7 +482,7 @@
       renderTeacherAdminView();
     }
 
-    // ★ 개별 학생 명단 삭제 기능 ★
+    // 개별 학생 명단 삭제 기능
     function deleteSingleStudent(num, name) {
       if (!confirm(`[${num} ${name}] 학생을 명단에서 삭제하시겠습니까?`)) return;
 
@@ -510,6 +509,22 @@
       link.href = URL.createObjectURL(blob);
       link.download = `강일여고_3학년_학생_고유코드_최종명렬표_${STUDENT_LIST.length}명.csv`;
       link.click();
+    }
+
+    // ★ 날짜별 정원 수용 팀 수 계산 (고경력 A그룹 + A그룹 조합 예외 허용) ★
+    function getMaxTeamsForDate(dateStr) {
+      const availList = TEACHER_SCHEDULE[dateStr] || [];
+      const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
+      const countB = availList.filter(t => TEACHER_B_GROUP.includes(t)).length;
+
+      // 1원칙: A그룹(고경력) + B그룹(저경력) 표준 조합
+      const standardPairs = Math.min(countA, countB);
+      const remA = countA - standardPairs;
+
+      // 2원칙 예외: B그룹이 부족하여 남은 A그룹(고경력) 교사가 2명 이상이면 A+A 조합 팀 형성
+      const extraSeniorPairs = Math.floor(remA / 2);
+
+      return standardPairs + extraSeniorPairs;
     }
 
     // 교사 관리자 전용 뷰 렌더링 (1단계 일괄업로드 + 2단계 개별추가 탑재)
@@ -630,6 +645,156 @@
           </div>
         </section>
       `;
+    }
+
+    // ★ 유연한 면접교사 자동 배정 (고경력 A+A 조합 유연 허용) ★
+    async function assignRandomTeachersForDate(targetDateStr) {
+      const dayStudentList = state.regs.filter(r => r.date === targetDateStr);
+      if (dayStudentList.length === 0) {
+        alert(`${targetDateStr} 날짜에 면접을 신청한 학생이 없습니다.`);
+        return;
+      }
+
+      const availList = TEACHER_SCHEDULE[targetDateStr] || ALL_TEACHERS;
+      let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+      let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+      const workload = getTeacherWorkloadCounts();
+      const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+        const diff = (workload[a] || 0) - (workload[b] || 0);
+        return diff !== 0 ? diff : Math.random() - 0.5;
+      });
+
+      availA = sortByWorkload(availA);
+      availB = sortByWorkload(availB);
+
+      const teams = [];
+
+      // 1순위: A그룹(고경력) + B그룹(저경력) 매칭
+      while (availA.length > 0 && availB.length > 0) {
+        teams.push({ t1: availA.shift(), t2: availB.shift() });
+      }
+
+      // 2순위 예외: B그룹 교사가 다 소진되었으나 A그룹(고경력) 교사가 2명 이상 남아있는 경우 A+A 조합 형성
+      while (availA.length >= 2) {
+        teams.push({ t1: availA.shift(), t2: availA.shift() });
+      }
+
+      if (teams.length === 0) {
+        alert(`${targetDateStr} 날짜에 배정 가능한 교사 팀이 부족합니다. (최소 2명의 교사 필요)`);
+        return;
+      }
+
+      const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
+      const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
+
+      let count = 0;
+      p8Students.forEach((st, idx) => {
+        if (teams[idx]) {
+          st.teacher1 = teams[idx].t1;
+          st.teacher2 = teams[idx].t2;
+          count++;
+        }
+      });
+
+      p9Students.forEach((st, idx) => {
+        if (teams[idx]) {
+          st.teacher1 = teams[idx].t1;
+          st.teacher2 = teams[idx].t2;
+          count++;
+        }
+      });
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          for (const reg of dayStudentList) {
+            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
+          }
+        } catch(e) { console.warn("Firestore Batch Save Error", e); }
+      }
+
+      alert(`[${targetDateStr} 균등 배정 완료]\n고경력/저경력 조합 및 고경력+고경력 유연 조합을 고려하여 총 ${count}명 학생에게 2인 1조 면접관 팀이 배치되었습니다.`);
+      renderTeacherView();
+    }
+
+    async function autoAssignRandomTeachers() {
+      if (state.regs.length === 0) {
+        alert('배정할 면접 신청 학생 내역이 없습니다.');
+        return;
+      }
+
+      if (!confirm('현재 신청된 전체 학생에게 2인 1조 교사 팀을 자동으로 배정하시겠습니까?')) return;
+
+      const dateGroup = {};
+      state.regs.forEach(r => {
+        if (!dateGroup[r.date]) dateGroup[r.date] = [];
+        dateGroup[r.date].push(r);
+      });
+
+      let assignedCount = 0;
+
+      for (const dateStr in dateGroup) {
+        const availList = TEACHER_SCHEDULE[dateStr] || ALL_TEACHERS;
+        
+        let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+        let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+        const workload = getTeacherWorkloadCounts();
+        const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+          const diff = (workload[a] || 0) - (workload[b] || 0);
+          return diff !== 0 ? diff : Math.random() - 0.5;
+        });
+
+        availA = sortByWorkload(availA);
+        availB = sortByWorkload(availB);
+
+        const teams = [];
+        while (availA.length > 0 && availB.length > 0) {
+          teams.push({ t1: availA.shift(), t2: availB.shift() });
+        }
+        while (availA.length >= 2) {
+          teams.push({ t1: availA.shift(), t2: availA.shift() });
+        }
+
+        if (teams.length === 0) continue;
+
+        const dayStudentList = dateGroup[dateStr];
+        const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
+        const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
+
+        p8Students.forEach((st, idx) => {
+          if (teams[idx]) {
+            st.teacher1 = teams[idx].t1;
+            st.teacher2 = teams[idx].t2;
+            assignedCount++;
+          }
+        });
+
+        p9Students.forEach((st, idx) => {
+          if (teams[idx]) {
+            st.teacher1 = teams[idx].t1;
+            st.teacher2 = teams[idx].t2;
+            assignedCount++;
+          }
+        });
+      }
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          for (const reg of state.regs) {
+            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
+          }
+        } catch(e) { console.warn("Firestore Batch Save Error", e); }
+      }
+
+      alert(`[전체 날짜 균등 배정 완료]\n유연한 팀 조합을 적용하여 총 ${assignedCount}건의 면접교사 배정이 성공적으로 완료되었습니다.`);
+      renderTeacherView();
     }
 
     function handleStudentLogin() {
@@ -811,48 +976,6 @@
           const { doc, setDoc } = window.dbTools;
           await setDoc(doc(window.db, 'interview_settings', 'teacher_schedule'), { schedule: TEACHER_SCHEDULE });
         } catch(e) { console.warn("Firestore Teacher Schedule Save Error", e); }
-      }
-    }
-
-    function getMaxTeamsForDate(dateStr) {
-      const availList = TEACHER_SCHEDULE[dateStr] || [];
-      const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
-      const countB = availList.filter(t => TEACHER_B_GROUP.includes(t)).length;
-      return Math.min(countA, countB);
-    }
-
-    function downloadTicketImage(id) {
-      const card = document.getElementById(`ticketCard_${id}`);
-      if (!card) return;
-
-      html2canvas(card, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `강일여고_모의면접_예약확인증_${state.user.name}_${state.user.num}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      });
-    }
-
-    async function submitStudentFeedback(id) {
-      const reg = state.regs.find(r => r.id === id);
-      if (!reg) return;
-
-      const currentFb = reg.feedback || '';
-      const feedbackInput = prompt(`[${reg.date} ${reg.period}교시 모의면접 후기 작성]\n\n· 실제 받았던 주요 면접 질문 및 본인의 느낌/아쉬웠던 점을 솔직하게 기록해 주세요:`, currentFb);
-
-      if (feedbackInput !== null) {
-        reg.feedback = feedbackInput.trim();
-        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-        if (window.isFirebaseReady && window.dbTools) {
-          try {
-            const { doc, setDoc } = window.dbTools;
-            await setDoc(doc(window.db, 'interview_registrations', id), reg);
-          } catch(e) { console.warn("Firestore Feedback Save Error", e); }
-        }
-
-        alert('모의면접 후기가 성공적으로 등록/수정되었습니다!');
-        checkMyRegistrations();
       }
     }
 
@@ -1148,7 +1271,8 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         exportedAt: new Date().toLocaleString(),
         closedDates: state.closedDates,
         teacherSchedule: TEACHER_SCHEDULE,
-        registrations: state.regs
+        registrations: state.regs,
+        studentList: STUDENT_LIST
       };
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
@@ -1178,6 +1302,10 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           state.closedDates = restored.closedDates || [];
           TEACHER_SCHEDULE = restored.teacherSchedule || TEACHER_SCHEDULE;
           state.regs = restored.registrations || [];
+          if (restored.studentList) {
+            STUDENT_LIST = restored.studentList;
+            localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+          }
 
           localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
           localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
@@ -1438,148 +1566,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         if (r.teacher2) counts[r.teacher2] = (counts[r.teacher2] || 0) + 1;
       });
       return counts;
-    }
-
-    async function assignRandomTeachersForDate(targetDateStr) {
-      const dayStudentList = state.regs.filter(r => r.date === targetDateStr);
-      if (dayStudentList.length === 0) {
-        alert(`${targetDateStr} 날짜에 면접을 신청한 학생이 없습니다.`);
-        return;
-      }
-
-      const availList = TEACHER_SCHEDULE[targetDateStr] || ALL_TEACHERS;
-      let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-      let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-
-      if (availA.length === 0 || availB.length === 0) {
-        alert(`${targetDateStr} 날짜에 가능한 A그룹 또는 B그룹 교사가 부족합니다.`);
-        return;
-      }
-
-      const workload = getTeacherWorkloadCounts();
-
-      const sortByWorkload = (arr) => [...arr].sort((a, b) => {
-        const diff = (workload[a] || 0) - (workload[b] || 0);
-        return diff !== 0 ? diff : Math.random() - 0.5;
-      });
-
-      availA = sortByWorkload(availA);
-      availB = sortByWorkload(availB);
-
-      const teams = [];
-      const maxTeams = Math.min(availA.length, availB.length);
-      for (let i = 0; i < maxTeams; i++) {
-        teams.push({ t1: availA[i], t2: availB[i] });
-      }
-
-      const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
-      const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
-
-      let count = 0;
-      p8Students.forEach((st, idx) => {
-        if (teams[idx]) {
-          st.teacher1 = teams[idx].t1;
-          st.teacher2 = teams[idx].t2;
-          count++;
-        }
-      });
-
-      p9Students.forEach((st, idx) => {
-        if (teams[idx]) {
-          st.teacher1 = teams[idx].t1;
-          st.teacher2 = teams[idx].t2;
-          count++;
-        }
-      });
-
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          for (const reg of dayStudentList) {
-            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
-          }
-        } catch(e) { console.warn("Firestore Batch Save Error", e); }
-      }
-
-      alert(`[${targetDateStr} 균등 배정 완료]\n누적 담당 건수를 종합 계산하여 총 ${count}명 학생에게 2인 1조 팀이 고르게 배정되었습니다.`);
-      renderTeacherView();
-    }
-
-    async function autoAssignRandomTeachers() {
-      if (state.regs.length === 0) {
-        alert('배정할 면접 신청 학생 내역이 없습니다.');
-        return;
-      }
-
-      if (!confirm('현재 신청된 전체 학생에게 [누적 건수 균등 고려] 2인 1조 팀을 자동으로 배정하시겠습니까?')) return;
-
-      const dateGroup = {};
-      state.regs.forEach(r => {
-        if (!dateGroup[r.date]) dateGroup[r.date] = [];
-        dateGroup[r.date].push(r);
-      });
-
-      let assignedCount = 0;
-
-      for (const dateStr in dateGroup) {
-        const availList = TEACHER_SCHEDULE[dateStr] || ALL_TEACHERS;
-        
-        let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-        let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-
-        const workload = getTeacherWorkloadCounts();
-        const sortByWorkload = (arr) => [...arr].sort((a, b) => {
-          const diff = (workload[a] || 0) - (workload[b] || 0);
-          return diff !== 0 ? diff : Math.random() - 0.5;
-        });
-
-        availA = sortByWorkload(availA);
-        availB = sortByWorkload(availB);
-
-        const teams = [];
-        const maxTeams = Math.min(availA.length, availB.length);
-        for (let i = 0; i < maxTeams; i++) {
-          teams.push({ t1: availA[i], t2: availB[i] });
-        }
-
-        if (teams.length === 0) continue;
-
-        const dayStudentList = dateGroup[dateStr];
-        const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
-        const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
-
-        p8Students.forEach((st, idx) => {
-          if (teams[idx]) {
-            st.teacher1 = teams[idx].t1;
-            st.teacher2 = teams[idx].t2;
-            assignedCount++;
-          }
-        });
-
-        p9Students.forEach((st, idx) => {
-          if (teams[idx]) {
-            st.teacher1 = teams[idx].t1;
-            st.teacher2 = teams[idx].t2;
-            assignedCount++;
-          }
-        });
-      }
-
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          for (const reg of state.regs) {
-            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
-          }
-        } catch(e) { console.warn("Firestore Batch Save Error", e); }
-      }
-
-      alert(`[전체 날짜 균등 배정 완료]\n누적 건수를 고려하여 총 ${assignedCount}건의 면접교사 배정이 고르게 수행되었습니다.`);
-      renderTeacherView();
     }
 
     function showTodayTeacherStudents(teacherName) {
