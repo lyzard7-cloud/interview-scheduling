@@ -183,7 +183,7 @@
           <i class="fa-solid fa-bars"></i>
         </div>
         <nav class="space-y-1 text-xs sm:text-sm font-medium pt-2" id="sidebarNav">
-          <!-- 메뉴 렌더링 -->
+          <!-- 학생/교사 메뉴 자동 렌더링 -->
         </nav>
       </div>
 
@@ -303,7 +303,7 @@
     </main>
   </div>
 
-  <!-- 온라인 평가지 모달 (노트북 직접 입력용) -->
+  <!-- 온라인 평가지 모달 -->
   <div id="onlineEvalModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
     <div class="bg-white max-w-3xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
       <div class="flex justify-between items-center border-b pb-3">
@@ -350,13 +350,13 @@
   </footer>
 
   <script>
-    // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
     let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
     const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const TEACHER_B_GROUP = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
+    // 복원된 10월/11월 교사 스케줄 데이터
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -377,7 +377,20 @@
       "2026-10-27": ["신이현", "이진경", "조아영", "정해린", "최명호", "전명치"],
       "2026-10-28": ["원선보", "이진경", "백홍", "이나경", "조아영", "전명치"],
       "2026-10-29": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
-      "2026-10-30": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "전명치"]
+      "2026-10-30": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "전명치"],
+
+      "2026-11-02": ["신이현", "이진경", "백홍", "이나경", "전명치"],
+      "2026-11-03": ["신이현", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-04": ["원선보", "이진경", "백홍", "이나경", "조아영", "전명치"],
+      "2026-11-05": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
+      "2026-11-06": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-09": ["신이현", "이진경", "백홍", "이나경", "최명호", "전명치"],
+      "2026-11-10": ["신이현", "이진경", "백홍", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-11": ["김준형", "엄혜진", "원선보", "이진경", "백홍", "이나경", "조아영", "최명호", "전명치"],
+      "2026-11-12": ["엄혜진", "원선보", "신이현", "이진경", "백홍", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-13": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-16": ["엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
+      "2026-11-17": ["원선보", "이진경", "백홍", "이나경", "조아영", "최명호", "전명치"]
     }));
 
     const DEFAULT_CLOSED_DATES = ["2026-10-05", "2026-10-09"];
@@ -470,6 +483,148 @@
       updateSidebarNavForStudent();
       switchStudentTab('reserve');
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
+    }
+
+    // 학생용 사이드바 메뉴 복구
+    function updateSidebarNavForStudent() {
+      const nav = document.getElementById('sidebarNav');
+      if (!nav) return;
+      nav.innerHTML = `
+        <button onclick="switchStudentTab('reserve')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'reserve' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchStudentTab('myreg')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'myreg' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-clipboard-list mr-2"></i>나의 신청 내역</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchStudentTab('guide')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'guide' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-lightbulb mr-2 text-amber-500"></i>면접 준비 팁 & 족보</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      `;
+    }
+
+    function switchStudentTab(tabName) {
+      state.studentTab = tabName;
+      updateSidebarNavForStudent();
+
+      const reserveSec = document.getElementById('studentReservationSection');
+      const myRegSec = document.getElementById('myRegSection');
+      const guideSec = document.getElementById('guideSection');
+
+      reserveSec.classList.add('hidden');
+      myRegSec.classList.add('hidden');
+      guideSec.classList.add('hidden');
+
+      if (tabName === 'reserve') {
+        reserveSec.classList.remove('hidden');
+        renderCalendar();
+      } else if (tabName === 'myreg') {
+        myRegSec.classList.remove('hidden');
+        checkMyRegistrations();
+      } else if (tabName === 'guide') {
+        guideSec.classList.remove('hidden');
+      }
+    }
+
+    function switchTeacherTab(tabName) {
+      if (tabName === 'admin') {
+        const inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
+        if (inputPwd !== '01054568795') {
+          alert('비밀번호가 올바르지 않습니다.');
+          return;
+        }
+      }
+      state.teacherTab = tabName;
+      updateSidebarNavForTeacher();
+      renderTeacherView();
+    }
+
+    function updateSidebarNavForTeacher() {
+      const nav = document.getElementById('sidebarNav');
+      if (!nav) return;
+      nav.innerHTML = `
+        <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-calendar-days mr-2"></i>달력 일정 및 마감 관리</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('schedule')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'schedule' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-user-gear mr-2"></i>날짜별 참여 교사 관리</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-chart-pie mr-2"></i>면접교사 배정 통계</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('admin')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'admin' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-user-shield mr-2"></i>교사 관리자 전용</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="goToStudentPage()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold transition-all mt-3 pt-3 border-t whitespace-nowrap">
+          <span><i class="fa-solid fa-user-graduate mr-2 text-brand-purple"></i>학생 페이지로 이동</span>
+          <i class="fa-solid fa-arrow-right text-xs text-slate-400"></i>
+        </button>
+      `;
+    }
+
+    function syncDatabase() {
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { collection, onSnapshot } = window.dbTools;
+          onSnapshot(collection(window.db, 'interview_registrations'), (snapshot) => {
+            state.regs = [];
+            snapshot.forEach(doc => state.regs.push(doc.data()));
+            localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+            if (isTeacher) renderTeacherView();
+            else {
+              renderCalendar();
+              if (state.selectedDate) selectDate(state.selectedDate);
+              checkMyRegistrations();
+            }
+          });
+
+          onSnapshot(collection(window.db, 'interview_settings'), (snapshot) => {
+            snapshot.forEach(doc => {
+              if (doc.id === 'closed_dates') {
+                state.closedDates = doc.data().dates || [];
+                localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+                if (isTeacher) renderTeacherView();
+                else renderCalendar();
+              } else if (doc.id === 'teacher_schedule') {
+                TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
+                localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
+                if (isTeacher) renderTeacherView();
+                else renderCalendar();
+              }
+            });
+          });
+        } catch(e) { console.warn("Firestore Listener Error", e); }
+      }
+    }
+
+    async function saveClosedDatesToDb() {
+      localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_settings', 'closed_dates'), { dates: state.closedDates });
+        } catch(e) { console.warn("Firestore Closed Dates Save Error", e); }
+      }
+    }
+
+    async function saveTeacherScheduleToDb() {
+      localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_settings', 'teacher_schedule'), { schedule: TEACHER_SCHEDULE });
+        } catch(e) { console.warn("Firestore Teacher Schedule Save Error", e); }
+      }
     }
 
     // 사전 예상 질문지 모달 관련 기능
@@ -1362,6 +1517,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 엑셀 업로드 및 전학생 1명 개별 추가 기능을 지원합니다.</p>
           </div>
 
+          <!-- 1단계: 엑셀 파일 일괄 업로드 모듈 -->
           <div class="bg-indigo-50/70 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
@@ -1391,6 +1547,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
           </div>
 
+          <!-- 2단계: 전학생 등 개별 학생 1명 추가 모듈 -->
           <div class="bg-purple-50/70 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
@@ -1410,6 +1567,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
           </div>
 
+          <!-- 등록된 학생 명단 확인 테이블 -->
           <div class="space-y-2">
             <h4 class="font-bold text-slate-800 text-xs sm:text-sm flex justify-between items-center whitespace-nowrap">
               <span>📋 시스템 등록 학생 명단 목록 (총 ${STUDENT_LIST.length}명)</span>
@@ -1433,6 +1591,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
           </div>
 
+          <!-- 백업 및 복원 도구 -->
           <div class="bg-amber-50/60 p-4 sm:p-5 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
