@@ -1795,7 +1795,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // 면접 장소 및 관리 열 중앙 정렬 적용
+    // 면접 장소 및 관리 열 완벽 중앙 정렬 적용
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1879,7 +1879,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </td>
             <td class="py-2.5 px-1.5 whitespace-nowrap">${teacherCellHtml}</td>
             <td class="py-2.5 px-1.5 text-center whitespace-nowrap">
-              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+              <div class="flex justify-center">
+                <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+              </div>
             </td>
             <td class="py-2.5 px-1 text-center whitespace-nowrap">
               <div class="flex items-center justify-center space-x-1">
@@ -1957,7 +1959,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">사전질문</th>
                   <th class="py-2.5 px-1.5 whitespace-nowrap">담당 면접교사 (A:교사1, B:교사2)</th>
                   <th class="py-2.5 px-1.5 text-center whitespace-nowrap">면접 장소</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">관리</th>
+                  <th class="py-2.5 px-1.5 text-center whitespace-nowrap">관리</th>
                 </tr>
               </thead>
               <tbody>
