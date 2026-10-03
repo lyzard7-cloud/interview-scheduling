@@ -187,7 +187,7 @@
         </nav>
       </div>
 
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 text-xs space-y-1.5 hidden md:block">
+      <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 text-xs space-y-1.5 hidden md:block">
         <p class="font-bold text-slate-800 text-xs sm:text-sm whitespace-nowrap"><i class="fa-solid fa-headset text-brand-purple mr-1"></i> 시스템 문의</p>
         <p class="text-slate-500 whitespace-nowrap">3학년 교무실</p>
         <p class="text-slate-700 font-semibold whitespace-nowrap">033-650-0783 (내선 783)</p>
@@ -388,7 +388,7 @@
       window.location.href = window.location.pathname;
     }
 
-    // ★ 1. 학생 입력용 기본 CSV 양식 다운로드 ★
+    // 1. 학생 입력용 기본 CSV 양식 다운로드
     function downloadStudentTemplateCSV() {
       let csvStr = '\uFEFFNo,학번,이름\n';
       csvStr += '1,30101,강지수\n';
@@ -402,7 +402,7 @@
       link.click();
     }
 
-    // ★ 2. 선생님이 학번/이름 입력한 CSV 파일 업로드 ➔ 6자리 고유 PIN 코드 자동 생성 ★
+    // 2. CSV 파일 업로드 ➔ 6자리 고유 PIN 코드 일괄 자동 생성
     function processAndGeneratePinFromCSV(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -437,7 +437,7 @@
         if (generatedList.length > 0) {
           STUDENT_LIST = generatedList;
           localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
-          alert(`[코드 자동 생성 완료]\n\n총 ${generatedList.length}명 학생의 6자리 고유 PIN 코드가 성공적으로 생성되었습니다!`);
+          alert(`[일괄 코드 자동 생성 완료]\n\n총 ${generatedList.length}명 학생의 6자리 고유 PIN 코드가 성공적으로 생성되었습니다!`);
           renderTeacherAdminView();
         } else {
           alert('CSV 파일에서 학생 정보를 읽을 수 없습니다. 양식을 확인해 주세요.');
@@ -446,10 +446,57 @@
       reader.readAsText(file, 'utf-8');
     }
 
-    // ★ 3. 고유 코드가 포함된 최종 명렬표 CSV 다운로드 ★
+    // ★ 2단계: 전학생 등 개별 학생 1명 추가 기능 (기존 PIN 유지) ★
+    function addSingleStudent() {
+      const numInput = document.getElementById('singleAddNum')?.value.trim();
+      const nameInput = document.getElementById('singleAddName')?.value.trim();
+
+      if (!numInput || !nameInput) {
+        alert('추가할 학생의 학번과 이름을 모두 입력해 주세요.');
+        return;
+      }
+
+      const isExist = STUDENT_LIST.some(s => String(s.num) === numInput);
+      if (isExist) {
+        alert(`이미 학번 [${numInput}] 학생이 명단에 존재합니다.`);
+        return;
+      }
+
+      // 중복 없는 신규 6자리 PIN 번호 즉시 생성
+      const usedPins = new Set(STUDENT_LIST.map(s => String(s.pin)));
+      let newPin;
+      do {
+        newPin = String(Math.floor(100000 + Math.random() * 900000));
+      } while (usedPins.has(newPin));
+
+      const newStudent = {
+        no: String(STUDENT_LIST.length + 1),
+        num: numInput,
+        name: nameInput,
+        pin: newPin
+      };
+
+      STUDENT_LIST.push(newStudent);
+      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+
+      alert(`[개별 학생 추가 완료]\n\n· 학번: ${numInput}\n· 이름: ${nameInput}\n· 발급된 고유 PIN 코드: ${newPin}\n\n명단에 성공적으로 합류되었습니다! (총 ${STUDENT_LIST.length}명)`);
+      renderTeacherAdminView();
+    }
+
+    // ★ 개별 학생 명단 삭제 기능 ★
+    function deleteSingleStudent(num, name) {
+      if (!confirm(`[${num} ${name}] 학생을 명단에서 삭제하시겠습니까?`)) return;
+
+      STUDENT_LIST = STUDENT_LIST.filter(s => String(s.num) !== String(num));
+      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+      alert(`[${name}] 학생이 명단에서 삭제되었습니다.`);
+      renderTeacherAdminView();
+    }
+
+    // 3. 고유 코드가 포함된 최종 명렬표 CSV 다운로드
     function exportGeneratedStudentPinCSV() {
       if (STUDENT_LIST.length === 0) {
-        alert('먼저 작성한 학생 명렬표 CSV 파일을 업로드하여 코드를 생성해 주세요.');
+        alert('먼저 작성한 학생 명렬표 CSV 파일을 업로드하거나 개별 학생을 추가해 주세요.');
         return;
       }
 
@@ -465,44 +512,101 @@
       link.click();
     }
 
+    // 교사 관리자 전용 뷰 렌더링 (1단계 일괄업로드 + 2단계 개별추가 탑재)
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
 
+      const studentRowsHtml = STUDENT_LIST.map((s, i) => `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs">
+          <td class="py-2 px-2 text-center text-slate-400 whitespace-nowrap">${i + 1}</td>
+          <td class="py-2 px-2 font-bold text-slate-800 whitespace-nowrap">${s.num}</td>
+          <td class="py-2 px-2 font-bold text-slate-900 whitespace-nowrap">${s.name}</td>
+          <td class="py-2 px-2 font-extrabold text-brand-purple tracking-widest whitespace-nowrap">${s.pin}</td>
+          <td class="py-2 px-2 text-center whitespace-nowrap">
+            <button onclick="deleteSingleStudent('${s.num}', '${s.name}')" class="text-red-500 hover:text-red-700 font-bold underline text-[11px] whitespace-nowrap">삭제</button>
+          </td>
+        </tr>
+      `).join('');
+
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
           <div class="border-b border-slate-100 pb-3.5">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 - 학생 PIN 코드 관리</h3>
-            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">엑셀 파일 업로드로 197명 학생 전체 6자리 고유 코드를 1초 만에 자동 생성합니다.</p>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 - 학생 PIN 코드 및 명단 관리</h3>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 엑셀 업로드 및 전학생 1명 개별 추가 기능을 지원합니다.</p>
           </div>
 
-          <!-- 스텝 1: 양식 다운로드 & 업로드 모듈 -->
-          <div class="bg-indigo-50/70 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-4">
+          <!-- 1단계: 엑셀 파일 일괄 업로드 모듈 -->
+          <div class="bg-indigo-50/70 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-file-excel text-indigo-600"></i> [1단계] 학생 명단 업로드 및 코드 자동 생성 (현재 등록: ${STUDENT_LIST.length}명)
+                <i class="fa-solid fa-file-excel text-indigo-600"></i> [1단계] 엑셀 파일 전체 업로드 (현재 등록: ${STUDENT_LIST.length}명)
               </h4>
               <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-                1. <strong>[기본 양식 다운로드]</strong>를 눌러 학번과 이름을 적을 엑셀 파일(CSV)을 받습니다.<br>
-                2. 학번과 학생 이름을 적은 후 <strong>[학생 명단 업로드]</strong> 버튼을 누르면 6자리 고유 코드가 자동으로 생성됩니다.
+                1. <strong>[양식 다운로드]</strong>를 클릭해 학번과 이름을 적을 엑셀(CSV) 양식을 받습니다.<br>
+                2. 학번과 이름을 입력 후 <strong>[학생 명단 업로드]</strong> 버튼을 누르면 전체 고유 코드가 일괄 생성됩니다.
               </p>
             </div>
 
             <div class="flex items-center space-x-2 flex-wrap gap-2 pt-1">
               <button onclick="downloadStudentTemplateCSV()" class="bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
-                📄 1. 기본 양식 다운로드
+                📄 양식 다운로드
               </button>
 
               <label class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap">
-                📤 2. 학생 명단 업로드 (코드 자동 생성)
+                📤 학생 명단 전체 업로드 (코드 자동 생성)
                 <input type="file" accept=".csv" onchange="processAndGeneratePinFromCSV(event)" class="hidden">
               </label>
 
               ${STUDENT_LIST.length > 0 ? `
                 <button onclick="exportGeneratedStudentPinCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
-                  📥 3. 고유 코드 포함 최종 명렬표 다운로드
+                  📥 고유 코드 포함 최종 명렬표 다운로드
                 </button>
               ` : ''}
+            </div>
+          </div>
+
+          <!-- 2단계: 전학생 등 개별 학생 1명 추가 모듈 -->
+          <div class="bg-purple-50/70 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-3">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-user-plus text-brand-purple"></i> [2단계] 개별 전학생 1명 추가 (기존 코드 유지)
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600">
+                전학이나 명단 누락 발생 시, 학번과 이름만 적으면 기존 코드를 건드리지 않고 <strong>신규 PIN 코드를 즉시 발급</strong>합니다.
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2 flex-wrap gap-2 pt-1">
+              <input type="text" id="singleAddNum" placeholder="학번 (예: 30125)" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-brand-purple bg-white w-28 sm:w-36">
+              <input type="text" id="singleAddName" placeholder="이름 (예: 홍길동)" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-brand-purple bg-white w-28 sm:w-36">
+              <button onclick="addSingleStudent()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-4 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                + 학생 추가 (코드 생성)
+              </button>
+            </div>
+          </div>
+
+          <!-- 등록된 학생 명단 확인 테이블 -->
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-800 text-xs sm:text-sm flex justify-between items-center whitespace-nowrap">
+              <span>📋 시스템 등록 학생 명단 목록 (총 ${STUDENT_LIST.length}명)</span>
+            </h4>
+            
+            <div class="max-h-60 overflow-y-auto custom-scroll rounded-xl border border-slate-200">
+              <table class="w-full text-left border-collapse">
+                <thead class="sticky top-0 bg-slate-100 text-slate-600 text-xs font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">No</th>
+                    <th class="py-2 px-2 whitespace-nowrap">학번</th>
+                    <th class="py-2 px-2 whitespace-nowrap">이름</th>
+                    <th class="py-2 px-2 whitespace-nowrap">발급 고유 PIN 코드</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${studentRowsHtml.length > 0 ? studentRowsHtml : '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400 whitespace-nowrap">등록된 학생이 없습니다. 1단계 전체 업로드나 2단계 개별 추가를 진행해 주세요.</td></tr>'}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -534,13 +638,13 @@
       const pin = document.getElementById('sPin').value.trim();
 
       if (STUDENT_LIST.length === 0) {
-        alert('아직 등록된 학생 명단이 없습니다. 담임선생님께 확인해 주세요.');
+        alert('아직 시스템에 등록된 학생 명단이 없습니다. 교사 관리자 페이지에서 학생 명단을 등록해 주세요.');
         return;
       }
 
       const foundStudent = STUDENT_LIST.find(s => String(s.num) === num && String(s.name) === name);
       if (!foundStudent) {
-        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다.');
+        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
         return;
       }
 
