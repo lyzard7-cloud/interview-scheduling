@@ -628,6 +628,159 @@
       }
     }
 
+    // 개별/전체 날짜 균등배정 자바스크립트 처리 함수
+    async function assignRandomTeachersForDate(targetDateStr) {
+      if (!targetDateStr) {
+        alert('날짜를 먼저 선택해 주세요.');
+        return;
+      }
+
+      const dayStudentList = state.regs.filter(r => r.date === targetDateStr);
+      if (dayStudentList.length === 0) {
+        alert(`${targetDateStr} 날짜에 면접을 신청한 학생이 없습니다.`);
+        return;
+      }
+
+      const availList = TEACHER_SCHEDULE[targetDateStr] || ALL_TEACHERS;
+      let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+      let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+      const workload = getTeacherWorkloadCounts();
+      const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+        const diff = (workload[a] || 0) - (workload[b] || 0);
+        return diff !== 0 ? diff : Math.random() - 0.5;
+      });
+
+      availA = sortByWorkload(availA);
+      availB = sortByWorkload(availB);
+
+      const teams = [];
+
+      while (availA.length > 0 && availB.length > 0) {
+        teams.push({ t1: availA.shift(), t2: availB.shift() });
+      }
+
+      while (availA.length >= 2) {
+        teams.push({ t1: availA.shift(), t2: availA.shift() });
+      }
+
+      if (teams.length === 0) {
+        alert(`${targetDateStr} 날짜에 배정 가능한 교사 팀이 부족합니다. (최소 2명의 교사 참여 설정 필요)`);
+        return;
+      }
+
+      const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
+      const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
+
+      let count = 0;
+      p8Students.forEach((st, idx) => {
+        if (teams[idx]) {
+          st.teacher1 = teams[idx].t1;
+          st.teacher2 = teams[idx].t2;
+          count++;
+        }
+      });
+
+      p9Students.forEach((st, idx) => {
+        if (teams[idx]) {
+          st.teacher1 = teams[idx].t1;
+          st.teacher2 = teams[idx].t2;
+          count++;
+        }
+      });
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          for (const reg of dayStudentList) {
+            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
+          }
+        } catch(e) { console.warn("Firestore Batch Save Error", e); }
+      }
+
+      alert(`[${targetDateStr} 균등 배정 완료]\n총 ${count}명 학생에게 면접관 팀이 고르게 배치되었습니다.`);
+      renderTeacherView();
+    }
+
+    async function autoAssignRandomTeachers() {
+      if (state.regs.length === 0) {
+        alert('배정할 면접 신청 학생 내역이 없습니다.');
+        return;
+      }
+
+      if (!confirm('현재 신청된 전체 학생에게 [누적 건수 균등 고려] 2인 1조 팀을 자동으로 배정하시겠습니까?')) return;
+
+      const dateGroup = {};
+      state.regs.forEach(r => {
+        if (!dateGroup[r.date]) dateGroup[r.date] = [];
+        dateGroup[r.date].push(r);
+      });
+
+      let assignedCount = 0;
+
+      for (const dateStr in dateGroup) {
+        const availList = TEACHER_SCHEDULE[dateStr] || ALL_TEACHERS;
+        
+        let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+        let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+        const workload = getTeacherWorkloadCounts();
+        const sortByWorkload = (arr) => [...arr].sort((a, b) => {
+          const diff = (workload[a] || 0) - (workload[b] || 0);
+          return diff !== 0 ? diff : Math.random() - 0.5;
+        });
+
+        availA = sortByWorkload(availA);
+        availB = sortByWorkload(availB);
+
+        const teams = [];
+        while (availA.length > 0 && availB.length > 0) {
+          teams.push({ t1: availA.shift(), t2: availB.shift() });
+        }
+        while (availA.length >= 2) {
+          teams.push({ t1: availA.shift(), t2: availA.shift() });
+        }
+
+        if (teams.length === 0) continue;
+
+        const dayStudentList = dateGroup[dateStr];
+        const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
+        const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
+
+        p8Students.forEach((st, idx) => {
+          if (teams[idx]) {
+            st.teacher1 = teams[idx].t1;
+            st.teacher2 = teams[idx].t2;
+            assignedCount++;
+          }
+        });
+
+        p9Students.forEach((st, idx) => {
+          if (teams[idx]) {
+            st.teacher1 = teams[idx].t1;
+            st.teacher2 = teams[idx].t2;
+            assignedCount++;
+          }
+        });
+      }
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          for (const reg of state.regs) {
+            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
+          }
+        } catch(e) { console.warn("Firestore Batch Save Error", e); }
+      }
+
+      alert(`[전체 날짜 균등 배정 완료]\n총 ${assignedCount}건의 면접교사 배정이 성공적으로 완료되었습니다.`);
+      renderTeacherView();
+    }
+
     // 사전 예상 질문지 모달 관련 기능
     function openPreQuestionsModal(regId) {
       const reg = state.regs.find(r => r.id === regId);
@@ -661,7 +814,7 @@
           </div>
 
           <div class="pt-2 space-y-2 border-t">
-            <label class="block font-bold text-slate-800">✍️️ 새 예상 질문 추가</label>
+            <label class="block font-bold text-slate-800">✍ 새 예상 질문 추가</label>
             <div class="flex gap-2">
               <input type="text" id="newPreQAuthor" placeholder="선생님 성함" class="w-24 px-2.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs">
               <input type="text" id="newPreQText" placeholder="예: 생기부 2페이지 탐구활동 관련 검증 질문" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs">
@@ -894,7 +1047,7 @@
       link.click();
     }
 
-    // 1단계: CSV 파일 업로드 ➔ 데이터 타입(String) 보장 핀 코드 일괄 자동 생성
+    // 1단계: CSV 파일 업로드 ➔ PIN 코드 일괄 자동 생성
     function processAndGeneratePinFromCSV(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1642,6 +1795,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
+    // 면접 장소 및 관리 열 중앙 정렬 적용
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1724,17 +1878,19 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </button>
             </td>
             <td class="py-2.5 px-1.5 whitespace-nowrap">${teacherCellHtml}</td>
-            <td class="py-2.5 px-1.5 whitespace-nowrap">
-              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] border border-slate-200 rounded focus:border-brand-purple">
+            <td class="py-2.5 px-1.5 text-center whitespace-nowrap">
+              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
             </td>
-            <td class="py-2.5 px-1 text-center whitespace-nowrap space-x-1">
-              <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
-                📝 온라인 평가지
-              </button>
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                인쇄
-              </button>
-              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[10px] whitespace-nowrap">취소</button>
+            <td class="py-2.5 px-1 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center space-x-1">
+                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
+                  📝 온라인 평가지
+                </button>
+                <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold border border-slate-200 whitespace-nowrap">
+                  인쇄
+                </button>
+                <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[10px] whitespace-nowrap">취소</button>
+              </div>
             </td>
           </tr>
         `;
@@ -1800,7 +1956,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">상태</th>
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">사전질문</th>
                   <th class="py-2.5 px-1.5 whitespace-nowrap">담당 면접교사 (A:교사1, B:교사2)</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">면접 장소</th>
+                  <th class="py-2.5 px-1.5 text-center whitespace-nowrap">면접 장소</th>
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">관리</th>
                 </tr>
               </thead>
