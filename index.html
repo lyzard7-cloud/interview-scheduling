@@ -406,6 +406,7 @@
       editingTeacherId: null,
       selectedTeacherDates: [],
       searchKeyword: '',
+      evalSearchKeyword: '',
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
     };
@@ -542,6 +543,7 @@
       renderTeacherView();
     }
 
+    // ★ 교사용 사이드바 메뉴 (학생 면접 평가지 관리 탭 신규 추가) ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -556,6 +558,10 @@
         </button>
         <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('eval_management')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'eval_management' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-clipboard-user mr-2 text-indigo-600"></i>학생 면접 평가지 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
@@ -1634,6 +1640,210 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
+    // ★ 학생별 3회 누적 면접 평가지 종합 인쇄 함수 ★
+    function printStudentCumulativeEvalSheet(sNum) {
+      const studentRegs = state.regs.filter(r => String(r.num).trim() === String(sNum).trim()).sort((a,b)=> new Date(a.date) - new Date(b.date));
+      
+      if (studentRegs.length === 0) {
+        alert('출력할 면접 평가지 기록이 없습니다.');
+        return;
+      }
+
+      const sName = studentRegs[0].name;
+      const printArea = document.getElementById('printArea');
+
+      const cardsPrintHtml = studentRegs.map((r, idx) => {
+        const evalData = r.evalData || { scores: { q1: '중', q2: '중', q3: '중', q4: '중' }, qaList: [], summary: '' };
+        const qaPrintHtml = (evalData.qaList || []).map((qa, i) => `
+          <div class="border-b pb-2 mb-2 last:border-0">
+            <p class="font-bold text-slate-900">Q${i+1}. ${qa.question || '-'}</p>
+            <p class="text-slate-700 mt-0.5">➔ A. ${qa.answer || '-'}</p>
+          </div>
+        `).join('') || '<p class="text-slate-400">기록된 질의응답이 없습니다.</p>';
+
+        return `
+          <div class="border-2 border-slate-800 p-5 rounded-xl space-y-3 mb-6 bg-white page-break-after">
+            <div class="flex justify-between items-center border-b-2 border-slate-800 pb-2">
+              <h3 class="text-base font-bold text-slate-900">[제 ${idx + 1}회차 모의면접 평가 기록지]</h3>
+              <span class="text-xs font-semibold text-slate-600">${r.date} (${r.period}교시)</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-100 p-2.5 rounded font-medium border border-slate-300">
+              <div>■ 지원 대학/학과: <strong>${r.univ} ${r.dept}</strong></div>
+              <div>■ 면접 장소: <strong>${r.location || '3학년 교무실'}</strong></div>
+              <div class="col-span-2">■ 담당 면접관: <strong>[A] ${r.teacher1 || '미배정'} / [B] ${r.teacher2 || '미배정'}</strong></div>
+            </div>
+
+            <!-- 영역별 점수 -->
+            <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
+              <p class="font-bold text-slate-900 border-b pb-1">1. 영역별 평가 점수</p>
+              <div class="grid grid-cols-2 gap-1.5 pt-1">
+                <div>· 전공 적합성: <strong>[ ${evalData.scores.q1 || '중'} ]</strong></div>
+                <div>· 서류 진위여부: <strong>[ ${evalData.scores.q2 || '중'} ]</strong></div>
+                <div>· 논리적 사고: <strong>[ ${evalData.scores.q3 || '중'} ]</strong></div>
+                <div>· 태도 및 전달력: <strong>[ ${evalData.scores.q4 || '중'} ]</strong></div>
+              </div>
+            </div>
+
+            <!-- 현장 Q&A -->
+            <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
+              <p class="font-bold text-slate-900 border-b pb-1 mb-1">2. 주요 질문 및 학생 답변 기록</p>
+              ${qaPrintHtml}
+            </div>
+
+            <!-- 교사 종합 소견 -->
+            <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
+              <p class="font-bold text-slate-900 border-b pb-1">3. 종합 평가 소견 및 개선 지도사항</p>
+              <p class="text-slate-800 pt-1 leading-relaxed">${r.teacherEvaluation || evalData.summary || '등록된 총평 소견이 없습니다.'}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      printArea.innerHTML = `
+        <div class="max-w-4xl mx-auto p-4 space-y-4">
+          <div class="text-center border-b-4 border-slate-900 pb-3">
+            <h1 class="text-2xl font-black text-slate-900">2026학년도 대입 모의면접 학생별 3회 누적 평가지</h1>
+            <p class="text-sm font-bold text-slate-700 mt-1">강일여자고등학교 3학년부 | 지원 학생: ${sName} (${sNum})</p>
+          </div>
+          ${cardsPrintHtml}
+        </div>
+      `;
+
+      window.print();
+      setTimeout(() => {
+        printArea.innerHTML = '';
+      }, 500);
+    }
+
+    // ★ [신규 탭] 학생 면접 평가지 관리 뷰 렌더링 함수 ★
+    function renderTeacherEvalManagementView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      // 전체 등록 학생 목록에서 신청 내역이 있는 학생 그룹화
+      const studentMap = {};
+      
+      // 1. 등록된 197명 전체 학생 기준 초기화
+      STUDENT_LIST.forEach(s => {
+        studentMap[s.num] = { num: s.num, name: s.name, regs: [] };
+      });
+
+      // 2. 예약 내역을 해당 학생 데이터에 매칭
+      state.regs.forEach(r => {
+        const key = String(r.num).trim();
+        if (!studentMap[key]) {
+          studentMap[key] = { num: r.num, name: r.name, regs: [] };
+        }
+        studentMap[key].regs.push(r);
+      });
+
+      const studentKeys = Object.keys(studentMap).sort();
+
+      // 키워드 검색 필터링
+      const filteredKeys = studentKeys.filter(k => {
+        const s = studentMap[k];
+        if (!state.evalSearchKeyword) return s.regs.length > 0; // 기본은 1회 이상 신청 학생만
+        const kw = state.evalSearchKeyword.toLowerCase();
+        return s.name.toLowerCase().includes(kw) || s.num.includes(kw);
+      });
+
+      const studentCardsHtml = filteredKeys.map(k => {
+        const student = studentMap[k];
+        const sortedRegs = student.regs.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        const roundsHtml = [0, 1, 2].map(rIdx => {
+          const reg = sortedRegs[rIdx];
+          if (!reg) {
+            return `
+              <div class="bg-slate-50 rounded-2xl p-3.5 border border-dashed border-slate-300 flex flex-col justify-center items-center text-slate-400 text-xs min-h-[140px]">
+                <i class="fa-solid fa-calendar-plus text-slate-300 text-xl mb-1"></i>
+                <span>${rIdx + 1}회차 면접 미신청</span>
+              </div>
+            `;
+          }
+
+          const evalData = reg.evalData || { scores: { q1: '-', q2: '-', q3: '-', q4: '-' }, summary: '' };
+          const isDone = reg.status === '완료';
+
+          return `
+            <div class="bg-white rounded-2xl p-4 border ${isDone ? 'border-brand-purple/40 ring-1 ring-brand-purple/20' : 'border-slate-200'} space-y-2.5 flex flex-col justify-between shadow-sm">
+              <div class="space-y-1">
+                <div class="flex justify-between items-center border-b pb-1.5">
+                  <span class="font-extrabold text-brand-purple text-xs">[제 ${rIdx + 1}회차] ${reg.date} (${reg.period}교시)</span>
+                  <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${reg.status || '대기'}</span>
+                </div>
+                <p class="font-bold text-slate-900 text-xs truncate" title="${reg.univ} ${reg.dept}">${reg.univ} ${reg.dept}</p>
+                <p class="text-[11px] text-slate-500">면접관: ${[reg.teacher1, reg.teacher2].filter(Boolean).join(', ') || '미배정'}</p>
+              </div>
+
+              <!-- 점수 요약 -->
+              <div class="bg-slate-50 p-2 rounded-xl text-[11px] grid grid-cols-2 gap-1 text-slate-700 font-medium">
+                <div>전공: <strong>${evalData.scores.q1 || '-'}</strong></div>
+                <div>서류: <strong>${evalData.scores.q2 || '-'}</strong></div>
+                <div>논리: <strong>${evalData.scores.q3 || '-'}</strong></div>
+                <div>태도: <strong>${evalData.scores.q4 || '-'}</strong></div>
+              </div>
+
+              <!-- 종합 피드백 총평 -->
+              <div class="text-[11px] text-slate-600 line-clamp-2 bg-purple-50/50 p-2 rounded-xl italic">
+                "${reg.teacherEvaluation || evalData.summary || '아직 작성된 평가 총평이 없습니다.'}"
+              </div>
+
+              <div class="pt-1">
+                <button onclick="openOnlineEvalModal('${reg.id}')" class="w-full bg-brand-purple hover:bg-brand-purple/90 text-white font-bold py-1.5 rounded-xl text-xs transition-all shadow-sm">
+                  📝 평가지 작성/수정
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="bg-brand-navy text-white text-xs font-bold px-3 py-1 rounded-full">${student.num}</span>
+                <h4 class="text-base font-extrabold text-slate-900">${student.name} 학생</h4>
+                <span class="text-xs text-slate-500 font-medium">(총 ${sortedRegs.length}회 예약됨)</span>
+              </div>
+              <button onclick="printStudentCumulativeEvalSheet('${student.num}')" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2 rounded-xl font-bold transition-all shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-print text-amber-400"></i> 📄 3회 종합 평가지 인쇄
+              </button>
+            </div>
+
+            <!-- 1~3회차 가로 정렬 카드 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              ${roundsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="border-b border-slate-100 pb-3.5">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📋 학생별 3회 누적 면접 평가지 통합 관리</h3>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생별 1~3회차 모의면접 피드백 변화를 한눈에 확인하고 인쇄합니다.</p>
+          </div>
+
+          <!-- 검색바 -->
+          <div class="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
+            <div class="flex items-center space-x-2 w-full max-w-sm">
+              <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+              <input type="text" placeholder="학생 이름 또는 학번으로 검색..." value="${state.evalSearchKeyword}" oninput="state.evalSearchKeyword = this.value; renderTeacherEvalManagementView();" class="w-full bg-transparent text-xs focus:outline-none">
+            </div>
+            <span class="text-xs text-slate-500 whitespace-nowrap">조회 대상: <strong>${filteredKeys.length}명</strong></span>
+          </div>
+
+          <!-- 학생별 평가지 카드 리스트 -->
+          <div class="space-y-5">
+            ${filteredKeys.length > 0 ? studentCardsHtml : '<div class="text-center py-12 text-slate-400 text-xs">검색 조건에 해당하거나 면접을 신청한 학생이 없습니다.</div>'}
+          </div>
+        </section>
+      `;
+    }
+
     function renderTeacherView() {
       if (state.teacherTab === 'calendar') {
         renderTeacherCalendarView();
@@ -1643,6 +1853,8 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         renderTeacherScheduleView();
       } else if (state.teacherTab === 'admin') {
         renderTeacherAdminView();
+      } else if (state.teacherTab === 'eval_management') {
+        renderTeacherEvalManagementView();
       } else {
         renderTeacherListView();
       }
@@ -1795,7 +2007,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // ★ [방법 1 적용] 드래그 없는 슬림한 스마트 컴팩트 레이아웃 렌더링 ★
+    // 스마트 슬림 테이블 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1937,7 +2149,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <span class="text-xs text-slate-500 whitespace-nowrap">결과: <strong>${filteredRegs.length}건</strong></span>
           </div>
 
-          <!-- 가로 드래그 없이 한 화면에 쏙 들어오는 스마트 슬림 테이블 -->
           <div class="w-full rounded-xl border border-slate-200 overflow-hidden">
             <table class="w-full text-left border-collapse">
               <thead>
