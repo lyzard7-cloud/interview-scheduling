@@ -131,12 +131,12 @@
       <div class="space-y-5">
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
           <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">학번</label>
-          <input type="text" id="sNum" placeholder="학번 (예: 30001)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
+          <input type="text" id="sNum" placeholder="학번 (예: 30101)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
         </div>
 
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
           <label class="block text-xs font-semibold text-slate-400 mb-1 group-focus-within:text-brand-orange transition-colors whitespace-nowrap">이름</label>
-          <input type="text" id="sName" placeholder="이름 (예: 한지민)" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
+          <input type="text" id="sName" placeholder="이름 입력" autocomplete="new-password" class="w-full py-1 text-base sm:text-lg text-slate-900 placeholder-slate-300 focus:outline-none bg-transparent font-medium">
         </div>
 
         <div class="group relative border-b-2 border-slate-200 focus-within:border-brand-orange transition-all py-1.5">
@@ -311,69 +311,8 @@
   </footer>
 
   <script>
-    // 강일여고 3학년 전체 197명 업로드 명단 기반 고유 PIN 코드 데이터베이스
-    const STUDENT_LIST = [
-      { num: "30101", name: "강지수", pin: "842099" }, { num: "30102", name: "권은재", pin: "828745" },
-      { num: "30103", name: "김민선", pin: "260566" }, { num: "30104", name: "김승현", pin: "766824" },
-      { num: "30105", name: "김윤경", pin: "931221" }, { num: "30106", name: "김정윤", pin: "403164" },
-      { num: "30107", name: "김지후", pin: "367351" }, { num: "30108", name: "박지영", pin: "306236" },
-      { num: "30109", name: "백지윤", pin: "806456" }, { num: "30110", name: "양정혜", pin: "967911" },
-      { num: "30111", name: "이솔지", pin: "777405" }, { num: "30112", name: "이수민", pin: "702779" },
-      { num: "30113", name: "이예진", pin: "142475" }, { num: "30114", name: "이주예", pin: "128481" },
-      { num: "30115", name: "이호정", pin: "447600" }, { num: "30116", name: "정아영", pin: "990422" },
-      { num: "30117", name: "조해림", pin: "277977" }, { num: "30118", name: "최나한", pin: "471188" },
-      { num: "30119", name: "최연우", pin: "185888" }, { num: "30120", name: "최정빈", pin: "392237" },
-      { num: "30121", name: "한지민", pin: "508316" }, { num: "30122", name: "함수인", pin: "809572" },
-      { num: "30201", name: "강영인", pin: "870603" }, { num: "30202", name: "강희주", pin: "442436" },
-      { num: "30203", name: "김규원", pin: "857503" }, { num: "30204", name: "김나연", pin: "888636" },
-      { num: "30205", name: "김리하", pin: "522197" }, { num: "30206", name: "김시아", pin: "250269" },
-      { num: "30207", name: "김시윤", pin: "482021" }, { num: "30208", name: "김아연", pin: "542385" },
-      { num: "30209", name: "김예원", pin: "900989" }, { num: "30210", name: "김지희", pin: "761694" },
-      { num: "30211", name: "김하은", pin: "967756" }, { num: "30212", name: "박소은", pin: "598007" },
-      { num: "30213", name: "박지연", pin: "983141" }, { num: "30214", name: "배소연", pin: "721753" },
-      { num: "30215", name: "백송이", pin: "980424" }, { num: "30216", name: "변혜원", pin: "822361" },
-      { num: "30217", name: "서아현", pin: "389270" }, { num: "30218", name: "신유진", pin: "732009" },
-      { num: "30219", name: "심지수", pin: "403169 text-color" }, { num: "30220", name: "안지민", pin: "677353" },
-      { num: "30221", name: "양지민", pin: "804825" }, { num: "30222", name: "오혜린", pin: "867749" },
-      { num: "30223", name: "윤다은", pin: "356501" }, { num: "30224", name: "이수빈", pin: "437632" },
-      { num: "30225", name: "이연재", pin: "858682" }, { num: "30226", name: "이예원", pin: "515783" },
-      { num: "30227", name: "이윤지", pin: "979708" }, { num: "30228", name: "임수아", pin: "826388" },
-      { num: "30229", name: "전수아", pin: "841834" }, { num: "30230", name: "정서윤", pin: "265745" },
-      { num: "30231", name: "정소민", pin: "249826" }, { num: "30232", name: "정채원", pin: "971932" },
-      { num: "30233", name: "최은서", pin: "216096" }, { num: "30234", name: "홍지우", pin: "233306" },
-      { num: "30301", name: "강예빈", pin: "263673" }, { num: "30302", name: "권나현", pin: "419799" },
-      { num: "30303", name: "김도은", pin: "148385" }, { num: "30304", name: "김민서", pin: "626880" },
-      { num: "30305", name: "김보아", pin: "761186" }, { num: "30306", name: "김서현", pin: "900130" },
-      { num: "30307", name: "김소연", pin: "702766" }, { num: "30308", name: "김수빈", pin: "978131" },
-      { num: "30309", name: "김연우", pin: "518335" }, { num: "30310", name: "김유빈", pin: "976865" },
-      { num: "30311", name: "김윤서", pin: "207604" }, { num: "30312", name: "김하람", pin: "418357" },
-      { num: "30313", name: "김혜인", pin: "187979" }, { num: "30314", name: "노은지", pin: "643198" },
-      { num: "30315", name: "박가현", pin: "211516" }, { num: "30316", name: "박서연", pin: "688049" },
-      { num: "30317", name: "박시은", pin: "627763" }, { num: "30318", name: "박예나", pin: "220977" },
-      { num: "30319", name: "박유리", pin: "301297" }, { num: "30320", name: "배은지", pin: "592186" },
-      { num: "30321", name: "서은우", pin: "994200" }, { num: "30322", name: "성서현", pin: "947321" },
-      { num: "30323", name: "손유나", pin: "709664" }, { num: "30324", name: "송지은", pin: "360341" },
-      { num: "30325", name: "신채은", pin: "508682" }, { num: "30326", name: "안유진", pin: "437025" },
-      { num: "30327", name: "양수민", pin: "855909" }, { num: "30328", name: "오예은", pin: "880509" }, { num: "30329", name: "유가은", pin: "723483" }, { num: "30330", name: "유민서", pin: "349942" },
-      { num: "30331", name: "윤다빈", pin: "323985" }, { num: "30332", name: "윤시은", pin: "740443" },
-      { num: "30333", name: "이규원", pin: "140924" }, { num: "30334", name: "이다은", pin: "276805" },
-      { num: "30335", name: "이민아", pin: "278248" }, { num: "30336", name: "이서율", pin: "374662" },
-      { num: "30337", name: "이소윤", pin: "438250" }, { num: "30338", name: "이수진", pin: "870634" },
-      { num: "30339", name: "이아림", pin: "560599" }, { num: "30340", name: "이연우", pin: "447214" },
-      { num: "30341", name: "이유나", pin: "555819" }, { num: "30342", name: "이윤아", pin: "235478" },
-      { num: "30343", name: "이은채", pin: "710609" }, { num: "30344", name: "이재은", pin: "691456" },
-      { num: "30345", name: "이채원", pin: "194098" }, { num: "30346", name: "이하은", pin: "968840" },
-      { num: "30347", name: "임예지", pin: "321172" }, { num: "30348", name: "장서연", pin: "630048" },
-      { num: "30349", name: "전민지", pin: "786438" }, { num: "30350", name: "정다은", pin: "986968" },
-      { num: "30351", name: "정서율", pin: "172089" }, { num: "30352", name: "정소율", pin: "105990" },
-      { num: "30353", name: "정예지", pin: "376043" }, { num: "30354", name: "조민서", pin: "383495" },
-      { num: "30355", name: "최다은", pin: "276856" }, { num: "30356", name: "최민지", pin: "403169" },
-      { num: "30357", name: "최서윤", pin: "598126" }, { num: "30358", name: "최수아", pin: "492067" },
-      { num: "30359", name: "최유나", pin: "948839" }, { num: "30360", name: "최윤서", pin: "284069" },
-      { num: "30361", name: "최지아", pin: "437346" }, { num: "30362", name: "한서영", pin: "527632" },
-      { num: "30363", name: "한예슬", pin: "235471" }, { num: "30364", name: "허다연", pin: "492018" },
-      { num: "30365", name: "홍서율", pin: "948123" }, { num: "30366", name: "황다은", pin: "582019" }
-    ].map(s => ({ num: s.num, name: s.name, pin: s.pin.replace(' text-color', '') }));
+    // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
+    let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
     const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
@@ -399,20 +338,7 @@
       "2026-10-27": ["신이현", "이진경", "조아영", "정해린", "최명호", "전명치"],
       "2026-10-28": ["원선보", "이진경", "백홍", "이나경", "조아영", "전명치"],
       "2026-10-29": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
-      "2026-10-30": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "전명치"],
-
-      "2026-11-02": ["신이현", "이진경", "백홍", "이나경", "전명치"],
-      "2026-11-03": ["신이현", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-04": ["원선보", "이진경", "백홍", "이나경", "조아영", "전명치"],
-      "2026-11-05": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
-      "2026-11-06": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-09": ["신이현", "이진경", "백홍", "이나경", "최명호", "전명치"],
-      "2026-11-10": ["신이현", "이진경", "백홍", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-11": ["김준형", "엄혜진", "원선보", "이진경", "백홍", "이나경", "조아영", "최명호", "전명치"],
-      "2026-11-12": ["엄혜진", "원선보", "신이현", "이진경", "백홍", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-13": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-16": ["엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
-      "2026-11-17": ["원선보", "이진경", "백홍", "이나경", "조아영", "최명호", "전명치"]
+      "2026-10-30": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "전명치"]
     }));
 
     const DEFAULT_CLOSED_DATES = ["2026-10-05", "2026-10-09"];
@@ -460,6 +386,187 @@
 
     function goToStudentPage() {
       window.location.href = window.location.pathname;
+    }
+
+    // ★ 1. 학생 입력용 기본 CSV 양식 다운로드 ★
+    function downloadStudentTemplateCSV() {
+      let csvStr = '\uFEFFNo,학번,이름\n';
+      csvStr += '1,30101,강지수\n';
+      csvStr += '2,30102,권은재\n';
+      csvStr += '3,30301,강효린\n';
+
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_학생명단_입력양식.csv`;
+      link.click();
+    }
+
+    // ★ 2. 선생님이 학번/이름 입력한 CSV 파일 업로드 ➔ 6자리 고유 PIN 코드 자동 생성 ★
+    function processAndGeneratePinFromCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const generatedList = [];
+        const usedPins = new Set();
+
+        lines.forEach((line, index) => {
+          if (index === 0 || !line.trim()) return;
+          const cols = line.split(',');
+          if (cols.length >= 3) {
+            const no = cols[0] ? cols[0].trim() : String(index);
+            const num = cols[1] ? cols[1].trim() : '';
+            const name = cols[2] ? cols[2].trim() : '';
+
+            if (num && name) {
+              let pin;
+              do {
+                pin = String(Math.floor(100000 + Math.random() * 900000));
+              } while (usedPins.has(pin));
+
+              usedPins.add(pin);
+              generatedList.push({ no, num, name, pin });
+            }
+          }
+        });
+
+        if (generatedList.length > 0) {
+          STUDENT_LIST = generatedList;
+          localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+          alert(`[코드 자동 생성 완료]\n\n총 ${generatedList.length}명 학생의 6자리 고유 PIN 코드가 성공적으로 생성되었습니다!`);
+          renderTeacherAdminView();
+        } else {
+          alert('CSV 파일에서 학생 정보를 읽을 수 없습니다. 양식을 확인해 주세요.');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // ★ 3. 고유 코드가 포함된 최종 명렬표 CSV 다운로드 ★
+    function exportGeneratedStudentPinCSV() {
+      if (STUDENT_LIST.length === 0) {
+        alert('먼저 작성한 학생 명렬표 CSV 파일을 업로드하여 코드를 생성해 주세요.');
+        return;
+      }
+
+      let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
+      STUDENT_LIST.forEach((s, idx) => {
+        csvStr += `${idx + 1},${s.num},${s.name},${s.pin}\n`;
+      });
+
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_3학년_학생_고유코드_최종명렬표_${STUDENT_LIST.length}명.csv`;
+      link.click();
+    }
+
+    function renderTeacherAdminView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
+          <div class="border-b border-slate-100 pb-3.5">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 - 학생 PIN 코드 관리</h3>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">엑셀 파일 업로드로 197명 학생 전체 6자리 고유 코드를 1초 만에 자동 생성합니다.</p>
+          </div>
+
+          <!-- 스텝 1: 양식 다운로드 & 업로드 모듈 -->
+          <div class="bg-indigo-50/70 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-4">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-file-excel text-indigo-600"></i> [1단계] 학생 명단 업로드 및 코드 자동 생성 (현재 등록: ${STUDENT_LIST.length}명)
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                1. <strong>[기본 양식 다운로드]</strong>를 눌러 학번과 이름을 적을 엑셀 파일(CSV)을 받습니다.<br>
+                2. 학번과 학생 이름을 적은 후 <strong>[학생 명단 업로드]</strong> 버튼을 누르면 6자리 고유 코드가 자동으로 생성됩니다.
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2 flex-wrap gap-2 pt-1">
+              <button onclick="downloadStudentTemplateCSV()" class="bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                📄 1. 기본 양식 다운로드
+              </button>
+
+              <label class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap">
+                📤 2. 학생 명단 업로드 (코드 자동 생성)
+                <input type="file" accept=".csv" onchange="processAndGeneratePinFromCSV(event)" class="hidden">
+              </label>
+
+              ${STUDENT_LIST.length > 0 ? `
+                <button onclick="exportGeneratedStudentPinCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                  📥 3. 고유 코드 포함 최종 명렬표 다운로드
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- 백업 및 복원 도구 -->
+          <div class="bg-amber-50/60 p-4 sm:p-5 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-box-archive text-amber-600"></i> 전체 시스템 데이터 백업 / 복원
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">모든 예약 데이터와 교사 스케줄을 백업 파일로 보관하거나 원클릭 복원합니다.</p>
+            </div>
+            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+              <button onclick="backupFullDataJSON()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                💾 전체 백업
+              </button>
+              <label class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap">
+                📂 복원
+                <input type="file" accept=".json" onchange="restoreFullDataJSON(event)" class="hidden">
+              </label>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function handleStudentLogin() {
+      const num = document.getElementById('sNum').value.trim();
+      const name = document.getElementById('sName').value.trim();
+      const pin = document.getElementById('sPin').value.trim();
+
+      if (STUDENT_LIST.length === 0) {
+        alert('아직 등록된 학생 명단이 없습니다. 담임선생님께 확인해 주세요.');
+        return;
+      }
+
+      const foundStudent = STUDENT_LIST.find(s => String(s.num) === num && String(s.name) === name);
+      if (!foundStudent) {
+        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다.');
+        return;
+      }
+
+      if (String(foundStudent.pin) !== pin) {
+        alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
+        return;
+      }
+
+      state.user = { num, name, pin };
+      
+      document.getElementById('authStatus').innerHTML = `
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
+        </span>
+        <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
+          <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
+        </span>
+      `;
+
+      document.getElementById('loginPortalContainer').classList.add('hidden');
+      document.getElementById('mainDashboardContainer').classList.remove('hidden');
+
+      updateSidebarNavForStudent();
+      switchStudentTab('reserve');
+      alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
     function switchStudentTab(tabName) {
@@ -608,47 +715,6 @@
       const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
       const countB = availList.filter(t => TEACHER_B_GROUP.includes(t)).length;
       return Math.min(countA, countB);
-    }
-
-    function handleStudentLogin() {
-      const num = document.getElementById('sNum').value.trim();
-      const name = document.getElementById('sName').value.trim();
-      const pin = document.getElementById('sPin').value.trim();
-
-      if (!num || !name || pin.length < 6 || !/^\d{6}$/.test(pin)) {
-        alert('학번, 이름, 부여받은 숫자 6자리 코드를 정확히 입력해 주세요.');
-        return;
-      }
-
-      const foundStudent = STUDENT_LIST.find(s => s.num === num && s.name === name);
-      if (!foundStudent) {
-        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
-        return;
-      }
-
-      if (foundStudent.pin !== pin) {
-        alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
-        return;
-      }
-
-      state.user = { num, name, pin };
-      
-      document.getElementById('authStatus').innerHTML = `
-        <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
-        </span>
-        <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
-          <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
-        </span>
-      `;
-
-      document.getElementById('loginPortalContainer').classList.add('hidden');
-      document.getElementById('mainDashboardContainer').classList.remove('hidden');
-
-      updateSidebarNavForStudent();
-      switchStudentTab('reserve');
-      alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
     function downloadTicketImage(id) {
@@ -972,19 +1038,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       link.click();
     }
 
-    function exportStudentPinListCSV() {
-      let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
-      STUDENT_LIST.forEach((s, idx) => {
-        csvStr += `${idx+1},${s.num},${s.name},${s.pin}\n`;
-      });
-
-      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `강일여고_3학년_학생_고유코드_명렬표_197명_${new Date().toISOString().slice(0,10)}.csv`;
-      link.click();
-    }
-
     function backupFullDataJSON() {
       const backupData = {
         version: "2026.1",
@@ -1137,50 +1190,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       } else {
         renderTeacherListView();
       }
-    }
-
-    function renderTeacherAdminView() {
-      const main = document.getElementById('mainContent');
-      if (!main) return;
-
-      main.innerHTML = `
-        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
-          <div class="border-b border-slate-100 pb-3.5">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용</h3>
-            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생별 개인 접속 PIN 코드 및 데이터 백업/복원 도구를 제공합니다.</p>
-          </div>
-
-          <div class="bg-indigo-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div class="space-y-1">
-              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-file-excel text-indigo-600"></i> 3학년 전체 학생 개인 접속 코드(PIN) 명렬표 (총 197명)
-              </h4>
-              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">학생 개별 인증에 필요한 숫자 6자리 고유 코드가 포함된 엑셀(CSV) 다운로드 파일입니다.</p>
-            </div>
-            <button onclick="exportStudentPinListCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap self-end sm:self-auto">
-              📥 학생 PIN 엑셀 다운로드
-            </button>
-          </div>
-
-          <div class="bg-amber-50/60 p-4 sm:p-5 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div class="space-y-1">
-              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-box-archive text-amber-600"></i> 전체 시스템 데이터 1초 백업 / 복원
-              </h4>
-              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">현재 신청된 모든 예약 데이터와 교사 스케줄을 안전하게 저장하고 파일로 바로 복원합니다.</p>
-            </div>
-            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
-              <button onclick="backupFullDataJSON()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
-                💾 전체 데이터 백업
-              </button>
-              <label class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap">
-                📂 데이터 복원
-                <input type="file" accept=".json" onchange="restoreFullDataJSON(event)" class="hidden">
-              </label>
-            </div>
-          </div>
-        </section>
-      `;
     }
 
     function enableTeacherEdit(id) {
