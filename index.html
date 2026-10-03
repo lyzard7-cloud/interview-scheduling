@@ -350,6 +350,7 @@
   </footer>
 
   <script>
+    // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
     let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
@@ -440,92 +441,127 @@
       window.location.href = window.location.pathname;
     }
 
-    // 학생 로그인 처리
-    function handleStudentLogin() {
-      STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
+    // 1단계: CSV 양식 다운로드
+    function downloadStudentTemplateCSV() {
+      let csvStr = '\uFEFFNo,학번,이름\n';
+      csvStr += '1,30101,강지수\n2,30102,권은재\n3,30301,강효린\n';
 
-      const num = document.getElementById('sNum').value.trim();
-      const name = document.getElementById('sName').value.trim();
-      const pin = document.getElementById('sPin').value.trim();
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_학생명단_입력양식.csv`;
+      link.click();
+    }
 
+    // 1단계: CSV 파일 업로드 ➔ 데이터 타입(String) 보장 핀 코드 일괄 자동 생성
+    function processAndGeneratePinFromCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const generatedList = [];
+        const usedPins = new Set();
+
+        lines.forEach((line, index) => {
+          if (index === 0 || !line.trim()) return;
+          const cols = line.split(',');
+          if (cols.length >= 3) {
+            const no = cols[0] ? String(cols[0]).trim() : String(index);
+            const num = cols[1] ? String(cols[1]).trim() : '';
+            const name = cols[2] ? String(cols[2]).trim() : '';
+
+            if (num && name) {
+              let pin;
+              do {
+                pin = String(Math.floor(100000 + Math.random() * 900000));
+              } while (usedPins.has(pin));
+
+              usedPins.add(pin);
+              // 무조건 String 문자열 타입으로 일관되게 저장
+              generatedList.push({ no, num, name, pin });
+            }
+          }
+        });
+
+        if (generatedList.length > 0) {
+          STUDENT_LIST = generatedList;
+          localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+          alert(`[일괄 코드 자동 생성 완료]\n\n총 ${generatedList.length}명 학생의 6자리 고유 PIN 코드가 성공적으로 생성되었습니다!`);
+          renderTeacherAdminView();
+        } else {
+          alert('CSV 파일에서 학생 정보를 읽을 수 없습니다. 양식을 확인해 주세요.');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // 2단계: 전학생 등 개별 학생 1명 추가 (String 문자열 타입 통일)
+    function addSingleStudent() {
+      const numInput = String(document.getElementById('singleAddNum')?.value || '').trim();
+      const nameInput = String(document.getElementById('singleAddName')?.value || '').trim();
+
+      if (!numInput || !nameInput) {
+        alert('추가할 학생의 학번과 이름을 모두 입력해 주세요.');
+        return;
+      }
+
+      // 학번 중복 검사를 문자열 타입으로 안전하게 수행
+      const isExist = STUDENT_LIST.some(s => String(s.num).trim() === numInput);
+      if (isExist) {
+        alert(`이미 학번 [${numInput}] 학생이 명단에 존재합니다.`);
+        return;
+      }
+
+      const usedPins = new Set(STUDENT_LIST.map(s => String(s.pin)));
+      let newPin;
+      do {
+        newPin = String(Math.floor(100000 + Math.random() * 900000));
+      } while (usedPins.has(newPin));
+
+      const newStudent = {
+        no: String(STUDENT_LIST.length + 1),
+        num: numInput,
+        name: nameInput,
+        pin: newPin
+      };
+
+      STUDENT_LIST.push(newStudent);
+      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+
+      alert(`[개별 학생 추가 완료]\n\n· 학번: ${numInput}\n· 이름: ${nameInput}\n· 발급된 고유 PIN 코드: ${newPin}\n\n명단에 성공적으로 합류되었습니다!`);
+      renderTeacherAdminView();
+    }
+
+    // 개별 학생 명단 삭제
+    function deleteSingleStudent(num, name) {
+      if (!confirm(`[${num} ${name}] 학생을 명단에서 삭제하시겠습니까?`)) return;
+
+      STUDENT_LIST = STUDENT_LIST.filter(s => String(s.num).trim() !== String(num).trim());
+      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
+      alert(`[${name}] 학생이 명단에서 삭제되었습니다.`);
+      renderTeacherAdminView();
+    }
+
+    // 최종 명렬표 CSV 다운로드
+    function exportGeneratedStudentPinCSV() {
       if (STUDENT_LIST.length === 0) {
-        alert('아직 시스템에 등록된 학생 명단이 없습니다. 교사 관리자 페이지에서 학생 명단을 업로드/등록해 주세요.');
+        alert('먼저 작성한 학생 명렬표 CSV 파일을 업로드하거나 개별 학생을 추가해 주세요.');
         return;
       }
 
-      const foundStudent = STUDENT_LIST.find(s => String(s.num).trim() === num && String(s.name).trim() === name);
-      
-      if (!foundStudent) {
-        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
-        return;
-      }
+      let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
+      STUDENT_LIST.forEach((s, idx) => {
+        csvStr += `${idx + 1},${s.num},${s.name},${s.pin}\n`;
+      });
 
-      if (String(foundStudent.pin).trim() !== pin) {
-        alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
-        return;
-      }
-
-      state.user = { num, name, pin };
-      
-      document.getElementById('authStatus').innerHTML = `
-        <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
-        </span>
-        <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
-          <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
-        </span>
-      `;
-
-      document.getElementById('loginPortalContainer').classList.add('hidden');
-      document.getElementById('mainDashboardContainer').classList.remove('hidden');
-
-      updateSidebarNavForStudent();
-      switchStudentTab('reserve');
-      alert(`${name} 학생으로 로그인이 완료되었습니다.`);
-    }
-
-    // 학생용 사이드바 메뉴 복구
-    function updateSidebarNavForStudent() {
-      const nav = document.getElementById('sidebarNav');
-      if (!nav) return;
-      nav.innerHTML = `
-        <button onclick="switchStudentTab('reserve')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'reserve' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
-          <span><i class="fa-solid fa-calendar-check mr-2"></i>면접 예약</span>
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </button>
-        <button onclick="switchStudentTab('myreg')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'myreg' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
-          <span><i class="fa-solid fa-clipboard-list mr-2"></i>나의 신청 내역</span>
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </button>
-        <button onclick="switchStudentTab('guide')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'guide' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
-          <span><i class="fa-solid fa-lightbulb mr-2 text-amber-500"></i>면접 준비 팁 & 족보</span>
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </button>
-      `;
-    }
-
-    function switchStudentTab(tabName) {
-      state.studentTab = tabName;
-      updateSidebarNavForStudent();
-
-      const reserveSec = document.getElementById('studentReservationSection');
-      const myRegSec = document.getElementById('myRegSection');
-      const guideSec = document.getElementById('guideSection');
-
-      reserveSec.classList.add('hidden');
-      myRegSec.classList.add('hidden');
-      guideSec.classList.add('hidden');
-
-      if (tabName === 'reserve') {
-        reserveSec.classList.remove('hidden');
-        renderCalendar();
-      } else if (tabName === 'myreg') {
-        myRegSec.classList.remove('hidden');
-        checkMyRegistrations();
-      } else if (tabName === 'guide') {
-        guideSec.classList.remove('hidden');
-      }
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_3학년_학생_고유코드_최종명렬표_${STUDENT_LIST.length}명.csv`;
+      link.click();
     }
 
     function switchTeacherTab(tabName) {
@@ -881,127 +917,6 @@
       renderTeacherListView();
     }
 
-    // 기본 CSV 양식 다운로드
-    function downloadStudentTemplateCSV() {
-      let csvStr = '\uFEFFNo,학번,이름\n';
-      csvStr += '1,30101,강지수\n2,30102,권은재\n3,30301,강효린\n';
-
-      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `강일여고_학생명단_입력양식.csv`;
-      link.click();
-    }
-
-    // CSV 파일 업로드 ➔ PIN 코드 일괄 생성
-    function processAndGeneratePinFromCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const lines = text.split('\n');
-        const generatedList = [];
-        const usedPins = new Set();
-
-        lines.forEach((line, index) => {
-          if (index === 0 || !line.trim()) return;
-          const cols = line.split(',');
-          if (cols.length >= 3) {
-            const no = cols[0] ? cols[0].trim() : String(index);
-            const num = cols[1] ? cols[1].trim() : '';
-            const name = cols[2] ? cols[2].trim() : '';
-
-            if (num && name) {
-              let pin;
-              do {
-                pin = String(Math.floor(100000 + Math.random() * 900000));
-              } while (usedPins.has(pin));
-
-              usedPins.add(pin);
-              generatedList.push({ no, num, name, pin });
-            }
-          }
-        });
-
-        if (generatedList.length > 0) {
-          STUDENT_LIST = generatedList;
-          localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
-          alert(`[일괄 코드 자동 생성 완료]\n\n총 ${generatedList.length}명 학생의 6자리 고유 PIN 코드가 성공적으로 생성되었습니다!`);
-          renderTeacherAdminView();
-        } else {
-          alert('CSV 파일에서 학생 정보를 읽을 수 없습니다. 양식을 확인해 주세요.');
-        }
-      };
-      reader.readAsText(file, 'utf-8');
-    }
-
-    // 개별 학생 1명 추가
-    function addSingleStudent() {
-      const numInput = document.getElementById('singleAddNum')?.value.trim();
-      const nameInput = document.getElementById('singleAddName')?.value.trim();
-
-      if (!numInput || !nameInput) {
-        alert('추가할 학생의 학번과 이름을 모두 입력해 주세요.');
-        return;
-      }
-
-      const isExist = STUDENT_LIST.some(s => String(s.num) === numInput);
-      if (isExist) {
-        alert(`이미 학번 [${numInput}] 학생이 명단에 존재합니다.`);
-        return;
-      }
-
-      const usedPins = new Set(STUDENT_LIST.map(s => String(s.pin)));
-      let newPin;
-      do {
-        newPin = String(Math.floor(100000 + Math.random() * 900000));
-      } while (usedPins.has(newPin));
-
-      const newStudent = {
-        no: String(STUDENT_LIST.length + 1),
-        num: numInput,
-        name: nameInput,
-        pin: newPin
-      };
-
-      STUDENT_LIST.push(newStudent);
-      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
-
-      alert(`[개별 학생 추가 완료]\n\n· 학번: ${numInput}\n· 이름: ${nameInput}\n· 발급된 고유 PIN 코드: ${newPin}\n\n명단에 성공적으로 합류되었습니다!`);
-      renderTeacherAdminView();
-    }
-
-    // 개별 학생 명단 삭제
-    function deleteSingleStudent(num, name) {
-      if (!confirm(`[${num} ${name}] 학생을 명단에서 삭제하시겠습니까?`)) return;
-
-      STUDENT_LIST = STUDENT_LIST.filter(s => String(s.num) !== String(num));
-      localStorage.setItem('mock_student_list', JSON.stringify(STUDENT_LIST));
-      alert(`[${name}] 학생이 명단에서 삭제되었습니다.`);
-      renderTeacherAdminView();
-    }
-
-    // 최종 명렬표 CSV 다운로드
-    function exportGeneratedStudentPinCSV() {
-      if (STUDENT_LIST.length === 0) {
-        alert('먼저 작성한 학생 명렬표 CSV 파일을 업로드하거나 개별 학생을 추가해 주세요.');
-        return;
-      }
-
-      let csvStr = '\uFEFFNo,학번,이름,개인부여코드(PIN 6자리)\n';
-      STUDENT_LIST.forEach((s, idx) => {
-        csvStr += `${idx + 1},${s.num},${s.name},${s.pin}\n`;
-      });
-
-      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `강일여고_3학년_학생_고유코드_최종명렬표_${STUDENT_LIST.length}명.csv`;
-      link.click();
-    }
-
     // 날짜별 수용 정원 계산
     function getMaxTeamsForDate(dateStr) {
       const availList = TEACHER_SCHEDULE[dateStr] || [];
@@ -1212,7 +1127,7 @@
         <button onclick="submitReservation(8)" ${p8Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p8Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap">
           ${p8Full ? `8교시 마감 (${p8Regs.length}/${maxTeams}팀 정원 초과)` : `8교시 (16:40 ~ 17:30) 신청 [잔여 ${maxTeams - p8Regs.length}석]`}
         </button>
-        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap">
+        <button onclick="submitReservation(9)" ${p9Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p9Full ? 'disabled' : ''} class="py-3 sm:py-3.5 border-2 ${p9Full ? 'border-slate-300 bg-slate-100 text-slate-400 cursor-not-allowed' : 'border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white'} font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap">
           ${p9Full ? `9교시 마감 (${p9Regs.length}/${maxTeams}팀 정원 초과)` : `9교시 (17:40 ~ 18:30) 신청 [잔여 ${maxTeams - p9Regs.length}석]`}
         </button>
       `;
