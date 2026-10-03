@@ -303,41 +303,26 @@
     </main>
   </div>
 
-  <!-- 온라인 평가지 모달 -->
-  <div id="onlineEvalModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
+  <!-- ★ 통합 카드형 면접 상세 관리 및 평가 모달 ★ -->
+  <div id="studentDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
     <div class="bg-white max-w-3xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2" id="evalModalTitle">
-          <i class="fa-solid fa-laptop-code text-brand-purple"></i> 온라인 면접 평가 기록지 (실시간 입력)
+        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2" id="studentDetailTitle">
+          <i class="fa-solid fa-user-gear text-brand-purple"></i> 면접 예약 상세 및 현장 평가
         </h3>
-        <button onclick="closeOnlineEvalModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
+        <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
       </div>
 
-      <div id="evalModalContent" class="space-y-4 text-xs"></div>
+      <div id="studentDetailContent" class="space-y-4 text-xs"></div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t">
-        <button onclick="closeOnlineEvalModal()" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">취소</button>
-        <button id="saveEvalBtn" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-sm">
-          💾 평가 내용 저장
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 사전 예상 질문 관리 모달 -->
-  <div id="preQuestionsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
-    <div class="bg-white max-w-2xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2" id="preQModalTitle">
-          <i class="fa-solid fa-clipboard-question text-amber-500"></i> 사전 예상 질문 리스트
-        </h3>
-        <button onclick="closePreQuestionsModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
-      </div>
-
-      <div id="preQModalContent" class="space-y-4 text-xs"></div>
-
-      <div class="flex justify-end pt-3 border-t">
-        <button onclick="closePreQuestionsModal()" class="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs">닫기</button>
+      <div class="flex justify-between items-center pt-3 border-t">
+        <button id="deleteRegBtnInModal" class="text-red-500 hover:text-red-700 font-bold underline text-xs">예약 삭제</button>
+        <div class="flex gap-2">
+          <button onclick="closeStudentDetailModal()" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">닫기</button>
+          <button id="saveDetailBtnInModal" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-sm">
+            💾 저장하기
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -350,14 +335,13 @@
   </footer>
 
   <script>
-    // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
+    // 시스템 내 학생 목록 저장소
     let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
     const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
     const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const TEACHER_B_GROUP = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
-    // 복원된 10월/11월 교사 스케줄 데이터
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -486,7 +470,7 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
-    // 학생용 사이드바 메뉴 복구
+    // 학생용 사이드바 메뉴
     function updateSidebarNavForStudent() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -628,7 +612,158 @@
       }
     }
 
-    // 개별/전체 날짜 균등배정 자바스크립트 처리 함수
+    // ★ [방법 2] 통합 카드형 모달 오픈 함수 ★
+    function openStudentDetailModal(regId) {
+      const reg = state.regs.find(r => r.id === regId);
+      if (!reg) return;
+
+      const availList = TEACHER_SCHEDULE[reg.date] || ALL_TEACHERS;
+      const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+      const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+      const t1Options = availA.map(t => `<option value="${t}" ${reg.teacher1 === t ? 'selected' : ''}>${t} (A그룹)</option>`).join('');
+      const t2Options = availB.map(t => `<option value="${t}" ${reg.teacher2 === t ? 'selected' : ''}>${t} (B그룹)</option>`).join('');
+
+      const preQList = reg.preQuestions || [];
+      const preQHtml = preQList.map((q, idx) => `
+        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-200">
+          <div><span class="font-bold text-brand-purple">[Q${idx+1}]</span> ${q.question}</div>
+          <button onclick="removePreQuestion('${reg.id}', ${idx})" class="text-red-400 font-bold ml-2">✕</button>
+        </div>
+      `).join('') || '<div class="text-slate-400 text-xs">등록된 사전 질문이 없습니다.</div>';
+
+      const evalData = reg.evalData || { scores: { q1: '중', q2: '중', q3: '중', q4: '중' }, qaList: [], summary: '' };
+
+      document.getElementById('studentDetailTitle').innerHTML = `
+        <i class="fa-solid fa-user-gear text-brand-purple"></i> [${reg.date} ${reg.period}교시] ${reg.name} (${reg.num}) 면접 상세 관리
+      `;
+
+      document.getElementById('studentDetailContent').innerHTML = `
+        <div class="space-y-4">
+          <!-- 학생 기본 정보 카드 -->
+          <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 grid grid-cols-2 sm:grid-cols-4 gap-2 font-medium">
+            <div>학번/이름: <strong>${reg.name} (${reg.num})</strong></div>
+            <div>일시: <strong>${reg.date} ${reg.period}교시</strong></div>
+            <div class="col-span-2">지원: <strong class="text-brand-purple">${reg.univ} ${reg.dept}</strong></div>
+            ${reg.note ? `<div class="col-span-4 text-amber-800">요청사항: ${reg.note}</div>` : ''}
+          </div>
+
+          <!-- 담당 면접교사 및 면접 장소 설정 -->
+          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">담당 교사 1 (A그룹)</label>
+              <select id="modalT1_${reg.id}" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-xl bg-white focus:outline-none">
+                <option value="">A교사 선택</option>
+                ${t1Options}
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">담당 교사 2 (B그룹)</label>
+              <select id="modalT2_${reg.id}" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-xl bg-white focus:outline-none">
+                <option value="">B교사 선택</option>
+                ${t2Options}
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">면접 장소</label>
+              <input type="text" id="modalLoc_${reg.id}" value="${reg.location || '3학년 교무실'}" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-xl bg-white focus:outline-none">
+            </div>
+          </div>
+
+          <!-- 사전 질문 등록 및 관리 -->
+          <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200 space-y-2">
+            <span class="font-bold text-amber-900">❓ 사전 예상 질문 관리 (${preQList.length}개)</span>
+            <div class="space-y-1 max-h-32 overflow-y-auto custom-scroll">${preQHtml}</div>
+            <div class="flex gap-2 pt-1">
+              <input type="text" id="modalNewQAuthor" placeholder="작성자(성함)" class="w-24 px-2 py-1 border border-slate-300 rounded-xl bg-white text-xs">
+              <input type="text" id="modalNewQText" placeholder="새 예상 질문 입력..." class="flex-1 px-2.5 py-1 border border-slate-300 rounded-xl bg-white text-xs">
+              <button onclick="addPreQuestionInModal('${reg.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1 rounded-xl text-xs whitespace-nowrap">추가</button>
+            </div>
+          </div>
+
+          <!-- 온라인 평가 기록 링크 및 상태 전환 -->
+          <div class="flex justify-between items-center bg-slate-100 p-3 rounded-2xl border border-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-700">진행 상태:</span>
+              <button onclick="toggleStudentStatus('${reg.id}'); openStudentDetailModal('${reg.id}');" class="px-2.5 py-1 rounded-full font-bold text-xs bg-white border border-slate-300">
+                ${reg.status || '대기'} (클릭 시 상태 변경)
+              </button>
+            </div>
+            <button onclick="closeStudentDetailModal(); openOnlineEvalModal('${reg.id}');" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-3.5 py-1.5 rounded-xl shadow-sm text-xs whitespace-nowrap">
+              📝 온라인 평가지 열기
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('deleteRegBtnInModal').onclick = () => {
+        closeStudentDetailModal();
+        deleteRegistration(reg.id);
+      };
+
+      document.getElementById('saveDetailBtnInModal').onclick = () => saveStudentDetailInModal(reg.id);
+      document.getElementById('studentDetailModal').classList.remove('hidden');
+    }
+
+    function closeStudentDetailModal() {
+      document.getElementById('studentDetailModal').classList.add('hidden');
+    }
+
+    async function addPreQuestionInModal(regId) {
+      const reg = state.regs.find(r => r.id === regId);
+      if (!reg) return;
+
+      const author = document.getElementById('modalNewQAuthor')?.value.trim() || '선생님';
+      const question = document.getElementById('modalNewQText')?.value.trim();
+
+      if (!question) {
+        alert('예상 질문 문구를 입력해 주세요.');
+        return;
+      }
+
+      if (!reg.preQuestions) reg.preQuestions = [];
+      reg.preQuestions.push({ author, question, createdAt: new Date().toLocaleString() });
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_registrations', regId), reg);
+        } catch(e) { console.warn("Firestore Save Error", e); }
+      }
+
+      openStudentDetailModal(regId);
+      renderTeacherListView();
+    }
+
+    async function saveStudentDetailInModal(regId) {
+      const reg = state.regs.find(r => r.id === regId);
+      if (!reg) return;
+
+      const t1 = document.getElementById(`modalT1_${regId}`)?.value || '';
+      const t2 = document.getElementById(`modalT2_${regId}`)?.value || '';
+      const loc = document.getElementById(`modalLoc_${regId}`)?.value.trim() || '3학년 교무실';
+
+      reg.teacher1 = t1;
+      reg.teacher2 = t2;
+      reg.location = loc;
+
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_registrations', regId), reg);
+        } catch(e) { console.warn("Firestore Save Error", e); }
+      }
+
+      alert(`[상세 설정 저장 완료]\n\n${reg.name} 학생의 담당 교사 및 장소 설정이 저장되었습니다.`);
+      closeStudentDetailModal();
+      renderTeacherListView();
+    }
+
+    // 개별/전체 날짜 균등배정
     async function assignRandomTeachersForDate(targetDateStr) {
       if (!targetDateStr) {
         alert('날짜를 먼저 선택해 주세요.');
@@ -665,7 +800,7 @@
       }
 
       if (teams.length === 0) {
-        alert(`${targetDateStr} 날짜에 배정 가능한 교사 팀이 부족합니다. (최소 2명의 교사 참여 설정 필요)`);
+        alert(`${targetDateStr} 날짜에 배정 가능한 교사 팀이 부족합니다.`);
         return;
       }
 
@@ -779,102 +914,6 @@
 
       alert(`[전체 날짜 균등 배정 완료]\n총 ${assignedCount}건의 면접교사 배정이 성공적으로 완료되었습니다.`);
       renderTeacherView();
-    }
-
-    // 사전 예상 질문지 모달 관련 기능
-    function openPreQuestionsModal(regId) {
-      const reg = state.regs.find(r => r.id === regId);
-      if (!reg) return;
-
-      document.getElementById('preQModalTitle').innerHTML = `
-        <i class="fa-solid fa-clipboard-question text-amber-500"></i> ${reg.name} (${reg.num}) 사전 예상 질문지
-      `;
-
-      const preQList = reg.preQuestions || [];
-      const listHtml = preQList.map((q, idx) => `
-        <div class="flex justify-between items-start bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <div class="space-y-0.5">
-            <span class="text-[10px] text-brand-purple font-bold">[질문 ${idx + 1}] (작성: ${q.author || '선생님'})</span>
-            <p class="font-medium text-slate-800 text-xs">${q.question}</p>
-          </div>
-          <button onclick="removePreQuestion('${reg.id}', ${idx})" class="text-red-400 hover:text-red-600 font-bold ml-2">✕</button>
-        </div>
-      `).join('') || '<div class="text-slate-400 text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">아직 등록된 사전 질문이 없습니다. 아래에서 작성해 주세요.</div>';
-
-      document.getElementById('preQModalContent').innerHTML = `
-        <div class="space-y-3">
-          <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 text-slate-700">
-            <p class="font-bold text-brand-purple">📌 지원 정보: ${reg.univ} ${reg.dept}</p>
-            ${reg.note ? `<p class="mt-1 text-slate-600">학생 전달사항: ${reg.note}</p>` : ''}
-          </div>
-
-          <div class="space-y-2">
-            <h4 class="font-bold text-slate-800">등록된 질문 목록 (${preQList.length}개)</h4>
-            <div class="space-y-2 max-h-48 overflow-y-auto custom-scroll">${listHtml}</div>
-          </div>
-
-          <div class="pt-2 space-y-2 border-t">
-            <label class="block font-bold text-slate-800">✍ 새 예상 질문 추가</label>
-            <div class="flex gap-2">
-              <input type="text" id="newPreQAuthor" placeholder="선생님 성함" class="w-24 px-2.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs">
-              <input type="text" id="newPreQText" placeholder="예: 생기부 2페이지 탐구활동 관련 검증 질문" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs">
-              <button onclick="addPreQuestion('${reg.id}')" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-3.5 py-2 rounded-xl text-xs whitespace-nowrap">추가</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('preQuestionsModal').classList.remove('hidden');
-    }
-
-    function closePreQuestionsModal() {
-      document.getElementById('preQuestionsModal').classList.add('hidden');
-    }
-
-    async function addPreQuestion(regId) {
-      const reg = state.regs.find(r => r.id === regId);
-      if (!reg) return;
-
-      const author = document.getElementById('newPreQAuthor')?.value.trim() || '선생님';
-      const question = document.getElementById('newPreQText')?.value.trim();
-
-      if (!question) {
-        alert('예상 질문 문구를 입력해 주세요.');
-        return;
-      }
-
-      if (!reg.preQuestions) reg.preQuestions = [];
-      reg.preQuestions.push({ author, question, createdAt: new Date().toLocaleString() });
-
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          await setDoc(doc(window.db, 'interview_registrations', regId), reg);
-        } catch(e) { console.warn("Firestore Save Error", e); }
-      }
-
-      openPreQuestionsModal(regId);
-      renderTeacherListView();
-    }
-
-    async function removePreQuestion(regId, index) {
-      const reg = state.regs.find(r => r.id === regId);
-      if (!reg || !reg.preQuestions) return;
-
-      reg.preQuestions.splice(index, 1);
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          await setDoc(doc(window.db, 'interview_registrations', regId), reg);
-        } catch(e) { console.warn("Firestore Save Error", e); }
-      }
-
-      openPreQuestionsModal(regId);
-      renderTeacherListView();
     }
 
     // 온라인 디지털 평가 기록지 모달
@@ -1047,7 +1086,7 @@
       link.click();
     }
 
-    // 1단계: CSV 파일 업로드 ➔ PIN 코드 일괄 자동 생성
+    // 1단계: CSV 파일 업로드
     function processAndGeneratePinFromCSV(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1795,7 +1834,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // 면접 장소 및 관리 열 완벽 중앙 정렬 & 잘림 방지 스크롤 구조 적용
+    // ★ [방법 2] 드래그(가로 스크롤) 없는 깔끔한 카드형 통합 테이블 렌더링 ★
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1813,41 +1852,10 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       });
 
       let tableRows = filteredRegs.map((r, idx) => {
-        const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
-        const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
-
-        const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-        const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-        
-        let teacherCellHtml = '';
-        if (isEditing) {
-          const t1Options = availA.map(t => `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}(A)</option>`).join('');
-          const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}(B)</option>`).join('');
-
-          teacherCellHtml = `
-            <div class="flex items-center space-x-1 whitespace-nowrap">
-              <select id="t1Input_${r.id}" class="px-1 py-0.5 text-[11px] border border-slate-300 rounded focus:outline-none">
-                <option value="">A교사</option>
-                ${t1Options}
-              </select>
-              <select id="t2Input_${r.id}" class="px-1 py-0.5 text-[11px] border border-slate-300 rounded focus:outline-none">
-                <option value="">B교사</option>
-                ${t2Options}
-              </select>
-              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">저장</button>
-            </div>
-          `;
-        } else {
-          teacherCellHtml = `
-            <div class="flex items-center justify-between whitespace-nowrap">
-              <div class="space-x-1">
-                ${r.teacher1 ? `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold text-[10px]">${r.teacher1}(A)</span>` : ''}
-                ${r.teacher2 ? `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold text-[10px]">${r.teacher2}(B)</span>` : ''}
-              </div>
-              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[10px] font-semibold ml-1 underline whitespace-nowrap">수정</button>
-            </div>
-          `;
-        }
+        const assignedTeachers = [r.teacher1, r.teacher2].filter(Boolean);
+        const teacherText = assignedTeachers.length > 0 
+          ? `<span class="text-brand-purple font-bold">${assignedTeachers.join(', ')}</span>`
+          : `<span class="text-amber-600 font-medium">미배정</span>`;
 
         const statusStyle = r.status === '완료' 
           ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
@@ -1858,48 +1866,31 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         const preQCount = (r.preQuestions || []).length;
 
         return `
-          <tr class="border-b border-slate-100 hover:bg-slate-50 text-[11px] text-slate-700">
-            <td class="py-2.5 px-1 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
-            <td class="py-2.5 px-1 font-bold text-brand-navy text-center whitespace-nowrap">${r.date}</td>
-            <td class="py-2.5 px-1 font-bold text-brand-purple text-center whitespace-nowrap">${r.period}교시</td>
-            <td class="py-2.5 px-1 font-semibold text-center whitespace-nowrap">${r.num}</td>
-            <td class="py-2.5 px-1 font-bold text-slate-900 text-center whitespace-nowrap">${r.name}</td>
-            <td class="py-2.5 px-1 truncate max-w-[85px]" title="${r.univ}">${r.univ}</td>
-            <td class="py-2.5 px-1 truncate max-w-[85px]" title="${r.dept}">${r.dept}</td>
-            <td class="py-2.5 px-1 truncate max-w-[70px] text-slate-500" title="${r.note || '-'}">${r.note || '-'}</td>
-            <td class="py-2.5 px-1 text-center whitespace-nowrap">
-              <button onclick="toggleStudentStatus('${r.id}')" class="px-1.5 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
+          <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700">
+            <td class="py-3 px-2 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
+            <td class="py-3 px-2 font-bold text-brand-navy text-center whitespace-nowrap">${r.date}</td>
+            <td class="py-3 px-2 font-bold text-brand-purple text-center whitespace-nowrap">${r.period}교시</td>
+            <td class="py-3 px-2 font-semibold text-center whitespace-nowrap">${r.num}</td>
+            <td class="py-3 px-2 font-bold text-slate-900 text-center whitespace-nowrap">${r.name}</td>
+            <td class="py-3 px-2 text-center whitespace-nowrap">${r.univ}</td>
+            <td class="py-3 px-2 text-center whitespace-nowrap">${r.dept}</td>
+            <td class="py-3 px-2 text-center whitespace-nowrap">${teacherText}</td>
+            <td class="py-3 px-2 text-center whitespace-nowrap">
+              <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[11px] border transition-all ${statusStyle} whitespace-nowrap">
                 ${r.status || '대기'}
               </button>
             </td>
-            <td class="py-2.5 px-1 text-center whitespace-nowrap">
-              <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200 whitespace-nowrap">
-                ❓ 질문(${preQCount})
+            <td class="py-3 px-2 text-center whitespace-nowrap">
+              <button onclick="openStudentDetailModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-3 py-1 rounded-xl text-xs font-bold shadow-sm transition-all whitespace-nowrap">
+                ⚙️ 관리 / 평가 (${preQCount})
               </button>
-            </td>
-            <td class="py-2.5 px-1 whitespace-nowrap min-w-[170px]">${teacherCellHtml}</td>
-            <td class="py-2.5 px-1.5 text-center whitespace-nowrap min-w-[100px]">
-              <div class="flex justify-center">
-                <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
-              </div>
-            </td>
-            <td class="py-2.5 px-2 text-center whitespace-nowrap min-w-[150px]">
-              <div class="flex items-center justify-center space-x-1">
-                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
-                  📝 온라인 평가지
-                </button>
-                <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                  인쇄
-                </button>
-                <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[10px] whitespace-nowrap">취소</button>
-              </div>
             </td>
           </tr>
         `;
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+        tableRows = `<tr><td colspan="10" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
       }
 
       main.innerHTML = `
@@ -1943,24 +1934,21 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <span class="text-xs text-slate-500 whitespace-nowrap">결과: <strong>${filteredRegs.length}건</strong></span>
           </div>
 
-          <!-- 테이블 가로 잘림 방지 스크롤 오버플로우 박스 -->
-          <div class="w-full overflow-x-auto custom-scroll rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse min-w-[950px]">
+          <!-- 가로 드래그 없는 여유로운 테이블 -->
+          <div class="w-full rounded-xl border border-slate-200 overflow-hidden">
+            <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600">
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">No</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">면접 희망일</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">교시</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">학번</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">이름</th>
-                  <th class="py-2.5 px-1 whitespace-nowrap">지원 대학교</th>
-                  <th class="py-2.5 px-1 whitespace-nowrap">지원 학과</th>
-                  <th class="py-2.5 px-1 whitespace-nowrap">요청사항</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">상태</th>
-                  <th class="py-2.5 px-1 text-center whitespace-nowrap">사전질문</th>
-                  <th class="py-2.5 px-1 whitespace-nowrap">담당 면접교사 (A:교사1, B:교사2)</th>
-                  <th class="py-2.5 px-1.5 text-center whitespace-nowrap">면접 장소</th>
-                  <th class="py-2.5 px-2 text-center whitespace-nowrap">관리</th>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">No</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">면접 희망일</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">교시</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">학번</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">이름</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">지원 대학교</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">지원 학과</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">담당 면접관</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">상태</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">상세 관리 & 온라인 평가지</th>
                 </tr>
               </thead>
               <tbody>
@@ -2392,7 +2380,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
             <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
               ${teacherBadge}
-              <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded-lg font-bold text-xs whitespace-nowrap">📝 온라인 평가지</button>
+              <button onclick="openStudentDetailModal('${r.id}')" class="bg-brand-purple text-white px-2.5 py-1 rounded-lg font-bold text-xs whitespace-nowrap">⚙️ 상세/평가</button>
               <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold transition-all text-xs whitespace-nowrap">인쇄</button>
               <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1 whitespace-nowrap">삭제</button>
             </div>
@@ -2433,29 +2421,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       await saveClosedDatesToDb();
       renderTeacherCalendarView();
       showTeacherDateDetail(dateStr);
-    }
-
-    async function saveTeachers(id) {
-      const t1 = document.getElementById(`t1Input_${id}`)?.value || '';
-      const t2 = document.getElementById(`t2Input_${id}`)?.value || '';
-
-      const reg = state.regs.find(r => r.id === id);
-      if (reg) {
-        reg.teacher1 = t1;
-        reg.teacher2 = t2;
-        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-        if (window.isFirebaseReady && window.dbTools) {
-          try {
-            const { doc, setDoc } = window.dbTools;
-            await setDoc(doc(window.db, 'interview_registrations', id), reg);
-          } catch(e) { console.warn("Firestore Teacher Save Error", e); }
-        }
-
-        state.editingTeacherId = null;
-        alert(`담당 면접교사가 완벽히 저장되었습니다.`);
-        renderTeacherView();
-      }
     }
 
     async function deleteRegistration(id) {
