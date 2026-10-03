@@ -353,9 +353,17 @@
     // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
     let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
-    const ALL_TEACHERS = ["최명호", "전명치", "백홍", "엄혜진", "정해린", "원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
-    const TEACHER_A_GROUP = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
-    const TEACHER_B_GROUP = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
+    // 초기 기본 교사 명단 (하위 호환 보존)
+    const DEFAULT_TEACHER_A = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
+    const DEFAULT_TEACHER_B = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
+
+    // ★ 내년도 이관 대비 커스텀 교사 명단 로드 ★
+    let TEACHER_A_GROUP = JSON.parse(localStorage.getItem('mock_teacher_a_group') || JSON.stringify(DEFAULT_TEACHER_A));
+    let TEACHER_B_GROUP = JSON.parse(localStorage.getItem('mock_teacher_b_group') || JSON.stringify(DEFAULT_TEACHER_B));
+    let ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
+
+    // 교사 관리자 비밀번호 (기본: 01054568795)
+    let ADMIN_PASSWORD = localStorage.getItem('mock_admin_password') || '01054568795';
 
     // 복원된 10월/11월 교사 스케줄 데이터
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
@@ -487,7 +495,7 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
-    // 학생용 사이드바 메뉴 복구
+    // 학생용 사이드바 메뉴
     function updateSidebarNavForStudent() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -533,7 +541,7 @@
     function switchTeacherTab(tabName) {
       if (tabName === 'admin') {
         const inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
-        if (inputPwd !== '01054568795') {
+        if (inputPwd !== ADMIN_PASSWORD) {
           alert('비밀번호가 올바르지 않습니다.');
           return;
         }
@@ -543,7 +551,6 @@
       renderTeacherView();
     }
 
-    // ★ 교사용 사이드바 메뉴 (학생 면접 평가지 관리 탭 신규 추가) ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -607,6 +614,16 @@
                 localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
                 if (isTeacher) renderTeacherView();
                 else renderCalendar();
+              } else if (doc.id === 'teacher_roster') {
+                const data = doc.data();
+                if (data.groupA && data.groupB) {
+                  TEACHER_A_GROUP = data.groupA;
+                  TEACHER_B_GROUP = data.groupB;
+                  ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
+                  localStorage.setItem('mock_teacher_a_group', JSON.stringify(TEACHER_A_GROUP));
+                  localStorage.setItem('mock_teacher_b_group', JSON.stringify(TEACHER_B_GROUP));
+                  if (isTeacher) renderTeacherView();
+                }
               }
             });
           });
@@ -632,6 +649,88 @@
           await setDoc(doc(window.db, 'interview_settings', 'teacher_schedule'), { schedule: TEACHER_SCHEDULE });
         } catch(e) { console.warn("Firestore Teacher Schedule Save Error", e); }
       }
+    }
+
+    // ★ 교사 명단 DB 저장 함수 ★
+    async function saveTeacherRosterToDb() {
+      ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
+      localStorage.setItem('mock_teacher_a_group', JSON.stringify(TEACHER_A_GROUP));
+      localStorage.setItem('mock_teacher_b_group', JSON.stringify(TEACHER_B_GROUP));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_settings', 'teacher_roster'), {
+            groupA: TEACHER_A_GROUP,
+            groupB: TEACHER_B_GROUP
+          });
+        } catch(e) { console.warn("Firestore Roster Save Error", e); }
+      }
+    }
+
+    // ★ 내년도 이관 대비 교사 직접 추가/이동/삭제 함수 ★
+    async function addNewTeacherToGroup(groupType) {
+      const inputEl = document.getElementById('newTeacherNameInput');
+      const name = inputEl?.value.trim();
+
+      if (!name) {
+        alert('추가할 선생님 성함을 입력해 주세요.');
+        return;
+      }
+
+      if (ALL_TEACHERS.includes(name)) {
+        alert(`이미 [${name}] 선생님이 교사 명단에 등록되어 있습니다.`);
+        return;
+      }
+
+      if (groupType === 'A') TEACHER_A_GROUP.push(name);
+      else TEACHER_B_GROUP.push(name);
+
+      await saveTeacherRosterToDb();
+      if (inputEl) inputEl.value = '';
+      alert(`[${name}] 선생님이 ${groupType}그룹 면접관 명단에 신규 추가되었습니다.`);
+      renderTeacherAdminView();
+    }
+
+    async function moveTeacherGroup(name, currentGroup) {
+      if (groupType === 'A' || currentGroup === 'A') {
+        TEACHER_A_GROUP = TEACHER_A_GROUP.filter(t => t !== name);
+        if (!TEACHER_B_GROUP.includes(name)) TEACHER_B_GROUP.push(name);
+        alert(`[${name}] 선생님이 B그룹(후임/저경력)으로 이동되었습니다.`);
+      } else {
+        TEACHER_B_GROUP = TEACHER_B_GROUP.filter(t => t !== name);
+        if (!TEACHER_A_GROUP.includes(name)) TEACHER_A_GROUP.push(name);
+        alert(`[${name}] 선생님이 A그룹(선임/고경력)으로 이동되었습니다.`);
+      }
+
+      await saveTeacherRosterToDb();
+      renderTeacherAdminView();
+    }
+
+    async function removeTeacherFromRoster(name) {
+      if (!confirm(`[${name}] 선생님을 교사 명단에서 삭제하시겠습니까?\n(기존에 등록된 학생 면접 기록 데이터는 유지됩니다.)`)) return;
+
+      TEACHER_A_GROUP = TEACHER_A_GROUP.filter(t => t !== name);
+      TEACHER_B_GROUP = TEACHER_B_GROUP.filter(t => t !== name);
+
+      await saveTeacherRosterToDb();
+      alert(`[${name}] 선생님이 교사 명단에서 삭제되었습니다.`);
+      renderTeacherAdminView();
+    }
+
+    // ★ 관리자 비밀번호 변경 함수 ★
+    function changeAdminPassword() {
+      const newPwd = document.getElementById('newAdminPwdInput')?.value.trim();
+      if (!newPwd || newPwd.length < 4) {
+        alert('새 관리자 비밀번호는 최소 4자리 이상 입력해 주세요.');
+        return;
+      }
+
+      ADMIN_PASSWORD = newPwd;
+      localStorage.setItem('mock_admin_password', ADMIN_PASSWORD);
+      alert(`[비밀번호 변경 완료]\n\n교사 관리자 비밀번호가 성공적으로 변경되었습니다.\n새 비밀번호: ${newPwd}`);
+      const pwdInput = document.getElementById('newAdminPwdInput');
+      if (pwdInput) pwdInput.value = '';
     }
 
     // 개별/전체 날짜 균등배정 자바스크립트 처리 함수
@@ -1501,6 +1600,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         exportedAt: new Date().toLocaleString(),
         closedDates: state.closedDates,
         teacherSchedule: TEACHER_SCHEDULE,
+        teacherGroupA: TEACHER_A_GROUP,
+        teacherGroupB: TEACHER_B_GROUP,
+        adminPassword: ADMIN_PASSWORD,
         registrations: state.regs,
         studentList: STUDENT_LIST
       };
@@ -1531,6 +1633,10 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
           state.closedDates = restored.closedDates || [];
           TEACHER_SCHEDULE = restored.teacherSchedule || TEACHER_SCHEDULE;
+          if (restored.teacherGroupA) TEACHER_A_GROUP = restored.teacherGroupA;
+          if (restored.teacherGroupB) TEACHER_B_GROUP = restored.teacherGroupB;
+          if (restored.adminPassword) ADMIN_PASSWORD = restored.adminPassword;
+
           state.regs = restored.registrations || [];
           if (restored.studentList) {
             STUDENT_LIST = restored.studentList;
@@ -1539,10 +1645,14 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
           localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
           localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
+          localStorage.setItem('mock_teacher_a_group', JSON.stringify(TEACHER_A_GROUP));
+          localStorage.setItem('mock_teacher_b_group', JSON.stringify(TEACHER_B_GROUP));
+          localStorage.setItem('mock_admin_password', ADMIN_PASSWORD);
           localStorage.setItem('mock_regs', JSON.stringify(state.regs));
 
           await saveClosedDatesToDb();
           await saveTeacherScheduleToDb();
+          await saveTeacherRosterToDb();
 
           if (window.isFirebaseReady && window.dbTools) {
             const { doc, setDoc } = window.dbTools;
@@ -1640,7 +1750,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
-    // ★ 학생별 3회 누적 면접 평가지 종합 인쇄 함수 ★
+    // 학생별 3회 누적 면접 평가지 종합 인쇄 함수
     function printStudentCumulativeEvalSheet(sNum) {
       const studentRegs = state.regs.filter(r => String(r.num).trim() === String(sNum).trim()).sort((a,b)=> new Date(a.date) - new Date(b.date));
       
@@ -1674,7 +1784,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               <div class="col-span-2">■ 담당 면접관: <strong>[A] ${r.teacher1 || '미배정'} / [B] ${r.teacher2 || '미배정'}</strong></div>
             </div>
 
-            <!-- 영역별 점수 -->
             <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
               <p class="font-bold text-slate-900 border-b pb-1">1. 영역별 평가 점수</p>
               <div class="grid grid-cols-2 gap-1.5 pt-1">
@@ -1685,13 +1794,11 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </div>
             </div>
 
-            <!-- 현장 Q&A -->
             <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
               <p class="font-bold text-slate-900 border-b pb-1 mb-1">2. 주요 질문 및 학생 답변 기록</p>
               ${qaPrintHtml}
             </div>
 
-            <!-- 교사 종합 소견 -->
             <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
               <p class="font-bold text-slate-900 border-b pb-1">3. 종합 평가 소견 및 개선 지도사항</p>
               <p class="text-slate-800 pt-1 leading-relaxed">${r.teacherEvaluation || evalData.summary || '등록된 총평 소견이 없습니다.'}</p>
@@ -1716,20 +1823,42 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
-    // ★ [신규 탭] 학생 면접 평가지 관리 뷰 렌더링 함수 ★
+    // 학생 평가지 전용 실시간 검색 필터링 함수
+    function filterEvalCards(keyword) {
+      state.evalSearchKeyword = keyword.trim().toLowerCase();
+      const cards = document.querySelectorAll('.eval-student-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const searchData = card.getAttribute('data-search') || '';
+        if (!state.evalSearchKeyword || searchData.includes(state.evalSearchKeyword)) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      const countBadge = document.getElementById('evalSearchCountBadge');
+      if (countBadge) countBadge.textContent = visibleCount;
+
+      const emptyNotice = document.getElementById('evalSearchEmptyNotice');
+      if (emptyNotice) {
+        if (visibleCount === 0) emptyNotice.classList.remove('hidden');
+        else emptyNotice.classList.add('hidden');
+      }
+    }
+
+    // 학생 면접 평가지 관리 뷰 렌더링 함수
     function renderTeacherEvalManagementView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
 
-      // 전체 등록 학생 목록에서 신청 내역이 있는 학생 그룹화
       const studentMap = {};
-      
-      // 1. 등록된 197명 전체 학생 기준 초기화
       STUDENT_LIST.forEach(s => {
         studentMap[s.num] = { num: s.num, name: s.name, regs: [] };
       });
 
-      // 2. 예약 내역을 해당 학생 데이터에 매칭
       state.regs.forEach(r => {
         const key = String(r.num).trim();
         if (!studentMap[key]) {
@@ -1740,17 +1869,12 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
       const studentKeys = Object.keys(studentMap).sort();
 
-      // 키워드 검색 필터링
-      const filteredKeys = studentKeys.filter(k => {
-        const s = studentMap[k];
-        if (!state.evalSearchKeyword) return s.regs.length > 0; // 기본은 1회 이상 신청 학생만
-        const kw = state.evalSearchKeyword.toLowerCase();
-        return s.name.toLowerCase().includes(kw) || s.num.includes(kw);
-      });
-
-      const studentCardsHtml = filteredKeys.map(k => {
+      const studentCardsHtml = studentKeys.map(k => {
         const student = studentMap[k];
         const sortedRegs = student.regs.sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        const hasRegs = sortedRegs.length > 0;
+        const searchData = `${student.name.toLowerCase()} ${student.num}`;
 
         const roundsHtml = [0, 1, 2].map(rIdx => {
           const reg = sortedRegs[rIdx];
@@ -1777,7 +1901,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 <p class="text-[11px] text-slate-500">면접관: ${[reg.teacher1, reg.teacher2].filter(Boolean).join(', ') || '미배정'}</p>
               </div>
 
-              <!-- 점수 요약 -->
               <div class="bg-slate-50 p-2 rounded-xl text-[11px] grid grid-cols-2 gap-1 text-slate-700 font-medium">
                 <div>전공: <strong>${evalData.scores.q1 || '-'}</strong></div>
                 <div>서류: <strong>${evalData.scores.q2 || '-'}</strong></div>
@@ -1785,7 +1908,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 <div>태도: <strong>${evalData.scores.q4 || '-'}</strong></div>
               </div>
 
-              <!-- 종합 피드백 총평 -->
               <div class="text-[11px] text-slate-600 line-clamp-2 bg-purple-50/50 p-2 rounded-xl italic">
                 "${reg.teacherEvaluation || evalData.summary || '아직 작성된 평가 총평이 없습니다.'}"
               </div>
@@ -1800,7 +1922,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         }).join('');
 
         return `
-          <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
+          <div class="eval-student-card bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4 ${hasRegs ? '' : 'hidden'}" data-search="${searchData}">
             <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
               <div class="flex items-center space-x-2">
                 <span class="bg-brand-navy text-white text-xs font-bold px-3 py-1 rounded-full">${student.num}</span>
@@ -1812,13 +1934,14 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </button>
             </div>
 
-            <!-- 1~3회차 가로 정렬 카드 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               ${roundsHtml}
             </div>
           </div>
         `;
       }).join('');
+
+      const activeStudentCount = studentKeys.filter(k => studentMap[k].regs.length > 0).length;
 
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
@@ -1827,18 +1950,17 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생별 1~3회차 모의면접 피드백 변화를 한눈에 확인하고 인쇄합니다.</p>
           </div>
 
-          <!-- 검색바 -->
           <div class="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
             <div class="flex items-center space-x-2 w-full max-w-sm">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
-              <input type="text" placeholder="학생 이름 또는 학번으로 검색..." value="${state.evalSearchKeyword}" oninput="state.evalSearchKeyword = this.value; renderTeacherEvalManagementView();" class="w-full bg-transparent text-xs focus:outline-none">
+              <input type="text" placeholder="학생 이름 또는 학번으로 검색..." oninput="filterEvalCards(this.value)" class="w-full bg-transparent text-xs focus:outline-none">
             </div>
-            <span class="text-xs text-slate-500 whitespace-nowrap">조회 대상: <strong>${filteredKeys.length}명</strong></span>
+            <span class="text-xs text-slate-500 whitespace-nowrap">조회 대상: <strong id="evalSearchCountBadge">${activeStudentCount}</strong>명</span>
           </div>
 
-          <!-- 학생별 평가지 카드 리스트 -->
-          <div class="space-y-5">
-            ${filteredKeys.length > 0 ? studentCardsHtml : '<div class="text-center py-12 text-slate-400 text-xs">검색 조건에 해당하거나 면접을 신청한 학생이 없습니다.</div>'}
+          <div id="evalCardsContainer" class="space-y-5">
+            ${studentCardsHtml}
+            <div id="evalSearchEmptyNotice" class="hidden text-center py-12 text-slate-400 text-xs">검색 조건에 해당하거나 면접을 신청한 학생이 없습니다.</div>
           </div>
         </section>
       `;
@@ -1860,6 +1982,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
+    // ★ [고도화 반영] 교사 관리자 전용 뷰 렌더링 ★
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1876,11 +1999,67 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         </tr>
       `).join('');
 
+      const groupARows = TEACHER_A_GROUP.map((t, idx) => `
+        <div class="flex justify-between items-center bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-200 text-xs">
+          <span class="font-bold text-amber-900">${idx+1}. ${t} 선생님</span>
+          <div class="flex items-center space-x-1.5">
+            <button onclick="moveTeacherGroup('${t}', 'A')" class="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-2 py-0.5 rounded text-[10px] whitespace-nowrap">➔ B그룹 이동</button>
+            <button onclick="removeTeacherFromRoster('${t}')" class="text-red-500 hover:text-red-700 font-bold underline text-[10px] ml-1">삭제</button>
+          </div>
+        </div>
+      `).join('') || '<div class="text-xs text-slate-400 py-2 text-center">등록된 A그룹 교사가 없습니다.</div>';
+
+      const groupBRows = TEACHER_B_GROUP.map((t, idx) => `
+        <div class="flex justify-between items-center bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-200 text-xs">
+          <span class="font-bold text-blue-900">${idx+1}. ${t} 선생님</span>
+          <div class="flex items-center space-x-1.5">
+            <button onclick="moveTeacherGroup('${t}', 'B')" class="bg-blue-200 hover:bg-blue-300 text-blue-900 font-bold px-2 py-0.5 rounded text-[10px] whitespace-nowrap">➔ A그룹 이동</button>
+            <button onclick="removeTeacherFromRoster('${t}')" class="text-red-500 hover:text-red-700 font-bold underline text-[10px] ml-1">삭제</button>
+          </div>
+        </div>
+      `).join('') || '<div class="text-xs text-slate-400 py-2 text-center">등록된 B그룹 교사가 없습니다.</div>';
+
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5 sm:space-y-6">
           <div class="border-b border-slate-100 pb-3.5">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 - 학생 PIN 코드 및 명단 관리</h3>
-            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 엑셀 업로드 및 전학생 1명 개별 추가 기능을 지원합니다.</p>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 포털</h3>
+            <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생 PIN 명단 관리, 내년도 면접관 교사진 변경 및 관리자 설정을 지원합니다.</p>
+          </div>
+
+          <!-- 신규 기능: 내년도 이관 대비 면접관 교사 명단 직접 관리 모듈 -->
+          <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                새 학년도 부서 이동 시 성함을 직접 등록하면 소스 코드 수정 없이 **자동 배정 시스템 및 참여 교사 관리**에 즉시 적용됩니다.<br>
+                · <strong>A그룹 (선임/고경력)</strong>: 담임/진학 전문교사 / · <strong>B그룹 (후임/저경력)</strong>: 교과/지원 교사
+              </p>
+            </div>
+
+            <!-- 신규 교사 추가 입력창 -->
+            <div class="flex items-center space-x-2 flex-wrap gap-2 bg-white p-3 rounded-xl border border-purple-200">
+              <input type="text" id="newTeacherNameInput" placeholder="선생님 성함 입력 (예: 홍길동)" class="px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-brand-purple w-44 sm:w-56">
+              <button onclick="addNewTeacherToGroup('A')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                + A그룹 추가
+              </button>
+              <button onclick="addNewTeacherToGroup('B')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                + B그룹 추가
+              </button>
+            </div>
+
+            <!-- 그룹별 교사 목록 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div class="space-y-2">
+                <span class="font-bold text-amber-900 text-xs">⭐ A그룹 (선임/고경력 교사 : 총 ${TEACHER_A_GROUP.length}명)</span>
+                <div class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll">${groupARows}</div>
+              </div>
+              <div class="space-y-2">
+                <span class="font-bold text-blue-900 text-xs">🔹 B그룹 (후임/저경력 교사 : 총 ${TEACHER_B_GROUP.length}명)</span>
+                <div class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll">${groupBRows}</div>
+              </div>
+            </div>
           </div>
 
           <!-- 1단계: 엑셀 파일 일괄 업로드 모듈 -->
@@ -1957,13 +2136,29 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
           </div>
 
+          <!-- 신규 기능: 관리자 비밀번호 직접 변경 도구 -->
+          <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="space-y-1">
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-key text-slate-700"></i> 교사 관리자 비밀번호 변경
+              </h4>
+              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">담당 교사가 변경되는 경우 새 비밀번호로 직접 지정할 수 있습니다.</p>
+            </div>
+            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+              <input type="password" id="newAdminPwdInput" placeholder="새 비밀번호 입력" class="px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-brand-purple bg-white w-36">
+              <button onclick="changeAdminPassword()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                비밀번호 변경
+              </button>
+            </div>
+          </div>
+
           <!-- 백업 및 복원 도구 -->
           <div class="bg-amber-50/60 p-4 sm:p-5 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-box-archive text-amber-600"></i> 전체 시스템 데이터 백업 / 복원
               </h4>
-              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">모든 예약 데이터와 교사 스케줄을 백업 파일로 보관하거나 원클릭 복원합니다.</p>
+              <p class="text-[11px] sm:text-xs text-slate-600 whitespace-nowrap">모든 예약 데이터와 교사 스케줄 및 명단을 백업 파일로 보관하거나 원클릭 복원합니다.</p>
             </div>
             <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
               <button onclick="backupFullDataJSON()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
@@ -2007,7 +2202,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // 스마트 슬림 테이블 렌더링
+    // 면접 예약 현황 목록 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2096,7 +2291,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
                   📝평가지
                 </button>
-                <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-1 py-0.5 rounded text-[10px] font-bold border border-slate-200 whitespace-nowrap">인쇄</button>
                 <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[10px] whitespace-nowrap">취소</button>
               </div>
             </td>
@@ -2598,7 +2792,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
               ${teacherBadge}
               <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded-lg font-bold text-xs whitespace-nowrap">📝 온라인 평가지</button>
-              <button onclick="printEvaluationSheet(null, '${r.id}')" class="bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold transition-all text-xs whitespace-nowrap">인쇄</button>
               <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1 whitespace-nowrap">삭제</button>
             </div>
           </div>
