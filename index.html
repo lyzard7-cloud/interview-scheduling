@@ -1795,7 +1795,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
-    // 면접 장소 및 관리 열 완벽 중앙 정렬 적용
+    // 면접 장소 및 관리 열 완벽 중앙 정렬 & 잘림 방지 스크롤 구조 적용
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1859,14 +1859,14 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-[11px] text-slate-700">
-            <td class="py-2.5 px-1.5 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
-            <td class="py-2.5 px-1.5 font-bold text-brand-navy whitespace-nowrap">${r.date}</td>
-            <td class="py-2.5 px-1.5 font-bold text-brand-purple whitespace-nowrap">${r.period}교시</td>
-            <td class="py-2.5 px-1.5 font-semibold whitespace-nowrap">${r.num}</td>
-            <td class="py-2.5 px-1.5 font-bold text-slate-900 whitespace-nowrap">${r.name}</td>
-            <td class="py-2.5 px-1.5 truncate max-w-[90px]" title="${r.univ}">${r.univ}</td>
-            <td class="py-2.5 px-1.5 truncate max-w-[90px]" title="${r.dept}">${r.dept}</td>
-            <td class="py-2.5 px-1.5 truncate max-w-[80px] text-slate-500" title="${r.note || '-'}">${r.note || '-'}</td>
+            <td class="py-2.5 px-1 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
+            <td class="py-2.5 px-1 font-bold text-brand-navy text-center whitespace-nowrap">${r.date}</td>
+            <td class="py-2.5 px-1 font-bold text-brand-purple text-center whitespace-nowrap">${r.period}교시</td>
+            <td class="py-2.5 px-1 font-semibold text-center whitespace-nowrap">${r.num}</td>
+            <td class="py-2.5 px-1 font-bold text-slate-900 text-center whitespace-nowrap">${r.name}</td>
+            <td class="py-2.5 px-1 truncate max-w-[85px]" title="${r.univ}">${r.univ}</td>
+            <td class="py-2.5 px-1 truncate max-w-[85px]" title="${r.dept}">${r.dept}</td>
+            <td class="py-2.5 px-1 truncate max-w-[70px] text-slate-500" title="${r.note || '-'}">${r.note || '-'}</td>
             <td class="py-2.5 px-1 text-center whitespace-nowrap">
               <button onclick="toggleStudentStatus('${r.id}')" class="px-1.5 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
                 ${r.status || '대기'}
@@ -1877,13 +1877,13 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 ❓ 질문(${preQCount})
               </button>
             </td>
-            <td class="py-2.5 px-1.5 whitespace-nowrap">${teacherCellHtml}</td>
-            <td class="py-2.5 px-1.5 text-center whitespace-nowrap">
+            <td class="py-2.5 px-1 whitespace-nowrap min-w-[170px]">${teacherCellHtml}</td>
+            <td class="py-2.5 px-1.5 text-center whitespace-nowrap min-w-[100px]">
               <div class="flex justify-center">
                 <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
               </div>
             </td>
-            <td class="py-2.5 px-1 text-center whitespace-nowrap">
+            <td class="py-2.5 px-2 text-center whitespace-nowrap min-w-[150px]">
               <div class="flex items-center justify-center space-x-1">
                 <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
                   📝 온라인 평가지
@@ -1943,23 +1943,24 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <span class="text-xs text-slate-500 whitespace-nowrap">결과: <strong>${filteredRegs.length}건</strong></span>
           </div>
 
-          <div class="w-full overflow-hidden rounded-xl border border-slate-200">
-            <table class="w-full text-left border-collapse table-auto">
+          <!-- 테이블 가로 잘림 방지 스크롤 오버플로우 박스 -->
+          <div class="w-full overflow-x-auto custom-scroll rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse min-w-[950px]">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600">
-                  <th class="py-2.5 px-1.5 text-center whitespace-nowrap">No</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">면접 희망일</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">교시</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">학번</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">이름</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">지원 대학교</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">지원 학과</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">요청사항</th>
+                  <th class="py-2.5 px-1 text-center whitespace-nowrap">No</th>
+                  <th class="py-2.5 px-1 text-center whitespace-nowrap">면접 희망일</th>
+                  <th class="py-2.5 px-1 text-center whitespace-nowrap">교시</th>
+                  <th class="py-2.5 px-1 text-center whitespace-nowrap">학번</th>
+                  <th class="py-2.5 px-1 text-center whitespace-nowrap">이름</th>
+                  <th class="py-2.5 px-1 whitespace-nowrap">지원 대학교</th>
+                  <th class="py-2.5 px-1 whitespace-nowrap">지원 학과</th>
+                  <th class="py-2.5 px-1 whitespace-nowrap">요청사항</th>
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">상태</th>
                   <th class="py-2.5 px-1 text-center whitespace-nowrap">사전질문</th>
-                  <th class="py-2.5 px-1.5 whitespace-nowrap">담당 면접교사 (A:교사1, B:교사2)</th>
+                  <th class="py-2.5 px-1 whitespace-nowrap">담당 면접교사 (A:교사1, B:교사2)</th>
                   <th class="py-2.5 px-1.5 text-center whitespace-nowrap">면접 장소</th>
-                  <th class="py-2.5 px-1.5 text-center whitespace-nowrap">관리</th>
+                  <th class="py-2.5 px-2 text-center whitespace-nowrap">관리</th>
                 </tr>
               </thead>
               <tbody>
