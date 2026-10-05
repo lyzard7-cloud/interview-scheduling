@@ -350,19 +350,19 @@
   </footer>
 
   <script>
-    // 시스템 내 학생 목록 저장소
+    // 시스템 내 학생 목록 저장소 (기본 로컬 스토리지 데이터)
     let STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
-    // 초기 기본 교사 명단
+    // 초기 기본 교사 명단 (하위 호환 보존)
     const DEFAULT_TEACHER_A = ["최명호", "전명치", "백홍", "엄혜진", "정해린"];
     const DEFAULT_TEACHER_B = ["원선보", "이나경", "조아영", "이진경", "김준형", "신이현"];
 
-    // 커스텀 교사 명단 로드
+    // ★ 내년도 이관 대비 커스텀 교사 명단 로드 ★
     let TEACHER_A_GROUP = JSON.parse(localStorage.getItem('mock_teacher_a_group') || JSON.stringify(DEFAULT_TEACHER_A));
     let TEACHER_B_GROUP = JSON.parse(localStorage.getItem('mock_teacher_b_group') || JSON.stringify(DEFAULT_TEACHER_B));
     let ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
 
-    // 교사 관리자 비밀번호
+    // 교사 관리자 비밀번호 (기본: 01054568795)
     let ADMIN_PASSWORD = localStorage.getItem('mock_admin_password') || '01054568795';
 
     // 복원된 10월/11월 교사 스케줄 데이터
@@ -651,6 +651,7 @@
       }
     }
 
+    // ★ 교사 명단 DB 저장 함수 ★
     async function saveTeacherRosterToDb() {
       ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
       localStorage.setItem('mock_teacher_a_group', JSON.stringify(TEACHER_A_GROUP));
@@ -667,6 +668,7 @@
       }
     }
 
+    // ★ 내년도 이관 대비 교사 직접 추가/이동/삭제 함수 ★
     async function addNewTeacherToGroup(groupType) {
       const inputEl = document.getElementById('newTeacherNameInput');
       const name = inputEl?.value.trim();
@@ -691,7 +693,7 @@
     }
 
     async function moveTeacherGroup(name, currentGroup) {
-      if (currentGroup === 'A') {
+      if (groupType === 'A' || currentGroup === 'A') {
         TEACHER_A_GROUP = TEACHER_A_GROUP.filter(t => t !== name);
         if (!TEACHER_B_GROUP.includes(name)) TEACHER_B_GROUP.push(name);
         alert(`[${name}] 선생님이 B그룹(후임/저경력)으로 이동되었습니다.`);
@@ -716,6 +718,7 @@
       renderTeacherAdminView();
     }
 
+    // ★ 관리자 비밀번호 변경 함수 ★
     function changeAdminPassword() {
       const newPwd = document.getElementById('newAdminPwdInput')?.value.trim();
       if (!newPwd || newPwd.length < 4) {
@@ -1979,7 +1982,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
-    // 교사 관리자 전용 뷰 렌더링
+    // ★ [고도화 반영] 교사 관리자 전용 뷰 렌더링 ★
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2023,7 +2026,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생 PIN 명단 관리, 내년도 면접관 교사진 변경 및 관리자 설정을 지원합니다.</p>
           </div>
 
-          <!-- 면접관 교사 명단 직접 관리 모듈 -->
+          <!-- 신규 기능: 내년도 이관 대비 면접관 교사 명단 직접 관리 모듈 -->
           <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
@@ -2035,6 +2038,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </p>
             </div>
 
+            <!-- 신규 교사 추가 입력창 -->
             <div class="flex items-center space-x-2 flex-wrap gap-2 bg-white p-3 rounded-xl border border-purple-200">
               <input type="text" id="newTeacherNameInput" placeholder="선생님 성함 입력 (예: 홍길동)" class="px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-brand-purple w-44 sm:w-56">
               <button onclick="addNewTeacherToGroup('A')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
@@ -2045,6 +2049,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </button>
             </div>
 
+            <!-- 그룹별 교사 목록 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <div class="space-y-2">
                 <span class="font-bold text-amber-900 text-xs">⭐ A그룹 (선임/고경력 교사 : 총 ${TEACHER_A_GROUP.length}명)</span>
@@ -2131,7 +2136,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
           </div>
 
-          <!-- 관리자 비밀번호 직접 변경 도구 -->
+          <!-- 신규 기능: 관리자 비밀번호 직접 변경 도구 -->
           <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
@@ -2197,6 +2202,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       renderTeacherListView();
     }
 
+    // 면접 예약 현황 목록 렌더링
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2365,51 +2371,12 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
-    // ★ [고도화 반영] 날짜별 참여 교사 관리 뷰 (수당 산출 요약표 포함) ★
     function renderTeacherScheduleView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
 
       const firstDay = new Date(state.year, state.month - 1, 1).getDay();
       const lastDate = new Date(state.year, state.month, 0).getDate();
-
-      // 교사별 참여 일수 및 총 지도 횟수(1일=2회) 계산
-      const teacherStats = ALL_TEACHERS.map(t => {
-        let dateCount = 0;
-        for (const dStr in TEACHER_SCHEDULE) {
-          if (TEACHER_SCHEDULE[dStr] && TEACHER_SCHEDULE[dStr].includes(t)) {
-            dateCount++;
-          }
-        }
-        const sessionCount = dateCount * 2; // 1일 체크 = 8교시 + 9교시 = 2회
-        const isGoalMet = sessionCount >= 15;
-        const groupType = TEACHER_A_GROUP.includes(t) ? 'A' : 'B';
-
-        return { name: t, group: groupType, dateCount, sessionCount, isGoalMet };
-      });
-
-      const teacherSummaryCardsHtml = teacherStats.map(s => {
-        const badgeStyle = s.isGoalMet 
-          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-          : 'bg-amber-100 text-amber-800 border-amber-300';
-
-        const statusText = s.isGoalMet 
-          ? '🟢 달성 완료' 
-          : `🟡 진행 중 (${s.sessionCount}/15회)`;
-
-        return `
-          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1 flex flex-col justify-between">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-slate-900 text-xs">${s.name} 선생님 <span class="text-[10px] font-semibold text-slate-400">(${s.group}그룹)</span></span>
-              <span class="px-2 py-0.5 rounded-full font-bold text-[10px] border ${badgeStyle}">${statusText}</span>
-            </div>
-            <div class="flex justify-between items-end pt-1">
-              <span class="text-[11px] text-slate-500">참여: <strong>${s.dateCount}일</strong></span>
-              <span class="text-xs font-black text-brand-purple">총 ${s.sessionCount}회 지도</span>
-            </div>
-          </div>
-        `;
-      }).join('');
 
       let calGridHtml = '';
       for (let i = 0; i < firstDay; i++) {
@@ -2449,29 +2416,16 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
 
       main.innerHTML = `
-        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️ 날짜별 참여 교사 관리 & 수당 집계</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 방과후 면접관 교사 지정 및 지도 횟수(수당 산출 기준: 1일 체크 = 8·9교시 총 2회) 집계</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️ 날짜별 참여 교사 관리</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 방과후 면접관 교사 지정</p>
             </div>
             <div class="flex items-center space-x-1.5 whitespace-nowrap">
               <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">◀ 이전달</button>
               <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy whitespace-nowrap">${state.year}년 ${state.month}월</span>
               <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">다음달 ▶</button>
-            </div>
-          </div>
-
-          <!-- 신규: 면접 지도 수당 산출 기준 횟수 현황 요약표 -->
-          <div class="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 space-y-3">
-            <div class="flex justify-between items-center">
-              <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
-                <i class="fa-solid fa-calculator text-brand-purple"></i> 📊 선생님별 면접 지도 횟수 현황 (수당 지급 기준: 목표 15회)
-              </h4>
-              <span class="text-[11px] text-slate-500 font-medium">※ 1일 체크 = 8교시 + 9교시 (총 2회)</span>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              ${teacherSummaryCardsHtml}
             </div>
           </div>
 
