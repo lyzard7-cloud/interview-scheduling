@@ -980,12 +980,10 @@
       renderTeacherListView();
     }
 
-    // ★ [온라인 평가지 모달 - 영역별 점수 제거 + 넓은 종합 소견 + 질문 추가 오류 완전 수정] ★
     function openOnlineEvalModal(regId) {
       const reg = state.regs.find(r => r.id === regId);
       if (!reg) return;
 
-      // 임시 글로벌 객체 초기화 (Q&A 동적 제어를 위함)
       window.tempEvalRegId = regId;
       window.tempEvalData = JSON.parse(JSON.stringify(reg.evalData || { qaList: [], summary: '' }));
 
@@ -1336,7 +1334,7 @@
               <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">지원:</span> <strong>${r.univ} ${r.dept}</strong></div>
               ${r.note ? `<div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">요청사항:</span> <strong class="text-amber-200">${r.note}</strong></div>` : ''}
               ${r.feedback ? `<div class="col-span-1 sm:col-span-2"><span class="text-amber-400 font-bold">내 면접 후기:</span> <span class="text-slate-200">${r.feedback}</span></div>` : ''}
-              ${r.teacherEvaluation ? `<div class="col-span-1 sm:col-span-2 p-2 bg-indigo-900/60 rounded border border-indigo-500/40"><span class="text-amber-300 font-bold">💬 교사 총평:</span> <span class="text-white">${r.teacherEvaluation}</span></div>` : ''}
+              ${r.teacherEvaluation ? `<div class="col-span-1 sm:col-span-2 p-2 bg-indigo-900/60 rounded border border-indigo-500/40"><span class="text-amber-300 font-bold">💬 교사 총평:</span> <span class="text-white whitespace-pre-wrap">${r.teacherEvaluation}</span></div>` : ''}
               <div class="col-span-1 sm:col-span-2 whitespace-nowrap"><span class="text-slate-400">면접 장소:</span> <strong class="text-amber-300">${r.location || '3학년 교무실'}</strong></div>
             </div>
 
@@ -1960,7 +1958,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
               </h4>
               <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
                 새 학년도 부서 이동 시 성함을 직접 등록하면 소스 코드 수정 없이 **자동 배정 시스템 및 참여 교사 관리**에 즉시 적용됩니다.<br>
@@ -2293,7 +2291,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
-    // ★ [자음 입력 방지 전용 처리 함수 - 한글 조합 포커스 유지] ★
     function handleTeacherSearch(value) {
       state.searchKeyword = value;
       
@@ -2626,6 +2623,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
+    // ★ [교시별 태그 색상 구분 렌더링 - 7교시 초록 / 8교시 파랑 / 9교시 보라] ★
     function renderTeacherCalendarView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2646,11 +2644,18 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         const dayRegs = state.regs.filter(r => r.date === dateStr);
         const maxTeams = getMaxTeamsForDate(dateStr);
 
-        let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => `
-          <div class="text-[9px] sm:text-[10px] bg-brand-purpleLight text-brand-purple font-semibold px-1 py-0.5 rounded truncate whitespace-nowrap">
-            [${r.period}교시] ${r.name}
-          </div>
-        `).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
+        let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => {
+          const p = Number(r.period);
+          let badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200'; // 9교시 기본 (보라)
+          if (p === 7) badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200'; // 7교시 (초록)
+          else if (p === 8) badgeStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200'; // 8교시 (파랑)
+
+          return `
+            <div class="text-[9px] sm:text-[10px] ${badgeStyle} border font-bold px-1 py-0.5 rounded truncate whitespace-nowrap">
+              [${r.period}교시] ${r.name}
+            </div>
+          `;
+        }).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
 
         calGridHtml += `
           <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-24 sm:h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : isClosed ? 'bg-slate-100 text-slate-400 opacity-70 border-slate-200' : 'bg-white border-slate-200 hover:border-brand-purple'} rounded-xl p-1.5 sm:p-2 cursor-pointer flex flex-col justify-between transition-all relative">
