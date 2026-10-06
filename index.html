@@ -143,8 +143,8 @@
       </div>
       <p class="text-slate-600 leading-relaxed font-normal">
         · 1인당 최대 3회까지 예약 가능합니다.<br>
-        · <strong>수요일은 7교시(15:40~) 면접도 신청 가능</strong>합니다.<br>
-        · 부여받은 개인 6자리 코드로 로그인해 주세요.
+        · 부여받은 개인 6자리 코드로 로그인해 주세요.<br>
+        · 코드 분실 시 담임선생님께 문의 바랍니다.
       </p>
     </div>
 
@@ -253,7 +253,6 @@
             <h4 class="font-bold text-amber-900 text-sm flex items-center gap-1.5">
               <i class="fa-solid fa-star text-amber-500"></i> 면접 기본 에티켓
             </h4>
-            <!-- 에티켓 문구 변경 반영 -->
             <p>· 입실 시 밝은 미소와 함께 인사하기</p>
             <p>· 질문을 들을 때는 면접관의 눈과 인중 사이를 편안하게 아이컨택하기</p>
             <p>· 답변은 결론부터 명확히 말하는 두괄식으로 구성하기 (1분 이내)</p>
@@ -274,6 +273,7 @@
     </main>
   </div>
 
+  <!-- 온라인 평가지 모달 -->
   <div id="onlineEvalModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
     <div class="bg-white max-w-3xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
       <div class="flex justify-between items-center border-b pb-3">
@@ -294,6 +294,7 @@
     </div>
   </div>
 
+  <!-- 사전 예상 질문 모달 -->
   <div id="preQuestionsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
     <div class="bg-white max-w-2xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
       <div class="flex justify-between items-center border-b pb-3">
@@ -512,6 +513,7 @@
       renderTeacherView();
     }
 
+    // ★ [사이드바 메뉴 복구] 학생 면접 평가지 관리 탭 추가 ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -526,6 +528,10 @@
         </button>
         <button onclick="switchTeacherTab('list')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'list' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('evals')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'evals' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-file-signature mr-2 text-indigo-600"></i>학생 면접 평가지 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
@@ -975,6 +981,7 @@
       renderTeacherListView();
     }
 
+    // ★ [온라인 평가지 모달 - 사전질문 연동 복구] ★
     function openOnlineEvalModal(regId) {
       const reg = state.regs.find(r => r.id === regId);
       if (!reg) return;
@@ -987,7 +994,7 @@
       `;
 
       const preQChips = preQList.map((q, idx) => `
-        <button onclick="insertQToEval('${q.question.replace(/'/g, "\\'")}')" class="text-left bg-purple-50 hover:bg-purple-100 text-brand-purple p-2 rounded-lg border border-purple-200 transition-all font-medium">
+        <button onclick="insertQToEval('${q.question.replace(/'/g, "\\'")}')" class="text-left bg-purple-50 hover:bg-purple-100 text-brand-purple p-2 rounded-lg border border-purple-200 transition-all font-medium whitespace-nowrap overflow-hidden text-ellipsis">
           💡 [사전질문 ${idx+1}] ${q.question}
         </button>
       `).join('') || '<div class="text-slate-400 text-xs">등록된 사전 예상 질문이 없습니다.</div>';
@@ -1016,7 +1023,7 @@
 
           ${preQList.length > 0 ? `
             <div class="space-y-1.5 bg-amber-50/70 p-3 rounded-2xl border border-amber-200">
-              <span class="font-bold text-amber-900">📌 사전 질문 가져오기 (클릭 시 질문란에 삽입)</span>
+              <span class="font-bold text-amber-900">📌 사전 질문 가져오기 (클릭 시 질문란에 자동 삽입)</span>
               <div class="grid grid-cols-1 gap-1.5 pt-1">${preQChips}</div>
             </div>
           ` : ''}
@@ -1129,7 +1136,8 @@
 
       alert(`[평가 기록 완료]\n\n${reg.name} 학생의 디지털 평가 기록지가 저장되었습니다!`);
       closeOnlineEvalModal();
-      renderTeacherListView();
+      if (state.teacherTab === 'evals') renderTeacherEvalsView();
+      else renderTeacherListView();
     }
 
     function downloadStudentTemplateCSV() {
@@ -1770,6 +1778,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
+    // ★ [학생별 3회 누적 평가지 인쇄 기능 복구] ★
     function printStudentCumulativeEvalSheet(sNum) {
       const studentRegs = state.regs.filter(r => String(r.num).trim() === String(sNum).trim()).sort((a,b)=> new Date(a.date) - new Date(b.date));
       
@@ -1842,6 +1851,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
+    // ★ [교사 관리 화면 렌더링 스위치 - evals 추가] ★
     function renderTeacherView() {
       if (state.teacherTab === 'calendar') {
         renderTeacherCalendarView();
@@ -1851,9 +1861,99 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         renderTeacherScheduleView();
       } else if (state.teacherTab === 'admin') {
         renderTeacherAdminView();
+      } else if (state.teacherTab === 'evals') {
+        renderTeacherEvalsView();
       } else {
         renderTeacherListView();
       }
+    }
+
+    // ★ [복구 기능] 학생 면접 평가지 관리 뷰 렌더링 ★
+    function renderTeacherEvalsView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      const studentMap = {};
+      state.regs.forEach(r => {
+        if (!studentMap[r.num]) {
+          studentMap[r.num] = {
+            num: r.num,
+            name: r.name,
+            records: []
+          };
+        }
+        studentMap[r.num].records.push(r);
+      });
+
+      const students = Object.values(studentMap).filter(s => {
+        if (!state.evalSearchKeyword) return true;
+        const kw = state.evalSearchKeyword.toLowerCase();
+        return s.name.toLowerCase().includes(kw) || String(s.num).includes(kw);
+      });
+
+      const studentCardsHtml = students.map(s => {
+        s.records.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        const recordsListHtml = s.records.map((r, i) => {
+          const hasEval = r.evalData || r.teacherEvaluation;
+          return `
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+              <div class="flex justify-between items-center flex-wrap gap-1">
+                <span class="font-extrabold text-brand-purple text-xs">[제 ${i+1}회차] ${r.date} (${r.period}교시)</span>
+                <div class="flex items-center space-x-1.5">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === '완료' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}">${r.status || '대기'}</span>
+                  <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-2 py-0.5 rounded text-[10px] shadow-sm whitespace-nowrap">
+                    ✍ 평가지 작성/수정
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-700 font-semibold truncate">지원: ${r.univ} ${r.dept}</p>
+              <p class="text-[11px] text-slate-500 truncate">면접관: [A] ${r.teacher1 || '미배정'} / [B] ${r.teacher2 || '미배정'}</p>
+              ${r.teacherEvaluation ? `<p class="text-[11px] text-indigo-900 bg-indigo-50 p-1.5 rounded border border-indigo-100 mt-1">💬 총평: ${r.teacherEvaluation}</p>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center border-b pb-2.5">
+              <div>
+                <h4 class="font-bold text-slate-900 text-base">${s.name} <span class="text-xs text-slate-500 font-normal">(${s.num})</span></h4>
+                <p class="text-xs text-brand-purple font-medium">총 ${s.records.length}회 면접 신청 완료</p>
+              </div>
+              <button onclick="printStudentCumulativeEvalSheet('${s.num}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm transition-all whitespace-nowrap">
+                🖨️ 3회 누적 평가지 인쇄
+              </button>
+            </div>
+            <div class="space-y-2">
+              ${recordsListHtml}
+            </div>
+          </div>
+        `;
+      }).join('') || '<div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">검색된 학생 면접 기록이 없습니다.</div>';
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📑 학생별 면접 평가지 종합 관리</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생별 1~3회차 누적 평가지 관리 및 통합 출력</p>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="flex items-center space-x-2 w-full max-w-sm">
+              <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+              <input type="text" placeholder="학생 이름 또는 학번으로 검색..." value="${state.evalSearchKeyword}" oninput="state.evalSearchKeyword = this.value; renderTeacherEvalsView();" class="w-full bg-transparent text-xs focus:outline-none">
+            </div>
+            <span class="text-xs text-slate-500 whitespace-nowrap">총 <strong>${students.length}명</strong></span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${studentCardsHtml}
+          </div>
+        </section>
+      `;
     }
 
     function renderTeacherAdminView() {
@@ -1902,7 +2002,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
               </h4>
               <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
                 새 학년도 부서 이동 시 성함을 직접 등록하면 소스 코드 수정 없이 **자동 배정 시스템 및 참여 교사 관리**에 즉시 적용됩니다.<br>
@@ -2235,7 +2335,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       `;
     }
 
-    // 날짜별 참여 교사 관리 뷰
     function renderTeacherScheduleView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
