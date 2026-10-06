@@ -275,17 +275,17 @@
 
   <!-- 온라인 평가지 모달 -->
   <div id="onlineEvalModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
-    <div class="bg-white max-w-3xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8">
-      <div class="flex justify-between items-center border-b pb-3">
+    <div class="bg-white max-w-3xl w-full rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 my-8 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center border-b pb-3 shrink-0">
         <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2" id="evalModalTitle">
           <i class="fa-solid fa-laptop-code text-brand-purple"></i> 온라인 면접 평가 기록지 (실시간 입력)
         </h3>
         <button onclick="closeOnlineEvalModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
       </div>
 
-      <div id="evalModalContent" class="space-y-4 text-xs"></div>
+      <div id="evalModalContent" class="space-y-4 text-xs overflow-y-auto custom-scroll pr-1 flex-1"></div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t">
+      <div class="flex justify-end gap-2 pt-3 border-t shrink-0">
         <button onclick="closeOnlineEvalModal()" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs">취소</button>
         <button id="saveEvalBtn" class="bg-brand-purple hover:bg-brand-purple/90 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-sm">
           💾 평가 내용 저장
@@ -980,12 +980,21 @@
       renderTeacherListView();
     }
 
-    // ★ [온라인 평가지 모달 - 사전질문 연동 복구] ★
+    // ★ [온라인 평가지 모달 - 영역별 점수 제거 + 넓은 종합 소견 + 질문 추가 오류 완전 수정] ★
     function openOnlineEvalModal(regId) {
       const reg = state.regs.find(r => r.id === regId);
       if (!reg) return;
 
-      const evalData = reg.evalData || { scores: { q1: '중', q2: '중', q3: '중', q4: '중' }, qaList: [], summary: '' };
+      // 임시 글로벌 객체 초기화 (Q&A 동적 제어를 위함)
+      window.tempEvalRegId = regId;
+      window.tempEvalData = JSON.parse(JSON.stringify(reg.evalData || { qaList: [], summary: '' }));
+
+      renderOnlineEvalModalContent(reg);
+      document.getElementById('onlineEvalModal').classList.remove('hidden');
+    }
+
+    function renderOnlineEvalModalContent(reg) {
+      const evalData = window.tempEvalData;
       const preQList = reg.preQuestions || [];
 
       document.getElementById('evalModalTitle').innerHTML = `
@@ -1003,11 +1012,11 @@
           <button onclick="removeQaRow(${i})" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold">✕</button>
           <div>
             <label class="font-bold text-slate-700">질문 ${i+1}</label>
-            <input type="text" value="${qa.question || ''}" onchange="updateQaQuestion(${i}, this.value)" class="w-full mt-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:border-brand-purple">
+            <input type="text" value="${qa.question || ''}" onchange="updateQaQuestion(${i}, this.value)" class="w-full mt-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:border-brand-purple bg-white">
           </div>
           <div>
             <label class="font-bold text-slate-700">학생 답변 및 피드백 요약</label>
-            <textarea onchange="updateQaAnswer(${i}, this.value)" rows="2" class="w-full mt-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:border-brand-purple">${qa.answer || ''}</textarea>
+            <textarea onchange="updateQaAnswer(${i}, this.value)" rows="2" class="w-full mt-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:border-brand-purple bg-white">${qa.answer || ''}</textarea>
           </div>
         </div>
       `).join('');
@@ -1027,78 +1036,54 @@
             </div>
           ` : ''}
 
-          <div class="space-y-2 border-t border-b py-3">
-            <h4 class="font-bold text-slate-900">1. 영역별 평가 점수 (상 / 중 / 하)</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              ${['1. 전공 적합성 및 지식', '2. 서류(생기부) 진위여부', '3. 논리적 사고 및 표현력', '4. 면접 태도 및 전달력'].map((label, idx) => {
-                const key = `q${idx+1}`;
-                const val = evalData.scores[key] || '중';
-                return `
-                  <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                    <span class="font-semibold text-slate-800">${label}</span>
-                    <div class="flex gap-2">
-                      ${['상', '중', '하'].map(score => `
-                        <label class="inline-flex items-center space-x-1 cursor-pointer">
-                          <input type="radio" name="score_${key}" value="${score}" ${val === score ? 'checked' : ''} onchange="updateEvalScore('${key}', '${score}')" class="text-brand-purple">
-                          <span class="font-bold text-xs ${val === score ? 'text-brand-purple' : 'text-slate-500'}">${score}</span>
-                        </label>
-                      `).join('')}
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <div class="space-y-2">
+          <div class="space-y-2 pt-1">
             <div class="flex justify-between items-center">
-              <h4 class="font-bold text-slate-900">2. 현장 주요 질문 및 학생 답변 기록 (Q&A)</h4>
-              <button onclick="addQaRow()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-2.5 py-1 rounded-lg text-xs">+ 질문 추가</button>
+              <h4 class="font-bold text-slate-900 text-sm">1. 현장 주요 질문 및 학생 답변 기록 (Q&A)</h4>
+              <button type="button" onclick="addQaRow()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-sm transition-all">
+                <i class="fa-solid fa-plus text-[10px]"></i> 질문 추가
+              </button>
             </div>
-            <div id="qaRowsContainer" class="space-y-2">${qaRowsHtml}</div>
+            <div id="qaRowsContainer" class="space-y-2.5">${qaRowsHtml.length > 0 ? qaRowsHtml : '<div class="text-slate-400 text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">우측 상단의 [+ 질문 추가] 버튼을 눌러 질문을 기록하세요.</div>'}</div>
           </div>
 
-          <div class="space-y-1">
-            <h4 class="font-bold text-slate-900">3. 종합 평가 소견 및 개선 권고사항</h4>
-            <textarea id="evalSummaryText" rows="3" placeholder="학생의 전반적인 면접 태도, 개선점 및 총평을 적어주세요." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs">${evalData.summary || ''}</textarea>
+          <div class="space-y-1.5 pt-2 border-t border-slate-100">
+            <h4 class="font-bold text-slate-900 text-sm">2. 종합 평가 소견 및 개선 권고사항</h4>
+            <textarea id="evalSummaryText" rows="7" placeholder="학생의 전반적인 면접 태도, 논리성, 전달력, 피드백 및 종합 개선점 등 상세 내용을 자유롭고 편하게 작성해 주세요." class="w-full px-3.5 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-purple text-xs leading-relaxed bg-slate-50/50">${evalData.summary || ''}</textarea>
           </div>
         </div>
       `;
 
-      window.tempEvalRegId = regId;
-      window.tempEvalData = evalData;
-
-      document.getElementById('saveEvalBtn').onclick = () => saveOnlineEval(regId);
-      document.getElementById('onlineEvalModal').classList.remove('hidden');
+      document.getElementById('saveEvalBtn').onclick = () => saveOnlineEval(reg.id);
     }
 
     function closeOnlineEvalModal() {
       document.getElementById('onlineEvalModal').classList.add('hidden');
     }
 
-    function updateEvalScore(key, score) {
-      if (!window.tempEvalData) return;
-      window.tempEvalData.scores[key] = score;
-    }
-
     function insertQToEval(qText) {
       if (!window.tempEvalData) return;
       if (!window.tempEvalData.qaList) window.tempEvalData.qaList = [];
       window.tempEvalData.qaList.push({ question: qText, answer: '' });
-      openOnlineEvalModal(window.tempEvalRegId);
+      
+      const reg = state.regs.find(r => r.id === window.tempEvalRegId);
+      if (reg) renderOnlineEvalModalContent(reg);
     }
 
     function addQaRow() {
       if (!window.tempEvalData) return;
       if (!window.tempEvalData.qaList) window.tempEvalData.qaList = [];
       window.tempEvalData.qaList.push({ question: '', answer: '' });
-      openOnlineEvalModal(window.tempEvalRegId);
+      
+      const reg = state.regs.find(r => r.id === window.tempEvalRegId);
+      if (reg) renderOnlineEvalModalContent(reg);
     }
 
     function removeQaRow(idx) {
       if (!window.tempEvalData || !window.tempEvalData.qaList) return;
       window.tempEvalData.qaList.splice(idx, 1);
-      openOnlineEvalModal(window.tempEvalRegId);
+      
+      const reg = state.regs.find(r => r.id === window.tempEvalRegId);
+      if (reg) renderOnlineEvalModalContent(reg);
     }
 
     function updateQaQuestion(idx, val) {
@@ -1732,37 +1717,24 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <thead>
               <tr class="bg-slate-200">
                 <th class="border border-slate-400 py-1.5 px-2">평가 항목</th>
-                <th class="border border-slate-400 py-1.5 px-2 w-28 text-center">평가 (상/중/하)</th>
                 <th class="border border-slate-400 py-1.5 px-2">면접관 주요 피드백 및 질문 내용</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="border border-slate-400 p-2 font-semibold">1. 전공 적합성 및 지식</td>
-                <td class="border border-slate-400 p-2 text-center">[   ] 상  [   ] 중  [   ] 하</td>
-                <td class="border border-slate-400 p-2 h-16"></td>
+                <td class="border border-slate-400 p-2 font-semibold w-1/3">1. 전공 적합성 및 제출 서류 확인</td>
+                <td class="border border-slate-400 p-2 h-20"></td>
               </tr>
               <tr>
-                <td class="border border-slate-400 p-2 font-semibold">2. 서류(생기부) 진위여부</td>
-                <td class="border border-slate-400 p-2 text-center">[   ] 상  [   ] 중  [   ] 하</td>
-                <td class="border border-slate-400 p-2 h-16"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-400 p-2 font-semibold">3. 논리적 사고 및 표현력</td>
-                <td class="border border-slate-400 p-2 text-center">[   ] 상  [   ] 중  [   ] 하</td>
-                <td class="border border-slate-400 p-2 h-16"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-400 p-2 font-semibold">4. 면접 태도 및 전달력</td>
-                <td class="border border-slate-400 p-2 text-center">[   ] 상  [   ] 중  [   ] 하</td>
-                <td class="border border-slate-400 p-2 h-16"></td>
+                <td class="border border-slate-400 p-2 font-semibold w-1/3">2. 논리적 사고력 및 면접 태도</td>
+                <td class="border border-slate-400 p-2 h-20"></td>
               </tr>
             </tbody>
           </table>
 
           <div class="border border-slate-400 p-3 text-xs space-y-1">
             <p class="font-bold text-slate-800">※ 종합 평가 소견 및 개선 권고사항:</p>
-            <div class="h-20">${r.teacherEvaluation ? `<p class="p-2 text-slate-800">${r.teacherEvaluation}</p>` : ''}</div>
+            <div class="h-28">${r.teacherEvaluation ? `<p class="p-2 text-slate-800 whitespace-pre-wrap">${r.teacherEvaluation}</p>` : ''}</div>
           </div>
 
           <div class="flex justify-end pt-2 text-xs font-bold">
@@ -1777,7 +1749,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
-    // ★ [학생별 3회 누적 평가지 인쇄 기능 복구] ★
     function printStudentCumulativeEvalSheet(sNum) {
       const studentRegs = state.regs.filter(r => String(r.num).trim() === String(sNum).trim()).sort((a,b)=> new Date(a.date) - new Date(b.date));
       
@@ -1790,7 +1761,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       const printArea = document.getElementById('printArea');
 
       const cardsPrintHtml = studentRegs.map((r, idx) => {
-        const evalData = r.evalData || { scores: { q1: '중', q2: '중', q3: '중', q4: '중' }, qaList: [], summary: '' };
+        const evalData = r.evalData || { qaList: [], summary: '' };
         const qaPrintHtml = (evalData.qaList || []).map((qa, i) => `
           <div class="border-b pb-2 mb-2 last:border-0">
             <p class="font-bold text-slate-900">Q${i+1}. ${qa.question || '-'}</p>
@@ -1812,23 +1783,13 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </div>
 
             <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
-              <p class="font-bold text-slate-900 border-b pb-1">1. 영역별 평가 점수</p>
-              <div class="grid grid-cols-2 gap-1.5 pt-1">
-                <div>· 전공 적합성: <strong>[ ${evalData.scores.q1 || '중'} ]</strong></div>
-                <div>· 서류 진위여부: <strong>[ ${evalData.scores.q2 || '중'} ]</strong></div>
-                <div>· 논리적 사고: <strong>[ ${evalData.scores.q3 || '중'} ]</strong></div>
-                <div>· 태도 및 전달력: <strong>[ ${evalData.scores.q4 || '중'} ]</strong></div>
-              </div>
-            </div>
-
-            <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
-              <p class="font-bold text-slate-900 border-b pb-1 mb-1">2. 주요 질문 및 학생 답변 기록</p>
+              <p class="font-bold text-slate-900 border-b pb-1 mb-1">1. 주요 질문 및 학생 답변 기록 (Q&A)</p>
               ${qaPrintHtml}
             </div>
 
             <div class="border border-slate-400 p-2.5 rounded text-xs space-y-1">
-              <p class="font-bold text-slate-900 border-b pb-1">3. 종합 평가 소견 및 개선 지도사항</p>
-              <p class="text-slate-800 pt-1 leading-relaxed">${r.teacherEvaluation || evalData.summary || '등록된 총평 소견이 없습니다.'}</p>
+              <p class="font-bold text-slate-900 border-b pb-1">2. 종합 평가 소견 및 개선 지도사항</p>
+              <p class="text-slate-800 pt-1 leading-relaxed whitespace-pre-wrap">${r.teacherEvaluation || evalData.summary || '등록된 총평 소견이 없습니다.'}</p>
             </div>
           </div>
         `;
@@ -1850,7 +1811,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }, 500);
     }
 
-    // ★ [교사 관리 화면 렌더링 스위치 - evals 추가] ★
     function renderTeacherView() {
       if (state.teacherTab === 'calendar') {
         renderTeacherCalendarView();
@@ -1867,7 +1827,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
-    // ★ [복구 기능] 학생 면접 평가지 관리 뷰 렌더링 ★
     function renderTeacherEvalsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1908,7 +1867,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
               </div>
               <p class="text-xs text-slate-700 font-semibold truncate">지원: ${r.univ} ${r.dept}</p>
               <p class="text-[11px] text-slate-500 truncate">면접관: [A] ${r.teacher1 || '미배정'} / [B] ${r.teacher2 || '미배정'}</p>
-              ${r.teacherEvaluation ? `<p class="text-[11px] text-indigo-900 bg-indigo-50 p-1.5 rounded border border-indigo-100 mt-1">💬 총평: ${r.teacherEvaluation}</p>` : ''}
+              ${r.teacherEvaluation ? `<p class="text-[11px] text-indigo-900 bg-indigo-50 p-1.5 rounded border border-indigo-100 mt-1 whitespace-pre-wrap">💬 총평: ${r.teacherEvaluation}</p>` : ''}
             </div>
           `;
         }).join('');
@@ -2001,7 +1960,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
             <div class="space-y-1">
               <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> 👨‍‍🏫 3학년 면접관 교사 명단 직접 관리 (내년도 교사진 변경 대응)
               </h4>
               <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
                 새 학년도 부서 이동 시 성함을 직접 등록하면 소스 코드 수정 없이 **자동 배정 시스템 및 참여 교사 관리**에 즉시 적용됩니다.<br>
@@ -2493,7 +2452,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️️ 날짜별 참여 교사 관리</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓 날짜별 참여 교사 관리</h3>
               <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 방과후 면접관 교사 지정</p>
             </div>
             <div class="flex items-center space-x-1.5 whitespace-nowrap">
