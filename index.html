@@ -513,7 +513,6 @@
       renderTeacherView();
     }
 
-    // ★ [사이드바 메뉴 복구] 학생 면접 평가지 관리 탭 추가 ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -2302,9 +2301,9 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           <div class="flex justify-between items-center bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200">
             <div class="flex items-center space-x-2 w-full max-w-xs sm:max-w-sm">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
-              <input type="text" placeholder="대학명, 학과, 이름으로 검색..." value="${state.searchKeyword}" oninput="state.searchKeyword = this.value; renderTeacherListView();" class="w-full bg-transparent text-xs focus:outline-none">
+              <input type="text" id="teacherSearchInput" placeholder="대학명, 학과, 이름으로 검색..." value="${state.searchKeyword}" oninput="handleTeacherSearch(this.value)" class="w-full bg-transparent text-xs focus:outline-none">
             </div>
-            <span class="text-xs text-slate-500 whitespace-nowrap">결과: <strong>${filteredRegs.length}건</strong></span>
+            <span class="text-xs text-slate-500 whitespace-nowrap" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
           </div>
 
           <div class="w-full rounded-xl border border-slate-200 overflow-hidden">
@@ -2333,6 +2332,117 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           </div>
         </section>
       `;
+    }
+
+    // ★ [자음 입력 방지 전용 처리 함수 - 한글 조합 포커스 유지] ★
+    function handleTeacherSearch(value) {
+      state.searchKeyword = value;
+      
+      const tbody = document.querySelector('#mainContent table tbody');
+      const countSpan = document.querySelector('#teacherSearchResultCount');
+      
+      if (!tbody) {
+        renderTeacherListView();
+        return;
+      }
+
+      const filteredRegs = state.regs.filter(r => {
+        if (!state.searchKeyword) return true;
+        const kw = state.searchKeyword.toLowerCase();
+        return (r.name || '').toLowerCase().includes(kw) ||
+               (r.univ || '').toLowerCase().includes(kw) ||
+               (r.dept || '').toLowerCase().includes(kw) ||
+               (r.num || '').includes(kw);
+      });
+
+      if (countSpan) {
+        countSpan.innerHTML = `결과: <strong>${filteredRegs.length}건</strong>`;
+      }
+
+      let tableRows = filteredRegs.map((r, idx) => {
+        const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+        const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
+
+        const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+        const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+        
+        let teacherCellHtml = '';
+        if (isEditing) {
+          const t1Options = availA.map(t => `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`).join('');
+          const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`).join('');
+
+          teacherCellHtml = `
+            <div class="flex items-center justify-center space-x-0.5 whitespace-nowrap">
+              <select id="t1Input_${r.id}" class="w-16 px-1 py-0.5 text-[10px] border border-slate-300 rounded focus:outline-none bg-white">
+                <option value="">A교사</option>
+                ${t1Options}
+              </select>
+              <select id="t2Input_${r.id}" class="w-16 px-1 py-0.5 text-[10px] border border-slate-300 rounded focus:outline-none bg-white">
+                <option value="">B교사</option>
+                ${t2Options}
+              </select>
+              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">저장</button>
+            </div>
+          `;
+        } else {
+          teacherCellHtml = `
+            <div class="flex items-center justify-center space-x-1 whitespace-nowrap">
+              ${r.teacher1 ? `<span class="bg-amber-100 text-amber-800 px-1 py-0.5 rounded font-bold text-[10px]">${r.teacher1}</span>` : ''}
+              ${r.teacher2 ? `<span class="bg-blue-100 text-blue-800 px-1 py-0.5 rounded font-bold text-[10px]">${r.teacher2}</span>` : ''}
+              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[10px] underline ml-0.5">수정</button>
+            </div>
+          `;
+        }
+
+        const statusStyle = r.status === '완료' 
+          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+          : r.status === '불참' 
+            ? 'bg-red-100 text-red-800 border-red-300' 
+            : 'bg-slate-100 text-slate-700 border-slate-300';
+
+        const preQCount = (r.preQuestions || []).length;
+
+        return `
+          <tr class="border-b border-slate-100 hover:bg-slate-50 text-[11px] text-slate-700">
+            <td class="py-2 px-1 font-semibold text-slate-500 text-center whitespace-nowrap">${idx + 1}</td>
+            <td class="py-2 px-1 font-bold text-brand-navy text-center whitespace-nowrap">${r.date}</td>
+            <td class="py-2 px-1 font-bold text-brand-purple text-center whitespace-nowrap">${r.period}교시</td>
+            <td class="py-2 px-1 font-semibold text-center whitespace-nowrap">${r.num}</td>
+            <td class="py-2 px-1 font-bold text-slate-900 text-center whitespace-nowrap">${r.name}</td>
+            <td class="py-2 px-1 text-center truncate max-w-[75px]" title="${r.univ}">${r.univ}</td>
+            <td class="py-2 px-1 text-center truncate max-w-[75px]" title="${r.dept}">${r.dept}</td>
+            <td class="py-2 px-1 text-center truncate max-w-[60px] text-slate-500" title="${r.note || '-'}">${r.note || '-'}</td>
+            <td class="py-2 px-1 text-center whitespace-nowrap">
+              <button onclick="toggleStudentStatus('${r.id}')" class="px-1.5 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
+                ${r.status || '대기'}
+              </button>
+            </td>
+            <td class="py-2 px-1 text-center whitespace-nowrap">
+              <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-1 py-0.5 rounded font-bold border border-amber-200 text-[10px] whitespace-nowrap">
+                ❓질문(${preQCount})
+              </button>
+            </td>
+            <td class="py-2 px-1 text-center whitespace-nowrap">${teacherCellHtml}</td>
+            <td class="py-2 px-1 text-center whitespace-nowrap">
+              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+            </td>
+            <td class="py-2 px-1 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center space-x-1">
+                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap">
+                  📝평가지
+                </button>
+                <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-semibold underline text-[10px] whitespace-nowrap">취소</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (filteredRegs.length === 0) {
+        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+      }
+
+      tbody.innerHTML = tableRows;
     }
 
     function renderTeacherScheduleView() {
@@ -2383,7 +2493,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️ 날짜별 참여 교사 관리</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🗓️️ 날짜별 참여 교사 관리</h3>
               <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 방과후 면접관 교사 지정</p>
             </div>
             <div class="flex items-center space-x-1.5 whitespace-nowrap">
