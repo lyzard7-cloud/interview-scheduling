@@ -240,6 +240,72 @@
         </div>
       </div>
 
+      <!-- ★ [학생용 신규] 실제 대학 면접 후기 작성 섹션 ★ -->
+      <div id="realReviewSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+        <div class="border-b border-slate-100 pb-3.5">
+          <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-brand-orange"></i> 실제 대입 면접 후기 남기기
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">실제 대학 면접을 다녀온 경험을 적어주시면 후배들에게 가장 소중한 진학 자산이 됩니다!</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); submitRealInterviewReview();" class="space-y-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">응시한 대학교 <span class="text-red-500">*</span></label>
+              <input type="text" id="rvUniv" placeholder="예: 한국대학교" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">응시한 학과/전공 <span class="text-red-500">*</span></label>
+              <input type="text" id="rvDept" placeholder="예: 간호학과" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">전형 유형 <span class="text-red-500">*</span></label>
+              <select id="rvType" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple bg-white">
+                <option value="학생부종합">학생부종합전형</option>
+                <option value="학생부교과">학생부교과(면접형)</option>
+                <option value="논술전형">논술/면접전형</option>
+                <option value="실기/실적">실기/특기자전형</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">면접 일자 / 방식 <span class="text-red-500">*</span></label>
+              <input type="text" id="rvStyle" placeholder="예: 2026-10-20 / 면접관 2명대 학생 1명 (10분)" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple">
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <div class="flex justify-between items-center">
+              <label class="block font-bold text-slate-900">🎯 실제로 받은 면접 질문 작성 (Q&A)</label>
+              <button type="button" onclick="addReviewQuestionInput()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-2.5 py-1 rounded-lg text-[11px]">+ 질문 추가</button>
+            </div>
+            <div id="reviewQuestionsContainer" class="space-y-2">
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                <span class="font-bold text-brand-purple">질문 1</span>
+                <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-1 pt-2 border-t border-slate-100">
+            <label class="block font-bold text-slate-900">💡 면접장 분위기, 팁 및 후배들에게 주는 조언</label>
+            <textarea id="rvTip" rows="4" placeholder="예: 대기실 분위기는 조용했고, 생기부 2페이지 실험 활동 관련 세부 수치를 정확히 물어보셨습니다. 꼭 본인 세특 내용을 숙지하고 가세요!" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-purple text-xs leading-relaxed"></textarea>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orangeHover text-white font-bold rounded-xl py-3 text-sm shadow-md transition-all font-jua">
+              🚀 면접 후기 작성 완료 (등록)
+            </button>
+          </div>
+        </form>
+
+        <div class="pt-4 border-t border-slate-100 space-y-3">
+          <h4 class="font-bold text-slate-800 text-xs">📋 내가 작성한 면접 후기 목록</h4>
+          <div id="mySubmittedReviewsList" class="space-y-2 text-xs"></div>
+        </div>
+      </div>
+
       <div id="guideSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
         <div class="border-b border-slate-100 pb-3">
           <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
@@ -379,8 +445,10 @@
       selectedTeacherDates: [],
       searchKeyword: '',
       evalSearchKeyword: '',
+      realReviewKeyword: '',
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
-      regs: JSON.parse(localStorage.getItem('mock_regs') || '[]')
+      regs: JSON.parse(localStorage.getItem('mock_regs') || '[]'),
+      realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
     };
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -458,6 +526,7 @@
       alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
+    // ★ [학생 메뉴 수정] 실제 대입 면접 후기 작성 탭 추가 ★
     function updateSidebarNavForStudent() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -468,6 +537,10 @@
         </button>
         <button onclick="switchStudentTab('myreg')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'myreg' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-clipboard-list mr-2"></i>나의 신청 내역</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchStudentTab('realReview')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'realReview' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-pen-to-square mr-2 text-brand-orange"></i>실제 대학 면접 후기 작성</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="switchStudentTab('guide')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.studentTab === 'guide' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
@@ -483,10 +556,12 @@
 
       const reserveSec = document.getElementById('studentReservationSection');
       const myRegSec = document.getElementById('myRegSection');
+      const realRvSec = document.getElementById('realReviewSection');
       const guideSec = document.getElementById('guideSection');
 
       reserveSec.classList.add('hidden');
       myRegSec.classList.add('hidden');
+      realRvSec.classList.add('hidden');
       guideSec.classList.add('hidden');
 
       if (tabName === 'reserve') {
@@ -495,6 +570,9 @@
       } else if (tabName === 'myreg') {
         myRegSec.classList.remove('hidden');
         checkMyRegistrations();
+      } else if (tabName === 'realReview') {
+        realRvSec.classList.remove('hidden');
+        renderMySubmittedReviews();
       } else if (tabName === 'guide') {
         guideSec.classList.remove('hidden');
       }
@@ -513,6 +591,7 @@
       renderTeacherView();
     }
 
+    // ★ [교사 메뉴 수정] 실제 면접 후기 DB 탭 추가 ★
     function updateSidebarNavForTeacher() {
       const nav = document.getElementById('sidebarNav');
       if (!nav) return;
@@ -531,6 +610,10 @@
         </button>
         <button onclick="switchTeacherTab('evals')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'evals' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-file-signature mr-2 text-indigo-600"></i>학생 면접 평가지 관리</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="switchTeacherTab('realReviews')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'realReviews' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-book-bookmark mr-2 text-brand-orange"></i>실제 면접 후기 DB</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
         <button onclick="switchTeacherTab('stats')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'stats' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
@@ -575,6 +658,15 @@
             }
           });
 
+          // ★ 실제 면접 후기 실시간 연동 ★
+          onSnapshot(collection(window.db, 'interview_real_reviews'), (snapshot) => {
+            state.realReviews = [];
+            snapshot.forEach(doc => state.realReviews.push(doc.data()));
+            localStorage.setItem('mock_real_reviews', JSON.stringify(state.realReviews));
+            if (isTeacher && state.teacherTab === 'realReviews') renderTeacherRealReviewsView();
+            else if (state.studentTab === 'realReview') renderMySubmittedReviews();
+          });
+
           onSnapshot(collection(window.db, 'interview_settings'), (snapshot) => {
             snapshot.forEach(doc => {
               if (doc.id === 'closed_dates') {
@@ -602,6 +694,232 @@
           });
         } catch(e) { console.warn("Firestore Listener Error", e); }
       }
+    }
+
+    // ★ [학생 기능] 실제 면접 질문 입력란 동적 추가 ★
+    function addReviewQuestionInput() {
+      const container = document.getElementById('reviewQuestionsContainer');
+      if (!container) return;
+
+      const qCount = container.querySelectorAll('.rv-question-input').length + 1;
+      const div = document.createElement('div');
+      div.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 relative';
+      div.innerHTML = `
+        <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold">✕</button>
+        <span class="font-bold text-brand-purple">질문 ${qCount}</span>
+        <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="면접관이 던진 질문을 기억나는 대로 적어주세요.">
+      `;
+      container.appendChild(div);
+    }
+
+    // ★ [학생 기능] 실제 면접 후기 저장 제출 ★
+    async function submitRealInterviewReview() {
+      if (!state.user) {
+        alert('로그인 후 후기를 작성할 수 있습니다.');
+        return;
+      }
+
+      const univ = document.getElementById('rvUniv')?.value.trim();
+      const dept = document.getElementById('rvDept')?.value.trim();
+      const type = document.getElementById('rvType')?.value;
+      const style = document.getElementById('rvStyle')?.value.trim();
+      const tip = document.getElementById('rvTip')?.value.trim() || '';
+
+      const qInputs = document.querySelectorAll('.rv-question-input');
+      const questions = [];
+      qInputs.forEach(inp => {
+        const val = inp.value.trim();
+        if (val) questions.push(val);
+      });
+
+      if (!univ || !dept || !style) {
+        alert('필수 입력 항목(대학교, 학과, 일자/방식)을 입력해 주세요.');
+        return;
+      }
+
+      if (questions.length === 0) {
+        alert('최소 1개 이상의 실제 받은 질문을 작성해 주세요.');
+        return;
+      }
+
+      const reviewData = {
+        id: `rv_${Date.now()}_${state.user.num}`,
+        num: state.user.num,
+        name: state.user.name,
+        univ: univ,
+        dept: dept,
+        type: type,
+        style: style,
+        questions: questions,
+        tip: tip,
+        createdAt: new Date().toLocaleString()
+      };
+
+      state.realReviews.push(reviewData);
+      localStorage.setItem('mock_real_reviews', JSON.stringify(state.realReviews));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, setDoc } = window.dbTools;
+          await setDoc(doc(window.db, 'interview_real_reviews', reviewData.id), reviewData);
+        } catch(e) { console.warn("Firestore Real Review Save Error", e); }
+      }
+
+      alert(`[면접 후기 제출 완료]\n\n${univ} ${dept} 면접 후기가 안전하게 등록되었습니다! 후배들을 위한 소중한 정보 감사합니다.`);
+      
+      // 폼 초기화
+      document.getElementById('rvUniv').value = '';
+      document.getElementById('rvDept').value = '';
+      document.getElementById('rvStyle').value = '';
+      document.getElementById('rvTip').value = '';
+      document.getElementById('reviewQuestionsContainer').innerHTML = `
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+          <span class="font-bold text-brand-purple">질문 1</span>
+          <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+        </div>
+      `;
+
+      renderMySubmittedReviews();
+    }
+
+    // ★ [학생 기능] 내가 제출한 대학 후기 목록 보기 ★
+    function renderMySubmittedReviews() {
+      const container = document.getElementById('mySubmittedReviewsList');
+      if (!container || !state.user) return;
+
+      const myRvList = state.realReviews.filter(r => String(r.num).trim() === String(state.user.num).trim());
+
+      if (myRvList.length === 0) {
+        container.innerHTML = `<div class="text-slate-400 py-3 text-center">아직 등록한 실제 대학 면접 후기가 없습니다.</div>`;
+        return;
+      }
+
+      container.innerHTML = myRvList.map((r, idx) => `
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+          <div class="flex justify-between items-center border-b pb-1.5">
+            <span class="font-bold text-slate-900">${r.univ} ${r.dept} <span class="text-brand-purple font-semibold">(${r.type})</span></span>
+            <span class="text-[10px] text-slate-400">${r.createdAt}</span>
+          </div>
+          <p class="text-slate-600 font-medium">일시/방식: ${r.style}</p>
+          <div class="space-y-1 pt-1">
+            <p class="font-bold text-slate-700">받은 질문 목록 (${r.questions.length}개):</p>
+            ${r.questions.map((q, i) => `<p class="text-slate-800 pl-2">· Q${i+1}. ${q}</p>`).join('')}
+          </div>
+          ${r.tip ? `<p class="text-amber-800 bg-amber-50 p-2 rounded border border-amber-200 text-[11px] mt-1">💡 꿀팁: ${r.tip}</p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ★ [교사 기능] 실제 면접 후기 DB 뷰 렌더링 및 엑셀 출력 ★
+    function renderTeacherRealReviewsView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      const filteredReviews = state.realReviews.filter(r => {
+        if (!state.realReviewKeyword) return true;
+        const kw = state.realReviewKeyword.toLowerCase();
+        return (r.univ || '').toLowerCase().includes(kw) ||
+               (r.dept || '').toLowerCase().includes(kw) ||
+               (r.name || '').toLowerCase().includes(kw) ||
+               (r.type || '').toLowerCase().includes(kw);
+      });
+
+      const cardsHtml = filteredReviews.map(r => `
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
+          <div class="flex justify-between items-center border-b pb-2.5">
+            <div>
+              <h4 class="font-bold text-slate-900 text-base">${r.univ} ${r.dept} <span class="bg-purple-100 text-brand-purple text-xs px-2 py-0.5 rounded font-bold ml-1">${r.type}</span></h4>
+              <p class="text-xs text-slate-500 mt-0.5">작성자: <strong>${r.name} (${r.num})</strong> | ${r.createdAt}</p>
+            </div>
+            <button onclick="deleteRealReview('${r.id}')" class="text-red-400 hover:text-red-600 text-xs font-bold underline">삭제</button>
+          </div>
+
+          <div class="text-xs space-y-2">
+            <p class="font-semibold text-slate-700">📌 면접 일시 및 방식 : <span class="text-slate-900 font-bold">${r.style}</span></p>
+
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+              <p class="font-bold text-brand-purple">❓ 실제 받은 질문 리스트 (${r.questions.length}개)</p>
+              ${r.questions.map((q, i) => `
+                <div class="pl-2 text-slate-800 font-medium">
+                  <span class="font-bold text-slate-900">Q${i+1}.</span> ${q}
+                </div>
+              `).join('')}
+            </div>
+
+            ${r.tip ? `
+              <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-200 text-amber-900 space-y-0.5">
+                <p class="font-bold"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> 후배들을 위한 꿀팁 & 면접장 분위기</p>
+                <p class="leading-relaxed whitespace-pre-wrap">${r.tip}</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('') || '<div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">등록된 실제 대학 면접 후기가 없습니다.</div>';
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📚 실제 대학 면접 후기 수집 DB</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">3학년 학생들이 응시 후 제출한 실제 대학 면접 질문 및 팁 모음 (총 ${filteredReviews.length}건)</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="exportRealReviewsToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                📥 엑셀(CSV) 다운로드
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="flex items-center space-x-2 w-full max-w-sm">
+              <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+              <input type="text" placeholder="대학명, 학과, 전형, 학생 이름으로 검색..." value="${state.realReviewKeyword}" oninput="state.realReviewKeyword = this.value; renderTeacherRealReviewsView();" class="w-full bg-transparent text-xs focus:outline-none">
+            </div>
+            <span class="text-xs text-slate-500 whitespace-nowrap">총 <strong>${filteredReviews.length}건</strong></span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${cardsHtml}
+          </div>
+        </section>
+      `;
+    }
+
+    // ★ [교사 기능] 실제 면접 후기 삭제 ★
+    async function deleteRealReview(id) {
+      if (!confirm('이 대학 면접 후기를 삭제하시겠습니까?')) return;
+      state.realReviews = state.realReviews.filter(r => r.id !== id);
+      localStorage.setItem('mock_real_reviews', JSON.stringify(state.realReviews));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, deleteDoc } = window.dbTools;
+          await deleteDoc(doc(window.db, 'interview_real_reviews', id));
+        } catch(e) { console.warn("Delete Real Review Firestore Error", e); }
+      }
+
+      renderTeacherRealReviewsView();
+      alert('후기가 삭제되었습니다.');
+    }
+
+    // ★ [교사 기능] 실제 면접 후기 엑셀 CSV 다운로드 ★
+    function exportRealReviewsToCSV() {
+      if (state.realReviews.length === 0) {
+        alert('다운로드할 면접 후기 데이터가 없습니다.');
+        return;
+      }
+
+      let csvStr = '\uFEFFNo,학번,이름,대학교,학과,전형유형,면접일시방식,실제질문목록,후기및꿀팁,작성일시\n';
+      state.realReviews.forEach((r, i) => {
+        const qStr = (r.questions || []).map((q, idx) => `Q${idx+1}.${q}`).join(' / ');
+        csvStr += `${i+1},${r.num},${r.name},"${r.univ}","${r.dept}","${r.type}","${r.style}","${qStr}","${(r.tip || '').replace(/"/g, '""')}",${r.createdAt}\n`;
+      });
+
+      const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `강일여고_실제대학면접후기DB_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
     }
 
     async function saveStudentListToOnlineDb() {
@@ -1343,7 +1661,7 @@
               <div class="space-x-2 whitespace-nowrap">
                 ${r.status === '완료' ? `
                   <button onclick="submitStudentFeedback('${r.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
-                    📝 면접 후기 작성
+                    📝 모의면접 후기 작성
                   </button>
                 ` : ''}
                 <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
@@ -1614,7 +1932,8 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         teacherGroupB: TEACHER_B_GROUP,
         adminPassword: ADMIN_PASSWORD,
         registrations: state.regs,
-        studentList: STUDENT_LIST
+        studentList: STUDENT_LIST,
+        realReviews: state.realReviews
       };
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
@@ -1648,6 +1967,11 @@ ${idx + 1}. ${r.name}학생 (${r.num})
           if (restored.adminPassword) ADMIN_PASSWORD = restored.adminPassword;
 
           state.regs = restored.registrations || [];
+          if (restored.realReviews) {
+            state.realReviews = restored.realReviews;
+            localStorage.setItem('mock_real_reviews', JSON.stringify(state.realReviews));
+          }
+
           if (restored.studentList) {
             STUDENT_LIST = restored.studentList;
             await saveStudentListToOnlineDb();
@@ -1820,6 +2144,8 @@ ${idx + 1}. ${r.name}학생 (${r.num})
         renderTeacherAdminView();
       } else if (state.teacherTab === 'evals') {
         renderTeacherEvalsView();
+      } else if (state.teacherTab === 'realReviews') {
+        renderTeacherRealReviewsView();
       } else {
         renderTeacherListView();
       }
@@ -2623,7 +2949,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
-    // ★ [교시별 태그 색상 구분 렌더링 - 7교시 초록 / 8교시 파랑 / 9교시 보라] ★
     function renderTeacherCalendarView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
