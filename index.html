@@ -241,7 +241,7 @@
         </div>
       </div>
 
-      <!-- 실제 대학 면접 후기 작성 섹션 -->
+      <!-- 실제 대학 면접 후기 작성 섹션 (질문+답변 작성란 탑재) -->
       <div id="realReviewSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
         <div class="border-b border-slate-100 pb-3.5">
           <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
@@ -278,13 +278,20 @@
 
           <div class="space-y-2 pt-2 border-t border-slate-100">
             <div class="flex justify-between items-center">
-              <label class="block font-bold text-slate-900">🎯 실제로 받은 면접 질문 작성 (Q&A)</label>
-              <button type="button" onclick="addReviewQuestionInput()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-2.5 py-1 rounded-lg text-[11px]">+ 질문 추가</button>
+              <label class="block font-bold text-slate-900">🎯 실제로 받은 면접 질문 & 답변 작성 (Q&A)</label>
+              <button type="button" onclick="addReviewQuestionInput()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-2.5 py-1 rounded-lg text-[11px]">+ 질문/답변 세트 추가</button>
             </div>
-            <div id="reviewQuestionsContainer" class="space-y-2">
-              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                <span class="font-bold text-brand-purple">질문 1</span>
-                <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+            <div id="reviewQuestionsContainer" class="space-y-3">
+              <div class="rv-qa-set bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 relative">
+                <div class="font-bold text-brand-purple text-xs">질문 1</div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Q. 면접관 질문</label>
+                  <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">A. 내 답변 및 면접관 반응 (선택)</label>
+                  <textarea class="rv-answer-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" rows="2" placeholder="예: 고등학교 2학년 과학 탐구 동아리 활동 중 수행한 실험 사례를 중심으로 논리적으로 답변함. 면접관께서 긍정적으로 고개를 끄덕이심."></textarea>
+                </div>
               </div>
             </div>
           </div>
@@ -694,21 +701,30 @@
       }
     }
 
+    // ★ [질문 + 답변 입력란 세트 동적 추가] ★
     function addReviewQuestionInput() {
       const container = document.getElementById('reviewQuestionsContainer');
       if (!container) return;
 
-      const qCount = container.querySelectorAll('.rv-question-input').length + 1;
+      const qCount = container.querySelectorAll('.rv-qa-set').length + 1;
       const div = document.createElement('div');
-      div.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 relative';
+      div.className = 'rv-qa-set bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 relative';
       div.innerHTML = `
         <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold">✕</button>
-        <span class="font-bold text-brand-purple">질문 ${qCount}</span>
-        <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="면접관이 던진 질문을 기억나는 대로 적어주세요.">
+        <div class="font-bold text-brand-purple text-xs">질문 ${qCount}</div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Q. 면접관 질문</label>
+          <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="면접관이 던진 질문을 적어주세요.">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">A. 내 답변 및 면접관 반응 (선택)</label>
+          <textarea class="rv-answer-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" rows="2" placeholder="본인이 실제 했던 답변 핵심이나 반응을 자유롭게 기록해 주세요."></textarea>
+        </div>
       `;
       container.appendChild(div);
     }
 
+    // ★ [실제 면접 후기 제출 - Q&A 객체 배열 구조로 저장] ★
     async function submitRealInterviewReview() {
       if (!state.user) {
         alert('로그인 후 후기를 작성할 수 있습니다.');
@@ -721,11 +737,15 @@
       const style = document.getElementById('rvStyle')?.value.trim();
       const tip = document.getElementById('rvTip')?.value.trim() || '';
 
-      const qInputs = document.querySelectorAll('.rv-question-input');
-      const questions = [];
-      qInputs.forEach(inp => {
-        const val = inp.value.trim();
-        if (val) questions.push(val);
+      const qaSets = document.querySelectorAll('.rv-qa-set');
+      const qaList = [];
+
+      qaSets.forEach(setEl => {
+        const qVal = setEl.querySelector('.rv-question-input')?.value.trim() || '';
+        const aVal = setEl.querySelector('.rv-answer-input')?.value.trim() || '';
+        if (qVal) {
+          qaList.push({ question: qVal, answer: aVal });
+        }
       });
 
       if (!univ || !dept || !style) {
@@ -733,7 +753,7 @@
         return;
       }
 
-      if (questions.length === 0) {
+      if (qaList.length === 0) {
         alert('최소 1개 이상의 실제 받은 질문을 작성해 주세요.');
         return;
       }
@@ -746,7 +766,8 @@
         dept: dept,
         type: type,
         style: style,
-        questions: questions,
+        qaList: qaList,
+        questions: qaList.map(item => item.question), // 하위 호환성 유지
         tip: tip,
         createdAt: new Date().toLocaleString()
       };
@@ -768,9 +789,16 @@
       document.getElementById('rvStyle').value = '';
       document.getElementById('rvTip').value = '';
       document.getElementById('reviewQuestionsContainer').innerHTML = `
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-          <span class="font-bold text-brand-purple">질문 1</span>
-          <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+        <div class="rv-qa-set bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 relative">
+          <div class="font-bold text-brand-purple text-xs">질문 1</div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Q. 면접관 질문</label>
+            <input type="text" class="rv-question-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" placeholder="예: 우리 학과에 지원하게 된 결정적인 계기는 무엇인가요?">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">A. 내 답변 및 면접관 반응 (선택)</label>
+            <textarea class="rv-answer-input w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:border-brand-purple text-xs bg-white" rows="2" placeholder="예: 고등학교 2학년 과학 탐구 동아리 활동 중 수행한 실험 사례를 중심으로 논리적으로 답변함. 면접관께서 긍정적으로 고개를 끄덕이심."></textarea>
+          </div>
         </div>
       `;
 
@@ -788,20 +816,29 @@
         return;
       }
 
-      container.innerHTML = myRvList.map((r, idx) => `
-        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-          <div class="flex justify-between items-center border-b pb-1.5">
-            <span class="font-bold text-slate-900">${r.univ} ${r.dept} <span class="text-brand-purple font-semibold">(${r.type})</span></span>
-            <span class="text-[10px] text-slate-400">${r.createdAt}</span>
+      container.innerHTML = myRvList.map((r, idx) => {
+        const qaItems = r.qaList || (r.questions || []).map(q => ({ question: q, answer: '' }));
+
+        return `
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+            <div class="flex justify-between items-center border-b pb-1.5">
+              <span class="font-bold text-slate-900">${r.univ} ${r.dept} <span class="text-brand-purple font-semibold">(${r.type})</span></span>
+              <span class="text-[10px] text-slate-400">${r.createdAt}</span>
+            </div>
+            <p class="text-slate-600 font-medium">일시/방식: ${r.style}</p>
+            <div class="space-y-1.5 pt-1">
+              <p class="font-bold text-slate-700">받은 질문 & 답변 목록 (${qaItems.length}개):</p>
+              ${qaItems.map((qa, i) => `
+                <div class="bg-white p-2.5 rounded-lg border border-slate-200 space-y-0.5">
+                  <p class="font-bold text-slate-900">Q${i+1}. ${qa.question}</p>
+                  ${qa.answer ? `<p class="text-slate-700 pl-3">➔ A. ${qa.answer}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            ${r.tip ? `<p class="text-amber-800 bg-amber-50 p-2 rounded border border-amber-200 text-[11px] mt-1">💡 꿀팁: ${r.tip}</p>` : ''}
           </div>
-          <p class="text-slate-600 font-medium">일시/방식: ${r.style}</p>
-          <div class="space-y-1 pt-1">
-            <p class="font-bold text-slate-700">받은 질문 목록 (${r.questions.length}개):</p>
-            ${r.questions.map((q, i) => `<p class="text-slate-800 pl-2">· Q${i+1}. ${q}</p>`).join('')}
-          </div>
-          ${r.tip ? `<p class="text-amber-800 bg-amber-50 p-2 rounded border border-amber-200 text-[11px] mt-1">💡 꿀팁: ${r.tip}</p>` : ''}
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderTeacherRealReviewsView() {
@@ -817,37 +854,42 @@
                (r.type || '').toLowerCase().includes(kw);
       });
 
-      const cardsHtml = filteredReviews.map(r => `
-        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
-          <div class="flex justify-between items-center border-b pb-2.5">
-            <div>
-              <h4 class="font-bold text-slate-900 text-base">${r.univ} ${r.dept} <span class="bg-purple-100 text-brand-purple text-xs px-2 py-0.5 rounded font-bold ml-1">${r.type}</span></h4>
-              <p class="text-xs text-slate-500 mt-0.5">작성자: <strong>${r.name} (${r.num})</strong> | ${r.createdAt}</p>
-            </div>
-            <button onclick="deleteRealReview('${r.id}')" class="text-red-400 hover:text-red-600 text-xs font-bold underline">삭제</button>
-          </div>
+      const cardsHtml = filteredReviews.map(r => {
+        const qaItems = r.qaList || (r.questions || []).map(q => ({ question: q, answer: '' }));
 
-          <div class="text-xs space-y-2">
-            <p class="font-semibold text-slate-700">📌 면접 일시 및 방식 : <span class="text-slate-900 font-bold">${r.style}</span></p>
-
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
-              <p class="font-bold text-brand-purple">❓ 실제 받은 질문 리스트 (${r.questions.length}개)</p>
-              ${r.questions.map((q, i) => `
-                <div class="pl-2 text-slate-800 font-medium">
-                  <span class="font-bold text-slate-900">Q${i+1}.</span> ${q}
-                </div>
-              `).join('')}
-            </div>
-
-            ${r.tip ? `
-              <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-200 text-amber-900 space-y-0.5">
-                <p class="font-bold"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> 후배들을 위한 꿀팁 & 면접장 분위기</p>
-                <p class="leading-relaxed whitespace-pre-wrap">${r.tip}</p>
+        return `
+          <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center border-b pb-2.5">
+              <div>
+                <h4 class="font-bold text-slate-900 text-base">${r.univ} ${r.dept} <span class="bg-purple-100 text-brand-purple text-xs px-2 py-0.5 rounded font-bold ml-1">${r.type}</span></h4>
+                <p class="text-xs text-slate-500 mt-0.5">작성자: <strong>${r.name} (${r.num})</strong> | ${r.createdAt}</p>
               </div>
-            ` : ''}
+              <button onclick="deleteRealReview('${r.id}')" class="text-red-400 hover:text-red-600 text-xs font-bold underline">삭제</button>
+            </div>
+
+            <div class="text-xs space-y-2">
+              <p class="font-semibold text-slate-700">📌 면접 일시 및 방식 : <span class="text-slate-900 font-bold">${r.style}</span></p>
+
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                <p class="font-bold text-brand-purple">❓ 실제 받은 질문 & 학생 답변 (${qaItems.length}개)</p>
+                ${qaItems.map((qa, i) => `
+                  <div class="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+                    <p class="font-bold text-slate-900">Q${i+1}. ${qa.question}</p>
+                    ${qa.answer ? `<p class="text-slate-700 leading-relaxed pl-3">➔ A. ${qa.answer}</p>` : '<p class="text-slate-400 text-[11px] pl-3">(작성된 답변 없음)</p>'}
+                  </div>
+                `).join('')}
+              </div>
+
+              ${r.tip ? `
+                <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-200 text-amber-900 space-y-0.5">
+                  <p class="font-bold"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> 후배들을 위한 꿀팁 & 면접장 분위기</p>
+                  <p class="leading-relaxed whitespace-pre-wrap">${r.tip}</p>
+                </div>
+              ` : ''}
+            </div>
           </div>
-        </div>
-      `).join('') || '<div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">등록된 실제 대학 면접 후기가 없습니다.</div>';
+        `;
+      }).join('') || '<div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">등록된 실제 대학 면접 후기가 없습니다.</div>';
 
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
@@ -900,10 +942,11 @@
         return;
       }
 
-      let csvStr = '\uFEFFNo,학번,이름,대학교,학과,전형유형,면접일시방식,실제질문목록,후기및꿀팁,작성일시\n';
+      let csvStr = '\uFEFFNo,학번,이름,대학교,학과,전형유형,면접일시방식,실제질문및답변목록,후기및꿀팁,작성일시\n';
       state.realReviews.forEach((r, i) => {
-        const qStr = (r.questions || []).map((q, idx) => `Q${idx+1}.${q}`).join(' / ');
-        csvStr += `${i+1},${r.num},${r.name},"${r.univ}","${r.dept}","${r.type}","${r.style}","${qStr}","${(r.tip || '').replace(/"/g, '""')}",${r.createdAt}\n`;
+        const qaItems = r.qaList || (r.questions || []).map(q => ({ question: q, answer: '' }));
+        const qaStr = qaItems.map((item, idx) => `Q${idx+1}.${item.question} (A.${item.answer || '-'})`).join(' / ');
+        csvStr += `${i+1},${r.num},${r.name},"${r.univ}","${r.dept}","${r.type}","${r.style}","${qaStr.replace(/"/g, '""')}","${(r.tip || '').replace(/"/g, '""')}",${r.createdAt}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -3016,7 +3059,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
       }
     }
 
-    // ★ [달력 내부 세로 스크롤 적용 - max-h 및 overflow-y-auto] ★
     function renderTeacherCalendarView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -3090,7 +3132,6 @@ ${idx + 1}. ${r.name}학생 (${r.num})
                 </div>
               </div>
             </div>
-            <!-- 내부에 스크롤 영역 형성 (스크롤 시 이벤트 버블링 차단) -->
             <div class="max-h-[62px] overflow-y-auto custom-scroll mt-1 pr-0.5" onclick="event.stopPropagation()">
               ${regsSummary}
             </div>
