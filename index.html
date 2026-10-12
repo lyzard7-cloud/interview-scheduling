@@ -459,8 +459,12 @@
       realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
     };
 
+    // ★ [교사 페이지 판별 로직 수정 - URL 파라미터/키워드 완벽 대응] ★
     const urlParams = new URLSearchParams(window.location.search);
-    const isTeacher = urlParams.get('role') === 'teacher' || urlParams.get('mode') === 'teacher';
+    const hrefLower = window.location.href.toLowerCase();
+    const isTeacher = urlParams.get('role') === 'teacher' || 
+                      urlParams.get('mode') === 'teacher' || 
+                      hrefLower.includes('teacher');
 
     document.addEventListener('DOMContentLoaded', () => {
       syncDatabase();
@@ -701,7 +705,6 @@
       }
     }
 
-    // ★ [질문 + 답변 입력란 세트 동적 추가] ★
     function addReviewQuestionInput() {
       const container = document.getElementById('reviewQuestionsContainer');
       if (!container) return;
@@ -1647,7 +1650,6 @@
       }
     }
 
-    // ★ [나의 신청 내역 - D-7일 기준 학생 직접 취소 제한 락킹 구현] ★
     function checkMyRegistrations() {
       if (!state.user) return;
       const myRegs = state.regs.filter(r => r.num === state.user.num);
@@ -1674,7 +1676,6 @@
           const regDateObj = new Date(r.date);
           regDateObj.setHours(0,0,0,0);
           
-          // 면접일 D-7일 이내인지 계산 (7일 이하이면 직접 취소 불가)
           const daysUntilInterview = Math.ceil((regDateObj - today) / (1000 * 60 * 60 * 24));
           const isCancelLocked = daysUntilInterview <= 7;
 
@@ -2818,7 +2819,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             <td class="py-2 px-1 font-bold text-slate-900 text-center whitespace-nowrap">${r.name}</td>
             <td class="py-2 px-1 text-center truncate max-w-[75px]" title="${r.univ}">${r.univ}</td>
             <td class="py-2 px-1 text-center truncate max-w-[75px]" title="${r.dept}">${r.dept}</td>
-            <td class="py-2 px-1 text-center truncate max-w-[60px] text-slate-500" title="${r.note \vert{}\vert{} '-'}">${r.note || '-'}</td>
+            <td class="py-2 px-1 text-center truncate max-w-[60px] text-slate-500" title="${r.note || '-'}">${r.note || '-'}</td>
             <td class="py-2 px-1 text-center whitespace-nowrap">
               <button onclick="toggleStudentStatus('${r.id}')" class="px-1.5 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
                 ${r.status || '대기'}
@@ -2831,7 +2832,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
             </td>
             <td class="py-2 px-1 text-center whitespace-nowrap">${teacherCellHtml}</td>
             <td class="py-2 px-1 text-center whitespace-nowrap">
-              <input type="text" value="${r.location \vert{}\vert{} '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-20 px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
             </td>
             <td class="py-2 px-1 text-center whitespace-nowrap">
               <div class="flex items-center justify-center space-x-1">
@@ -2952,7 +2953,7 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
       alert(`[오늘(${todayStr}) ${teacherName} 선생님 담당 학생]\n총 ${myTodayStudents.length}명\n\n` + 
         (myTodayStudents.length > 0 
-          ? myTodayStudents.map(r => `· [${r.period}교시] ${r.name}(${r.num}) - ${r.univ}${r.dept}`).join('\n')
+          ? myTodayStudents.map(r => `· [${r.period}교시] ${r.name}(${r.num}) - ${r.univ} ${r.dept}`).join('\n')
           : '오늘 배정된 면접 학생이 없습니다.')
       );
     }
@@ -2968,165 +2969,4 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
       const teacherMap = {};
       state.regs.forEach(r => {
-        [r.teacher1, r.teacher2].filter(Boolean).forEach(t => {
-          if (!teacherMap[t]) teacherMap[t] = [];
-          teacherMap[t].push(r);
-        });
-      });
-
-      const teacherNames = Object.keys(teacherMap);
-      
-      const cardsHtml = teacherNames.map(t => {
-        const studentList = teacherMap[t].map(r => `
-          <div class="flex justify-between items-center text-xs py-1 border-b border-slate-100 last:border-0 whitespace-nowrap">
-            <span class="font-semibold text-slate-800">${r.name} (${r.num})</span>
-            <span class="text-slate-500">${r.date}${r.period}교시</span>
-          </div>
-        `).join('');
-
-        const isGroupA = TEACHER_A_GROUP.includes(t);
-
-        return `
-          <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-              <h4 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-user-tie text-brand-purple"></i> ${t} 선생님
-                <span class="text-[10px] px-2 py-0.5 rounded ${isGroupA ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${isGroupA ? 'A그룹' : 'B그룹'}</span>
-              </h4>
-              <span class="bg-brand-purpleLight text-brand-purple font-extrabold text-xs px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                총 ${teacherMap[t].length}건
-              </span>
-            </div>
-            <div class="space-y-1">
-              <div class="flex justify-between items-center mb-1">
-                <p class="text-[11px] font-bold text-slate-400 whitespace-nowrap">담당 면접 학생 목록</p>
-                <button onclick="showTodayTeacherStudents('${t}')" class="text-[10px] bg-brand-orange hover:bg-brand-orangeHover text-white font-bold px-2 py-0.5 rounded transition-all whitespace-nowrap">
-                  오늘 내 학생 보기
-                </button>
-              </div>
-              ${studentList}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      main.innerHTML = `
-        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2">
-            <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📊 면접교사별 배정 통계 및 종합 리포트</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 면접 운영 성과 및 교사별 담당 실적 요약</p>
-            </div>
-            <div class="flex items-center space-x-2">
-              <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
-                📄 종합 결과 보고서 인쇄
-              </button>
-              <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
-                <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
-              </button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-center space-y-1">
-              <p class="text-[11px] text-slate-500 font-bold whitespace-nowrap">총 예약 신청</p>
-              <p class="text-xl sm:text-2xl font-black text-brand-navy whitespace-nowrap">${totalRegs}건</p>
-            </div>
-            <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-center space-y-1">
-              <p class="text-[11px] text-emerald-700 font-bold whitespace-nowrap">면접 실시 완료</p>
-              <p class="text-xl sm:text-2xl font-black text-emerald-700 whitespace-nowrap">${completedRegs}건</p>
-            </div>
-            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-center space-y-1">
-              <p class="text-[11px] text-amber-700 font-bold whitespace-nowrap">학생 후기 작성</p>
-              <p class="text-xl sm:text-2xl font-black text-amber-700 whitespace-nowrap">${feedbackRegs}건</p>
-            </div>
-            <div class="bg-red-50 p-3.5 rounded-2xl border border-red-200 text-center space-y-1">
-              <p class="text-[11px] text-red-600 font-bold whitespace-nowrap">미진행/불참</p>
-              <p class="text-xl sm:text-2xl font-black text-red-600 whitespace-nowrap">${absentRegs}건</p>
-            </div>
-          </div>
-
-          ${teacherNames.length > 0 ? `
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-              ${cardsHtml}
-            </div>
-          ` : `
-            <div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">
-              아직 배정된 면접교사가 없습니다. [면접 예약 현황 목록] 탭에서 교사를 배정해 주세요.
-            </div>
-          `}
-        </section>
-      `;
-    }
-
-    async function updateLocation(id, newLoc) {
-      const reg = state.regs.find(r => r.id === id);
-      if (reg) {
-        reg.location = newLoc.trim() || '3학년 교무실';
-        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-        if (window.isFirebaseReady && window.dbTools) {
-          try {
-            const { doc, setDoc } = window.dbTools;
-            await setDoc(doc(window.db, 'interview_registrations', id), reg);
-          } catch(e) { console.warn("Firestore Location Save Error", e); }
-        }
-      }
-    }
-
-    function renderTeacherCalendarView() {
-      const main = document.getElementById('mainContent');
-      if (!main) return;
-
-      const firstDay = new Date(state.year, state.month - 1, 1).getDay();
-      const lastDate = new Date(state.year, state.month, 0).getDate();
-
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-      let calGridHtml = '';
-      for (let i = 0; i < firstDay; i++) {
-        calGridHtml += `<div class="h-24 sm:h-28 bg-slate-50/50 rounded-xl"></div>`;
-      }
-
-      for (let d = 1; d <= lastDate; d++) {
-        const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        
-        const isClosed = state.closedDates.includes(dateStr);
-        const isChecked = state.selectedTeacherDates.includes(dateStr);
-        const isToday = dateStr === todayStr;
-        const isPast = dateStr < todayStr;
-
-        const dayRegs = state.regs.filter(r => r.date === dateStr);
-        const completedCount = dayRegs.filter(r => r.status === '완료').length;
-
-        let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => {
-          const p = Number(r.period);
-          const isDone = r.status === '완료';
-
-          let badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200';
-          if (p === 7) badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-          else if (p === 8) badgeStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-
-          if (isDone) {
-            badgeStyle = 'bg-slate-100 text-slate-500 border-slate-200 opacity-70';
-          }
-
-          return `
-            <div class="text-[9px] sm:text-[10px] ${badgeStyle} border font-bold px-1 py-0.5 rounded truncate whitespace-nowrap flex items-center justify-between shrink-0 mb-0.5">
-              <span>[${r.period}교시] ${r.name}</span>${isDone ? '<span class="text-[8px] bg-emerald-600 text-white font-extrabold px-1 rounded-full ml-1">✔완료</span>' : ''}
-            </div>
-          `;
-        }).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
-
-        let cardBgClass = 'bg-white border-slate-200 hover:border-brand-purple';
-        if (isToday) {
-          cardBgClass = 'bg-amber-50/40 border-2 border-brand-orange ring-2 ring-brand-orange/20 shadow-sm';
-        } else if (isPast) {
-          cardBgClass = 'bg-slate-100/70 border-slate-200/80 opacity-80';
-        } else if (isClosed) {
-          cardBgClass = 'bg-slate-100 text-slate-400 opacity-70 border-slate-200';
-        }
-
-        calGridHtml += `
-          <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-24 sm:h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : cardBgClass} rounded-xl p-1.5 sm:p-2 cursor-pointer flex flex-col justify-between transition-all relative overflow-hidden">
+        [r.teacher1, r.teacher2].filter(Boolean
