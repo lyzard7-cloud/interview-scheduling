@@ -241,7 +241,6 @@
         </div>
       </div>
 
-      <!-- 실제 대학 면접 후기 작성 섹션 -->
       <div id="realReviewSection" class="hidden bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
         <div class="border-b border-slate-100 pb-3.5">
           <h3 class="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
@@ -459,7 +458,7 @@
       realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
     };
 
-    // ★ [교사 페이지 판별 로직 수정 - URL 파라미터/키워드 완벽 대응] ★
+    // ★ [교사 접속 완전 보장 로직] ★
     const urlParams = new URLSearchParams(window.location.search);
     const hrefLower = window.location.href.toLowerCase();
     const isTeacher = urlParams.get('role') === 'teacher' || 
@@ -495,6 +494,8 @@
     }
 
     function handleStudentLogin() {
+      if (isTeacher) return; // 교사 페이지에서는 실행 안함
+
       STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
       const num = document.getElementById('sNum').value.trim();
@@ -2969,4 +2970,438 @@ ${idx + 1}. ${r.name}학생 (${r.num})
 
       const teacherMap = {};
       state.regs.forEach(r => {
-        [r.teacher1, r.teacher2].filter(Boolean
+        [r.teacher1, r.teacher2].filter(Boolean).forEach(t => {
+          if (!teacherMap[t]) teacherMap[t] = [];
+          teacherMap[t].push(r);
+        });
+      });
+
+      const teacherNames = Object.keys(teacherMap);
+      
+      const cardsHtml = teacherNames.map(t => {
+        const studentList = teacherMap[t].map(r => `
+          <div class="flex justify-between items-center text-xs py-1 border-b border-slate-100 last:border-0 whitespace-nowrap">
+            <span class="font-semibold text-slate-800">${r.name} (${r.num})</span>
+            <span class="text-slate-500">${r.date} ${r.period}교시</span>
+          </div>
+        `).join('');
+
+        const isGroupA = TEACHER_A_GROUP.includes(t);
+
+        return `
+          <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+              <h4 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-user-tie text-brand-purple"></i> ${t} 선생님
+                <span class="text-[10px] px-2 py-0.5 rounded ${isGroupA ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${isGroupA ? 'A그룹' : 'B그룹'}</span>
+              </h4>
+              <span class="bg-brand-purpleLight text-brand-purple font-extrabold text-xs px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                총 ${teacherMap[t].length}건
+              </span>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between items-center mb-1">
+                <p class="text-[11px] font-bold text-slate-400 whitespace-nowrap">담당 면접 학생 목록</p>
+                <button onclick="showTodayTeacherStudents('${t}')" class="text-[10px] bg-brand-orange hover:bg-brand-orangeHover text-white font-bold px-2 py-0.5 rounded transition-all whitespace-nowrap">
+                  오늘 내 학생 보기
+                </button>
+              </div>
+              ${studentList}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📊 면접교사별 배정 통계 및 종합 리포트</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 면접 운영 성과 및 교사별 담당 실적 요약</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                📄 종합 결과 보고서 인쇄
+              </button>
+              <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+                <i class="fa-solid fa-arrow-left mr-1"></i> 학생 화면
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-center space-y-1">
+              <p class="text-[11px] text-slate-500 font-bold whitespace-nowrap">총 예약 신청</p>
+              <p class="text-xl sm:text-2xl font-black text-brand-navy whitespace-nowrap">${totalRegs}건</p>
+            </div>
+            <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-center space-y-1">
+              <p class="text-[11px] text-emerald-700 font-bold whitespace-nowrap">면접 실시 완료</p>
+              <p class="text-xl sm:text-2xl font-black text-emerald-700 whitespace-nowrap">${completedRegs}건</p>
+            </div>
+            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-center space-y-1">
+              <p class="text-[11px] text-amber-700 font-bold whitespace-nowrap">학생 후기 작성</p>
+              <p class="text-xl sm:text-2xl font-black text-amber-700 whitespace-nowrap">${feedbackRegs}건</p>
+            </div>
+            <div class="bg-red-50 p-3.5 rounded-2xl border border-red-200 text-center space-y-1">
+              <p class="text-[11px] text-red-600 font-bold whitespace-nowrap">미진행/불참</p>
+              <p class="text-xl sm:text-2xl font-black text-red-600 whitespace-nowrap">${absentRegs}건</p>
+            </div>
+          </div>
+
+          ${teacherNames.length > 0 ? `
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+              ${cardsHtml}
+            </div>
+          ` : `
+            <div class="text-center py-12 text-slate-400 text-xs whitespace-nowrap">
+              아직 배정된 면접교사가 없습니다. [면접 예약 현황 목록] 탭에서 교사를 배정해 주세요.
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    async function updateLocation(id, newLoc) {
+      const reg = state.regs.find(r => r.id === id);
+      if (reg) {
+        reg.location = newLoc.trim() || '3학년 교무실';
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+        if (window.isFirebaseReady && window.dbTools) {
+          try {
+            const { doc, setDoc } = window.dbTools;
+            await setDoc(doc(window.db, 'interview_registrations', id), reg);
+          } catch(e) { console.warn("Firestore Location Save Error", e); }
+        }
+      }
+    }
+
+    function renderTeacherCalendarView() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+
+      const firstDay = new Date(state.year, state.month - 1, 1).getDay();
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      let calGridHtml = '';
+      for (let i = 0; i < firstDay; i++) {
+        calGridHtml += `<div class="h-24 sm:h-28 bg-slate-50/50 rounded-xl"></div>`;
+      }
+
+      for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        
+        const isClosed = state.closedDates.includes(dateStr);
+        const isChecked = state.selectedTeacherDates.includes(dateStr);
+        const isToday = dateStr === todayStr;
+        const isPast = dateStr < todayStr;
+
+        const dayRegs = state.regs.filter(r => r.date === dateStr);
+        const completedCount = dayRegs.filter(r => r.status === '완료').length;
+
+        let regsSummary = dayRegs.length > 0 ? dayRegs.map(r => {
+          const p = Number(r.period);
+          const isDone = r.status === '완료';
+
+          let badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200';
+          if (p === 7) badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          else if (p === 8) badgeStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+
+          if (isDone) {
+            badgeStyle = 'bg-slate-100 text-slate-500 border-slate-200 opacity-70';
+          }
+
+          return `
+            <div class="text-[9px] sm:text-[10px] ${badgeStyle} border font-bold px-1 py-0.5 rounded truncate whitespace-nowrap flex items-center justify-between shrink-0 mb-0.5">
+              <span>[${r.period}교시] ${r.name}</span>
+              ${isDone ? '<span class="text-[8px] bg-emerald-600 text-white font-extrabold px-1 rounded-full ml-1">✔완료</span>' : ''}
+            </div>
+          `;
+        }).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
+
+        let cardBgClass = 'bg-white border-slate-200 hover:border-brand-purple';
+        if (isToday) {
+          cardBgClass = 'bg-amber-50/40 border-2 border-brand-orange ring-2 ring-brand-orange/20 shadow-sm';
+        } else if (isPast) {
+          cardBgClass = 'bg-slate-100/70 border-slate-200/80 opacity-80';
+        } else if (isClosed) {
+          cardBgClass = 'bg-slate-100 text-slate-400 opacity-70 border-slate-200';
+        }
+
+        calGridHtml += `
+          <div onclick="toggleTeacherDateSelect('${dateStr}')" class="h-24 sm:h-28 border ${isChecked ? 'border-brand-purple bg-brand-purpleLight/40 ring-2 ring-brand-purple/40 font-bold' : cardBgClass} rounded-xl p-1.5 sm:p-2 cursor-pointer flex flex-col justify-between transition-all relative overflow-hidden">
+            <div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-1">
+                  <span class="text-xs font-bold ${isPast ? 'text-slate-500' : isClosed ? 'text-slate-400' : 'text-slate-800'}">${d}</span>
+                  ${isToday ? '<span class="bg-brand-orange text-white text-[8px] font-extrabold px-1 rounded-full">오늘</span>' : ''}
+                </div>
+                <div class="flex items-center gap-0.5 whitespace-nowrap">
+                  ${isChecked ? '<span class="bg-brand-purple text-white text-[8px] px-1 py-0.5 rounded-full font-bold whitespace-nowrap">✓</span>' : ''}
+                  ${isClosed 
+                    ? '<span class="text-[9px] bg-slate-200 text-slate-600 font-bold px-1 rounded whitespace-nowrap">마감</span>' 
+                    : isPast && dayRegs.length > 0 
+                      ? `<span class="text-[9px] text-emerald-700 font-extrabold bg-emerald-50 px-1 rounded whitespace-nowrap">${completedCount}/${dayRegs.length}완료</span>`
+                      : `<span class="text-[9px] text-slate-500 font-bold whitespace-nowrap">${dayRegs.length}건</span>`}
+                </div>
+              </div>
+            </div>
+            <div class="max-h-[62px] overflow-y-auto custom-scroll mt-1 pr-0.5" onclick="event.stopPropagation()">
+              ${regsSummary}
+            </div>
+          </div>
+        `;
+      }
+
+      main.innerHTML = `
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">📅 달력 일정 및 마감 관리</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">날짜별 마감 및 진행 상태 지정 (카드 내부 스크롤 가능)</p>
+            </div>
+            <div class="flex items-center space-x-1.5 whitespace-nowrap">
+              <button onclick="changeMonth(-1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">◀ 이전달</button>
+              <span id="calMonthText" class="font-bold text-xs sm:text-sm px-1.5 text-brand-navy whitespace-nowrap">${state.year}년 ${state.month}월</span>
+              <button onclick="changeMonth(1)" class="px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap">다음달 ▶</button>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center space-x-2 text-xs font-bold text-slate-700 whitespace-nowrap">
+                <i class="fa-solid fa-hand-pointer text-brand-purple"></i>
+                <span>선택: <strong class="text-brand-purple text-xs sm:text-sm">${state.selectedTeacherDates.length}개</strong></span>
+              </div>
+              <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+                <button onclick="selectAllTeacherMonthDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
+                  전체 선택
+                </button>
+                <button onclick="clearSelectedTeacherDates()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
+                  해제
+                </button>
+                <button onclick="applySelectedBulkClose(true)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm whitespace-nowrap">
+                  마감
+                </button>
+                <button onclick="applySelectedBulkClose(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all shadow-sm whitespace-nowrap">
+                  해제
+                </button>
+                <button onclick="applyWeekendClose(true)" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
+                  주말 마감
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs font-bold text-slate-500 py-1.5 border-b border-slate-100">
+            <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+          </div>
+          <div class="grid grid-cols-7 gap-1 sm:gap-2">
+            ${calGridHtml}
+          </div>
+
+          <div id="teacherCalDetail" class="hidden border-t pt-4 space-y-3"></div>
+        </section>
+      `;
+    }
+
+    function toggleTeacherDateSelect(dateStr) {
+      if (state.selectedTeacherDates.includes(dateStr)) {
+        state.selectedTeacherDates = state.selectedTeacherDates.filter(d => d !== dateStr);
+      } else {
+        state.selectedTeacherDates.push(dateStr);
+      }
+      renderTeacherCalendarView();
+      showTeacherDateDetail(dateStr);
+    }
+
+    function selectAllTeacherMonthDates() {
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+      state.selectedTeacherDates = [];
+      for (let d = 1; d <= lastDate; d++) {
+        state.selectedTeacherDates.push(`${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+      }
+      renderTeacherCalendarView();
+    }
+
+    function clearSelectedTeacherDates() {
+      state.selectedTeacherDates = [];
+      renderTeacherCalendarView();
+    }
+
+    async function applySelectedBulkClose(isClose) {
+      if (state.selectedTeacherDates.length === 0) {
+        alert('달력에서 일괄 변경할 날짜를 먼저 클릭하여 선택해 주세요.');
+        return;
+      }
+
+      let count = 0;
+      state.selectedTeacherDates.forEach(dStr => {
+        if (isClose) {
+          if (!state.closedDates.includes(dStr)) {
+            state.closedDates.push(dStr);
+            count++;
+          }
+        } else {
+          if (state.closedDates.includes(dStr)) {
+            state.closedDates = state.closedDates.filter(d => d !== dStr);
+            count++;
+          }
+        }
+      });
+
+      await saveClosedDatesToDb();
+      alert(`선택한 ${state.selectedTeacherDates.length}개 중 ${count}개 날짜가 일괄 ${isClose ? '마감' : '해제'} 처리되었습니다.`);
+      state.selectedTeacherDates = [];
+      renderTeacherCalendarView();
+    }
+
+    async function applyWeekendClose(isClose) {
+      const lastDate = new Date(state.year, state.month, 0).getDate();
+      let count = 0;
+
+      for (let d = 1; d <= lastDate; d++) {
+        const dateObj = new Date(state.year, state.month - 1, d);
+        const day = dateObj.getDay();
+        if (day === 0 || day === 6) {
+          const dStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          if (isClose) {
+            if (!state.closedDates.includes(dStr)) {
+              state.closedDates.push(dStr);
+              count++;
+            }
+          }
+        }
+      }
+
+      await saveClosedDatesToDb();
+      alert(`${state.month}월 모든 주말(토/일)이 일괄 마감 처리되었습니다.`);
+      renderTeacherCalendarView();
+    }
+
+    function showTeacherDateDetail(dateStr) {
+      const container = document.getElementById('teacherCalDetail');
+      if (!container) return;
+
+      const isClosed = state.closedDates.includes(dateStr);
+      const dayRegs = state.regs.filter(r => r.date === dateStr);
+      const availTeachers = TEACHER_SCHEDULE[dateStr] || [];
+      const maxTeams = getMaxTeamsForDate(dateStr);
+
+      let listHtml = dayRegs.map(r => {
+        const assignedTeachers = [r.teacher1, r.teacher2].filter(Boolean);
+        const teacherBadge = assignedTeachers.length > 0 
+          ? `<span class="bg-brand-purpleLight text-brand-purple px-2 py-0.5 rounded font-bold text-xs whitespace-nowrap">담당: ${assignedTeachers.join(', ')}</span>`
+          : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold text-xs whitespace-nowrap">미배정</span>`;
+
+        return `
+          <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs border border-slate-200 flex-wrap gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="font-extrabold text-brand-purple bg-white px-2 py-1 rounded border border-brand-purple/30 whitespace-nowrap">[${r.period}교시]</span>
+              <div>
+                <span class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">${r.name} (${r.num})</span>
+                <span class="text-slate-500 ml-1.5 whitespace-nowrap">${r.univ} ${r.dept}</span>
+                ${r.note ? `<span class="text-amber-700 font-medium ml-1.5 whitespace-nowrap">(${r.note})</span>` : ''}
+                <span class="text-brand-purple font-bold ml-1.5 whitespace-nowrap">장소: ${r.location || '3학년 교무실'}</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+              ${teacherBadge}
+              <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded-lg font-bold text-xs whitespace-nowrap">📝 온라인 평가지</button>
+              <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1 whitespace-nowrap">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join('') || '<div class="text-xs text-slate-400 py-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 whitespace-nowrap">이 날짜에 신청된 면접 예약이 없습니다.</div>';
+
+      container.classList.remove('hidden');
+      container.innerHTML = `
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-brand-purpleLight/50 p-3.5 sm:p-4 rounded-xl border border-brand-purple/20 gap-2">
+          <div>
+            <h4 class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">📅 ${dateStr} 신청 현황 (정원: 8교시 ${maxTeams}명 / 9교시 ${maxTeams}명)</h4>
+            <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5 whitespace-nowrap">가능 교사: <strong>${availTeachers.length > 0 ? availTeachers.join(', ') : '없음/공휴일'}</strong></p>
+          </div>
+          <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
+            <button onclick="printEvaluationSheet('${dateStr}')" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
+              📄 평가 기록지 인쇄
+            </button>
+            <button onclick="toggleDateClosed('${dateStr}')" class="${isClosed ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-500 hover:bg-red-600'} text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
+              ${isClosed ? '마감 해제' : '개별 마감'}
+            </button>
+          </div>
+        </div>
+        <div class="space-y-2 pt-1">
+          ${listHtml}
+        </div>
+      `;
+    }
+
+    async function toggleDateClosed(dateStr) {
+      if (state.closedDates.includes(dateStr)) {
+        state.closedDates = state.closedDates.filter(d => d !== dateStr);
+        alert(`${dateStr} 날짜가 정상 운영(예약 가능)으로 재개되었습니다.`);
+      } else {
+        state.closedDates.push(dateStr);
+        alert(`${dateStr} 날짜가 마감 처리되었습니다.`);
+      }
+      await saveClosedDatesToDb();
+      renderTeacherCalendarView();
+      showTeacherDateDetail(dateStr);
+    }
+
+    async function saveTeachers(id) {
+      const t1 = document.getElementById(`t1Input_${id}`)?.value || '';
+      const t2 = document.getElementById(`t2Input_${id}`)?.value || '';
+
+      const reg = state.regs.find(r => r.id === id);
+      if (reg) {
+        reg.teacher1 = t1;
+        reg.teacher2 = t2;
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+        if (window.isFirebaseReady && window.dbTools) {
+          try {
+            const { doc, setDoc } = window.dbTools;
+            await setDoc(doc(window.db, 'interview_registrations', id), reg);
+          } catch(e) { console.warn("Firestore Teacher Save Error", e); }
+        }
+
+        state.editingTeacherId = null;
+        alert(`담당 면접교사가 완벽히 저장되었습니다.`);
+        renderTeacherView();
+      }
+    }
+
+    async function deleteRegistration(id) {
+      if (!confirm('이 학생의 면접 예약 내역을 취소/삭제하시겠습니까?')) return;
+      state.regs = state.regs.filter(r => r.id !== id);
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+
+      if (window.isFirebaseReady && window.dbTools) {
+        try {
+          const { doc, deleteDoc } = window.dbTools;
+          await deleteDoc(doc(window.db, 'interview_registrations', id));
+        } catch(e) { console.warn("Delete Firestore Error", e); }
+      }
+
+      if (isTeacher) renderTeacherView();
+      else checkMyRegistrations();
+      alert('예약 내역이 삭제되었습니다.');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+        const pwd = prompt('교사 비밀번호를 입력하세요:');
+        if (pwd === 'teacher123') {
+          window.location.href = window.location.pathname + '?role=teacher';
+        } else if (pwd) {
+          alert('비밀번호가 올바르지 않습니다.');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
