@@ -230,6 +230,9 @@
       realReviewKeyword: '',
       dateFilter: '',
       isTodayOnly: false,
+      // ★ [브라우저 개인 기억 기능] 1: 2행표, 2: 격자카드, 3: 슬림표 (기본값: 2번 격자카드)
+      viewLayoutMode: localStorage.getItem('teacher_preferred_layout') || '2',
+      expandedRowIds: [], // 3번 모드용 펼침 아이디 저장
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]'),
       realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
@@ -243,6 +246,22 @@
 
     function goToStudentPage() {
       window.location.href = './index.html';
+    }
+
+    // 레이아웃 변경 함수 (내 컴퓨터 브라우저에 저장)
+    function changeViewLayoutMode(modeVal) {
+      state.viewLayoutMode = modeVal;
+      localStorage.setItem('teacher_preferred_layout', modeVal);
+      renderTeacherListView();
+    }
+
+    function toggleRowExpansion(id) {
+      if (state.expandedRowIds.includes(id)) {
+        state.expandedRowIds = state.expandedRowIds.filter(item => item !== id);
+      } else {
+        state.expandedRowIds.push(id);
+      }
+      renderTeacherListView();
     }
 
     function updateSidebarNavForTeacher() {
@@ -1836,7 +1855,7 @@
       renderTeacherListView();
     }
 
-    // ★ [아이디어 2번: 2열 격자 카드(2-Column Grid) 레이아웃 적용] ★
+    // ★ [3가지 UI 모드 스위처 렌더링 렌더러] ★
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1860,108 +1879,217 @@
                (r.num || '').includes(kw);
       });
 
-      // 카드 목록 생성
-      const cardsHtml = filteredRegs.map((r, idx) => {
-        const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
-        const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
+      let contentLayoutHtml = '';
 
-        const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-        const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-        
-        let teacherCellHtml = '';
-        if (isEditing) {
-          const t1Options = availA.map(t => `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`).join('');
-          const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`).join('');
+      // --- [모드 1: 2행 컴팩트 표] ---
+      if (state.viewLayoutMode === '1') {
+        const rowsHtml = filteredRegs.map((r, idx) => {
+          const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+          const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
 
-          teacherCellHtml = `
-            <div class="flex items-center space-x-1 mt-1">
-              <select id="t1Input_${r.id}" class="px-1.5 py-1 text-xs border border-slate-300 rounded bg-white">
-                <option value="">A교사</option>
-                ${t1Options}
-              </select>
-              <select id="t2Input_${r.id}" class="px-1.5 py-1 text-xs border border-slate-300 rounded bg-white">
-                <option value="">B교사</option>
-                ${t2Options}
-              </select>
-              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-xs font-bold">저장</button>
-            </div>
+          const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+          const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+          let teacherCellHtml = '';
+          if (isEditing) {
+            const t1Options = availA.map(t => `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`).join('');
+            const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`).join('');
+            teacherCellHtml = `<select id="t1Input_${r.id}" class="text-[10px] border rounded"><option value="">A교사</option>${t1Options}</select> <select id="t2Input_${r.id}" class="text-[10px] border rounded"><option value="">B교사</option>${t2Options}</select> <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-1 py-0.5 rounded text-[10px]">저장</button>`;
+          } else {
+            teacherCellHtml = `${r.teacher1 ? `<span class="bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[10px]">[A] ${r.teacher1}</span>` : ''} ${r.teacher2 ? `<span class="bg-blue-100 text-blue-900 font-bold px-1.5 py-0.5 rounded text-[10px]">[B] ${r.teacher2}</span>` : ''} <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 text-[10px] underline ml-1">수정</button>`;
+          }
+
+          const statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800' : r.status === '불참' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700';
+          const isTodayRow = r.date === todayStr;
+
+          return `
+            <tbody class="border-b border-slate-200 text-xs ${isTodayRow ? 'bg-amber-50/40' : 'hover:bg-slate-50'}">
+              <tr class="font-bold text-slate-900">
+                <td class="py-2 px-2 text-center text-slate-400" rowspan="2">${idx + 1}</td>
+                <td class="py-1.5 px-2 ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'}">${r.date} [${r.period}교시] ${isTodayRow ? '⭐' : ''}</td>
+                <td class="py-1.5 px-2">${r.name} (${r.num})</td>
+                <td class="py-1.5 px-2 text-brand-purple" colspan="2"><i class="fa-solid fa-graduation-cap mr-1"></i>${r.univ} ${r.dept}</td>
+                <td class="py-1.5 px-2 text-center">
+                  <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[10px] ${statusStyle}">${r.status || '대기'}</button>
+                </td>
+              </tr>
+              <tr class="text-slate-600 bg-slate-50/50">
+                <td class="py-1.5 px-2">담당: ${teacherCellHtml}</td>
+                <td class="py-1.5 px-2">장소: <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-24 px-1 py-0.5 text-[11px] border rounded bg-white"></td>
+                <td class="py-1.5 px-2">요청: ${r.note || '-'}</td>
+                <td class="py-1.5 px-2 text-center" colspan="2">
+                  <div class="flex items-center justify-end space-x-1">
+                    <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 text-amber-900 px-2 py-0.5 rounded border text-[10px] font-bold">❓질문(${(r.preQuestions || []).length})</button>
+                    <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2 py-0.5 rounded text-[10px] font-bold">📝평가지</button>
+                    <button onclick="deleteRegistration('${r.id}')" class="text-red-500 underline text-[10px] font-bold ml-1">삭제</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
           `;
-        } else {
-          teacherCellHtml = `
-            <div class="flex items-center space-x-1.5 mt-1">
-              ${r.teacher1 ? `<span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded text-xs">[A] ${r.teacher1}</span>` : ''}
-              ${r.teacher2 ? `<span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-xs">[B] ${r.teacher2}</span>` : ''}
-              <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-xs underline ml-1">수정</button>
-            </div>
-          `;
-        }
+        }).join('');
 
-        const statusStyle = r.status === '완료' 
-          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-          : r.status === '불참' 
-            ? 'bg-red-100 text-red-800 border-red-300' 
-            : 'bg-slate-100 text-slate-700 border-slate-300';
-
-        const preQCount = (r.preQuestions || []).length;
-        const isTodayRow = r.date === todayStr;
-
-        return `
-          <div class="bg-white rounded-2xl p-4 shadow-sm border ${isTodayRow ? 'border-2 border-brand-orange bg-amber-50/20' : 'border-slate-200'} space-y-3 relative">
-            <div class="flex justify-between items-start border-b pb-2.5">
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="font-black text-brand-purple text-sm">[${r.period}교시]</span>
-                  <span class="font-extrabold text-slate-900 text-base">${r.name}</span>
-                  <span class="text-xs text-slate-500 font-medium">(${r.num})</span>
-                  ${isTodayRow ? '<span class="bg-brand-orange text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ml-1">오늘</span>' : ''}
-                </div>
-                <p class="text-xs font-bold text-slate-700 mt-1"><i class="fa-solid fa-calendar mr-1 text-slate-400"></i> ${r.date}</p>
-              </div>
-              <button onclick="toggleStudentStatus('${r.id}')" class="px-2.5 py-1 rounded-full font-bold text-xs border transition-all ${statusStyle}">
-                ${r.status || '대기'}
-              </button>
-            </div>
-
-            <div class="space-y-1.5 text-xs">
-              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                <p class="font-bold text-slate-900"><i class="fa-solid fa-graduation-cap text-brand-purple mr-1"></i> 지원: ${r.univ} ${r.dept}</p>
-                ${r.note ? `<p class="text-amber-800 text-[11px] mt-1 font-medium">요청사항: ${r.note}</p>` : ''}
-              </div>
-
-              <div class="flex justify-between items-center pt-1">
-                <div>
-                  <span class="text-[11px] text-slate-500 font-semibold block">담당 면접교사:</span>
-                  ${teacherCellHtml}
-                </div>
-                <div class="text-right">
-                  <span class="text-[11px] text-slate-500 font-semibold block">면접 장소:</span>
-                  <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-28 mt-0.5 px-2 py-0.5 text-xs text-right border border-slate-200 rounded focus:border-brand-purple bg-white font-bold text-brand-purple">
-                </div>
-              </div>
-            </div>
-
-            <div class="pt-2 border-t flex justify-between items-center flex-wrap gap-2">
-              <div class="flex items-center space-x-1.5">
-                <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-900 px-2.5 py-1.5 rounded-xl font-bold border border-amber-200 text-xs shadow-sm whitespace-nowrap">
-                  ❓ 사전질문 (${preQCount})
-                </button>
-                <button onclick="printSingleStudentPreQuestions('${r.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-2 py-1.5 rounded-xl font-bold border border-indigo-200 text-xs shadow-sm whitespace-nowrap" title="질문지 인쇄">
-                  🖨️ 질문지
-                </button>
-              </div>
-
-              <div class="flex items-center space-x-1.5">
-                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm whitespace-nowrap">
-                  📝 평가지 작성
-                </button>
-                <button onclick="deleteRegistration('${r.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all whitespace-nowrap">
-                  삭제
-                </button>
-              </div>
-            </div>
+        contentLayoutHtml = `
+          <div class="w-full rounded-xl border border-slate-200 overflow-x-auto custom-scroll">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+              <thead class="bg-slate-100 text-slate-600 text-xs font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-2 text-center w-12">No</th>
+                  <th class="py-2 px-2">면접일시 / 담당교사</th>
+                  <th class="py-2 px-2">학생명 / 면접장소</th>
+                  <th class="py-2 px-2">지원대학·학과 / 요청사항</th>
+                  <th class="py-2 px-2"></th>
+                  <th class="py-2 px-2 text-center">상태 / 관리</th>
+                </tr>
+              </thead>
+              ${rowsHtml.length > 0 ? rowsHtml : '<tbody><tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">신청 내역이 없습니다.</td></tr></tbody>'}
+            </table>
           </div>
         `;
-      }).join('') || `<div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 text-xs">검색 조건에 맞는 학생 신청 내역이 없습니다.</div>`;
+      }
+      
+      // --- [모드 2: 2열 격자 카드] ---
+      else if (state.viewLayoutMode === '2') {
+        const cardsHtml = filteredRegs.map((r, idx) => {
+          const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+          const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
+
+          const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
+          const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+
+          let teacherCellHtml = '';
+          if (isEditing) {
+            const t1Options = availA.map(t => `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`).join('');
+            const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`).join('');
+            teacherCellHtml = `<div class="flex items-center space-x-1 mt-1"><select id="t1Input_${r.id}" class="px-1.5 py-1 text-xs border rounded bg-white"><option value="">A교사</option>${t1Options}</select><select id="t2Input_${r.id}" class="px-1.5 py-1 text-xs border rounded bg-white"><option value="">B교사</option>${t2Options}</select><button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-xs font-bold">저장</button></div>`;
+          } else {
+            teacherCellHtml = `<div class="flex items-center space-x-1.5 mt-1">${r.teacher1 ? `<span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded text-xs">[A] ${r.teacher1}</span>` : ''}${r.teacher2 ? `<span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-xs">[B] ${r.teacher2}</span>` : ''}<button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-xs underline ml-1">수정</button></div>`;
+          }
+
+          const statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : r.status === '불참' ? 'bg-red-100 text-red-800 border-red-300' : 'bg-slate-100 text-slate-700 border-slate-300';
+          const isTodayRow = r.date === todayStr;
+
+          return `
+            <div class="bg-white rounded-2xl p-4 shadow-sm border ${isTodayRow ? 'border-2 border-brand-orange bg-amber-50/20' : 'border-slate-200'} space-y-3 relative">
+              <div class="flex justify-between items-start border-b pb-2.5">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-black text-brand-purple text-sm">[${r.period}교시]</span>
+                    <span class="font-extrabold text-slate-900 text-base">${r.name}</span>
+                    <span class="text-xs text-slate-500 font-medium">(${r.num})</span>
+                    ${isTodayRow ? '<span class="bg-brand-orange text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ml-1">오늘</span>' : ''}
+                  </div>
+                  <p class="text-xs font-bold text-slate-700 mt-1"><i class="fa-solid fa-calendar mr-1 text-slate-400"></i> ${r.date}</p>
+                </div>
+                <button onclick="toggleStudentStatus('${r.id}')" class="px-2.5 py-1 rounded-full font-bold text-xs border transition-all ${statusStyle}">
+                  ${r.status || '대기'}
+                </button>
+              </div>
+
+              <div class="space-y-1.5 text-xs">
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <p class="font-bold text-slate-900"><i class="fa-solid fa-graduation-cap text-brand-purple mr-1"></i> 지원: ${r.univ} ${r.dept}</p>
+                  ${r.note ? `<p class="text-amber-800 text-[11px] mt-1 font-medium">요청사항: ${r.note}</p>` : ''}
+                </div>
+
+                <div class="flex justify-between items-center pt-1">
+                  <div>
+                    <span class="text-[11px] text-slate-500 font-semibold block">담당 면접교사:</span>
+                    ${teacherCellHtml}
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[11px] text-slate-500 font-semibold block">면접 장소:</span>
+                    <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="w-28 mt-0.5 px-2 py-0.5 text-xs text-right border border-slate-200 rounded focus:border-brand-purple bg-white font-bold text-brand-purple">
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t flex justify-between items-center flex-wrap gap-2">
+                <div class="flex items-center space-x-1.5">
+                  <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-900 px-2.5 py-1.5 rounded-xl font-bold border border-amber-200 text-xs shadow-sm whitespace-nowrap">
+                    ❓ 사전질문 (${(r.preQuestions || []).length})
+                  </button>
+                  <button onclick="printSingleStudentPreQuestions('${r.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-2 py-1.5 rounded-xl font-bold border border-indigo-200 text-xs shadow-sm whitespace-nowrap" title="질문지 인쇄">
+                    🖨️ 질문지
+                  </button>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm whitespace-nowrap">
+                    📝 평가지 작성
+                  </button>
+                  <button onclick="deleteRegistration('${r.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all whitespace-nowrap">
+                    삭제
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        contentLayoutHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${cardsHtml.length > 0 ? cardsHtml : '<div class="col-span-2 text-center py-12 text-slate-400 text-xs">신청 내역이 없습니다.</div>'}</div>`;
+      }
+
+      // --- [모드 3: 슬림 표 + 클릭 확장] ---
+      else if (state.viewLayoutMode === '3') {
+        const rowsHtml = filteredRegs.map((r, idx) => {
+          const isExpanded = state.expandedRowIds.includes(r.id);
+          const isTodayRow = r.date === todayStr;
+
+          return `
+            <tbody class="border-b border-slate-200 text-xs ${isTodayRow ? 'bg-amber-50/40' : 'hover:bg-slate-50'}">
+              <tr onclick="toggleRowExpansion('${r.id}')" class="cursor-pointer font-bold text-slate-900">
+                <td class="py-2.5 px-2 text-center text-slate-400">${idx + 1}</td>
+                <td class="py-2.5 px-2 ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'}">${r.date} [${r.period}교시] ${isTodayRow ? '⭐' : ''}</td>
+                <td class="py-2.5 px-2">${r.name} (${r.num})</td>
+                <td class="py-2.5 px-2 text-brand-purple"><i class="fa-solid fa-graduation-cap mr-1"></i>${r.univ} ${r.dept}</td>
+                <td class="py-2.5 px-2 text-center">
+                  <span class="text-slate-500 font-medium">[A] ${r.teacher1 || '-'} / [B] ${r.teacher2 || '-'}</span>
+                </td>
+                <td class="py-2.5 px-2 text-center">
+                  <button onclick="event.stopPropagation(); openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">📝 평가지</button>
+                  <span class="text-slate-400 text-xs ml-2">${isExpanded ? '▲' : '▼'}</span>
+                </td>
+              </tr>
+              ${isExpanded ? `
+                <tr class="bg-slate-100/80 text-xs text-slate-700">
+                  <td colspan="6" class="p-3 space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>📌 요청사항: <strong class="text-amber-800">${r.note || '-'}</strong></div>
+                      <div>📌 면접장소: <input type="text" value="${r.location \vert{}\vert{} '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="px-2 py-0.5 border rounded bg-white text-xs"></div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                      <div class="flex gap-1.5">
+                        <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 text-amber-900 px-2.5 py-1 rounded border text-xs font-bold">❓ 사전질문 (${(r.preQuestions || []).length})</button>
+                        <button onclick="printSingleStudentPreQuestions('${r.id}')" class="bg-indigo-50 text-indigo-800 px-2 py-1 rounded border text-xs font-bold">🖨️ 질문지 인쇄</button>
+                      </div>
+                      <button onclick="deleteRegistration('${r.id}')" class="bg-red-50 text-red-600 border px-2.5 py-1 rounded text-xs font-bold">삭제</button>
+                    </div>
+                  </td>
+                </tr>
+              ` : ''}
+            </tbody>
+          `;
+        }).join('');
+
+        contentLayoutHtml = `
+          <div class="w-full rounded-xl border border-slate-200 overflow-x-auto custom-scroll">
+            <table class="w-full text-left border-collapse min-w-[650px]">
+              <thead class="bg-slate-100 text-slate-600 text-xs font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-2 text-center w-12">No</th>
+                  <th class="py-2.5 px-2">면접일시</th>
+                  <th class="py-2.5 px-2">학생명 (학번)</th>
+                  <th class="py-2.5 px-2">지원 대학교 · 학과</th>
+                  <th class="py-2.5 px-2 text-center">담당 면접관</th>
+                  <th class="py-2.5 px-2 text-center">관리 (상세보기)</th>
+                </tr>
+              </thead>
+              ${rowsHtml.length > 0 ? rowsHtml : '<tbody><tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">신청 내역이 없습니다.</td></tr></tbody>'}
+            </table>
+          </div>
+        `;
+      }
 
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
@@ -1999,7 +2127,7 @@
             </div>
           </div>
 
-          <!-- 상단 필터 제어바 -->
+          <!-- 상단 필터 및 UI 레이아웃 변경 스위치 제어바 -->
           <div class="flex justify-between items-center bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200 flex-wrap gap-2">
             <div class="flex items-center space-x-2 w-full sm:w-auto flex-1 max-w-xs sm:max-w-sm">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
@@ -2016,14 +2144,25 @@
                 ${dateSelectOptions}
               </select>
 
+              <!-- ★ [선생님 개별 PC 브라우저 저장용 UI 스위치] ★ -->
+              <div class="flex items-center bg-white p-0.5 rounded-xl border border-slate-300 ml-1">
+                <button onclick="changeViewLayoutMode('1')" class="px-2 py-1 text-xs font-bold rounded-lg transition-all ${state.viewLayoutMode === '1' ? 'bg-brand-purple text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}" title="1번 2행 컴팩트 표">
+                  1번 2행표
+                </button>
+                <button onclick="changeViewLayoutMode('2')" class="px-2 py-1 text-xs font-bold rounded-lg transition-all ${state.viewLayoutMode === '2' ? 'bg-brand-purple text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}" title="2번 2열 격자 카드">
+                  2번 격자카드
+                </button>
+                <button onclick="changeViewLayoutMode('3')" class="px-2 py-1 text-xs font-bold rounded-lg transition-all ${state.viewLayoutMode === '3' ? 'bg-brand-purple text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}" title="3번 슬림 표 (상세확장)">
+                  3번 슬림표
+                </button>
+              </div>
+
               <span class="text-xs text-slate-500 whitespace-nowrap pl-1" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
             </div>
           </div>
 
-          <!-- 2열 격자 카드 그리드 (Grid) 배치 -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${cardsHtml}
-          </div>
+          <!-- 동적 레이아웃 영역 -->
+          ${contentLayoutHtml}
         </section>
       `;
     }
