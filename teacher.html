@@ -144,7 +144,6 @@
     <p>© 강일여자고등학교 3학년부 대입 면접 연습 배정 시스템. All rights reserved.</p>
   </footer>
 
-  <!-- 메인 애플리케이션 스크립트 -->
   <script>
     var STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
 
@@ -225,7 +224,7 @@
     }
 
     function updateSidebarNavForTeacher() {
-      const nav = document.getElementById('sidebarNav');
+      var nav = document.getElementById('sidebarNav');
       if (!nav) return;
       nav.innerHTML = `
         <button onclick="switchTeacherTab('calendar')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'calendar' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
@@ -265,7 +264,7 @@
 
     function switchTeacherTab(tabName) {
       if (tabName === 'admin') {
-        const inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
+        var inputPwd = prompt('관리자 전용 비밀번호를 입력해 주세요:');
         if (inputPwd !== ADMIN_PASSWORD) {
           alert('비밀번호가 올바르지 않습니다.');
           return;
@@ -295,51 +294,51 @@
     }
 
     function renderTeacherListView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const uniqueDates = Array.from(new Set(state.regs.map(function(r) { return r.date; }))).sort();
-      const dateSelectOptions = uniqueDates.map(function(d) {
+      var uniqueDates = Array.from(new Set(state.regs.map(function(r) { return r.date; }))).sort();
+      var dateSelectOptions = uniqueDates.map(function(d) {
         return `<option value="${d}" ${state.dateFilter === d ? 'selected' : ''}>${d}</option>`;
       }).join('');
 
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const todayRegsCount = state.regs.filter(function(r) { return r.date === todayStr; }).length;
+      var now = new Date();
+      var todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      var todayRegsCount = state.regs.filter(function(r) { return r.date === todayStr; }).length;
 
-      const filteredRegs = state.regs.filter(function(r) {
+      var filteredRegs = state.regs.filter(function(r) {
         if (state.isTodayOnly && r.date !== todayStr) return false;
         if (state.dateFilter && r.date !== state.dateFilter) return false;
 
         if (!state.searchKeyword) return true;
-        const kw = state.searchKeyword.toLowerCase();
+        var kw = state.searchKeyword.toLowerCase();
         return (r.name || '').toLowerCase().includes(kw) ||
                (r.univ || '').toLowerCase().includes(kw) ||
                (r.dept || '').toLowerCase().includes(kw) ||
                (r.num || '').includes(kw);
       });
 
-      let contentLayoutHtml = '';
+      var contentLayoutHtml = '';
 
       if (state.viewLayoutMode === '1') {
-        const rowsHtml = filteredRegs.map(function(r, idx) {
-          const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
-          const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
+        var rowsHtml = filteredRegs.map(function(r, idx) {
+          var isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+          var availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
 
-          const availA = availList.filter(function(t) { return TEACHER_A_GROUP.includes(t); });
-          const availB = availList.filter(function(t) { return TEACHER_B_GROUP.includes(t); });
+          var availA = availList.filter(function(t) { return TEACHER_A_GROUP.includes(t); });
+          var availB = availList.filter(function(t) { return TEACHER_B_GROUP.includes(t); });
 
-          let teacherCellHtml = '';
+          var teacherCellHtml = '';
           if (isEditing) {
-            const t1Options = availA.map(function(t) { return `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`; }).join('');
-            const t2Options = availB.map(function(t) { return `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`; }).join('');
+            var t1Options = availA.map(function(t) { return `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`; }).join('');
+            var t2Options = availB.map(function(t) { return `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`; }).join('');
             teacherCellHtml = `<select id="t1Input_${r.id}" class="text-[10px] border rounded"><option value="">A교사</option>${t1Options}</select> <select id="t2Input_${r.id}" class="text-[10px] border rounded"><option value="">B교사</option>${t2Options}</select> <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-1 py-0.5 rounded text-[10px]">저장</button>`;
           } else {
             teacherCellHtml = `${r.teacher1 ? `<span class="bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[10px]">[A] ${r.teacher1}</span>` : ''} ${r.teacher2 ? `<span class="bg-blue-100 text-blue-900 font-bold px-1.5 py-0.5 rounded text-[10px]">[B] ${r.teacher2}</span>` : ''} <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 text-[10px] underline ml-1">수정</button>`;
           }
 
-          const statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800' : r.status === '불참' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700';
-          const isTodayRow = r.date === todayStr;
+          var statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800' : r.status === '불참' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700';
+          var isTodayRow = r.date === todayStr;
 
           return `
             <tbody class="border-b border-slate-200 text-xs ${isTodayRow ? 'bg-amber-50/40' : 'hover:bg-slate-50'}">
@@ -386,24 +385,24 @@
           </div>
         `;
       } else if (state.viewLayoutMode === '2') {
-        const cardsHtml = filteredRegs.map(function(r, idx) {
-          const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
-          const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
+        var cardsHtml = filteredRegs.map(function(r, idx) {
+          var isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
+          var availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
 
-          const availA = availList.filter(function(t) { return TEACHER_A_GROUP.includes(t); });
-          const availB = availList.filter(function(t) { return TEACHER_B_GROUP.includes(t); });
+          var availA = availList.filter(function(t) { return TEACHER_A_GROUP.includes(t); });
+          var availB = availList.filter(function(t) { return TEACHER_B_GROUP.includes(t); });
 
-          let teacherCellHtml = '';
+          var teacherCellHtml = '';
           if (isEditing) {
-            const t1Options = availA.map(function(t) { return `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`; }).join('');
-            const t2Options = availB.map(function(t) { return `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`; }).join('');
+            var t1Options = availA.map(function(t) { return `<option value="${t}" ${r.teacher1 === t ? 'selected' : ''}>${t}</option>`; }).join('');
+            var t2Options = availB.map(function(t) { return `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`; }).join('');
             teacherCellHtml = `<div class="flex items-center space-x-1 mt-1"><select id="t1Input_${r.id}" class="px-1.5 py-1 text-xs border rounded bg-white"><option value="">A교사</option>${t1Options}</select><select id="t2Input_${r.id}" class="px-1.5 py-1 text-xs border rounded bg-white"><option value="">B교사</option>${t2Options}</select><button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded text-xs font-bold">저장</button></div>`;
           } else {
             teacherCellHtml = `<div class="flex items-center space-x-1.5 mt-1">${r.teacher1 ? `<span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded text-xs">[A] ${r.teacher1}</span>` : ''}${r.teacher2 ? `<span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-xs">[B] ${r.teacher2}</span>` : ''}<button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-xs underline ml-1">수정</button></div>`;
           }
 
-          const statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : r.status === '불참' ? 'bg-red-100 text-red-800 border-red-300' : 'bg-slate-100 text-slate-700 border-slate-300';
-          const isTodayRow = r.date === todayStr;
+          var statusStyle = r.status === '완료' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : r.status === '불참' ? 'bg-red-100 text-red-800 border-red-300' : 'bg-slate-100 text-slate-700 border-slate-300';
+          var isTodayRow = r.date === todayStr;
 
           return `
             <div class="bg-white rounded-2xl p-4 shadow-sm border ${isTodayRow ? 'border-2 border-brand-orange bg-amber-50/20' : 'border-slate-200'} space-y-3 relative">
@@ -465,9 +464,9 @@
 
         contentLayoutHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${cardsHtml.length > 0 ? cardsHtml : '<div class="col-span-2 text-center py-12 text-slate-400 text-xs">신청 내역이 없습니다.</div>'}</div>`;
       } else if (state.viewLayoutMode === '3') {
-        const rowsHtml = filteredRegs.map(function(r, idx) {
-          const isExpanded = state.expandedRowIds.includes(r.id);
-          const isTodayRow = r.date === todayStr;
+        var rowsHtml = filteredRegs.map(function(r, idx) {
+          var isExpanded = state.expandedRowIds.includes(r.id);
+          var isTodayRow = r.date === todayStr;
 
           return `
             <tbody class="border-b border-slate-200 text-xs ${isTodayRow ? 'bg-amber-50/40' : 'hover:bg-slate-50'}">
@@ -597,54 +596,37 @@
       `;
     }
 
-    function toggleTodayOnlyFilter() {
-      state.isTodayOnly = !state.isTodayOnly;
-      if (state.isTodayOnly) state.dateFilter = '';
-      renderTeacherListView();
-    }
-
-    function handleDateFilterChange(val) {
-      state.dateFilter = val;
-      if (val) state.isTodayOnly = false;
-      renderTeacherListView();
-    }
-
-    function handleTeacherSearch(value) {
-      state.searchKeyword = value;
-      renderTeacherListView();
-    }
-
     function renderTeacherCalendarView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const firstDay = new Date(state.year, state.month - 1, 1).getDay();
-      const lastDate = new Date(state.year, state.month, 0).getDate();
+      var firstDay = new Date(state.year, state.month - 1, 1).getDay();
+      var lastDate = new Date(state.year, state.month, 0).getDate();
 
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      var now = new Date();
+      var todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-      let calGridHtml = '';
-      for (let i = 0; i < firstDay; i++) {
+      var calGridHtml = '';
+      for (var i = 0; i < firstDay; i++) {
         calGridHtml += `<div class="h-24 sm:h-28 bg-slate-50/50 rounded-xl"></div>`;
       }
 
-      for (let d = 1; d <= lastDate; d++) {
-        const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      for (var d = 1; d <= lastDate; d++) {
+        var dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         
-        const isClosed = state.closedDates.includes(dateStr);
-        const isChecked = state.selectedTeacherDates.includes(dateStr);
-        const isToday = dateStr === todayStr;
-        const isPast = dateStr < todayStr;
+        var isClosed = state.closedDates.includes(dateStr);
+        var isChecked = state.selectedTeacherDates.includes(dateStr);
+        var isToday = dateStr === todayStr;
+        var isPast = dateStr < todayStr;
 
-        const dayRegs = state.regs.filter(function(r) { return r.date === dateStr; });
-        const completedCount = dayRegs.filter(function(r) { return r.status === '완료'; }).length;
+        var dayRegs = state.regs.filter(function(r) { return r.date === dateStr; });
+        var completedCount = dayRegs.filter(function(r) { return r.status === '완료'; }).length;
 
-        let regsSummary = dayRegs.length > 0 ? dayRegs.map(function(r) {
-          const p = Number(r.period);
-          const isDone = r.status === '완료';
+        var regsSummary = dayRegs.length > 0 ? dayRegs.map(function(r) {
+          var p = Number(r.period);
+          var isDone = r.status === '완료';
 
-          let badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200';
+          var badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200';
           if (p === 7) badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
           else if (p === 8) badgeStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200';
 
@@ -660,7 +642,7 @@
           `;
         }).join('') : `<div class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">신청 없음</div>`;
 
-        let cardBgClass = 'bg-white border-slate-200 hover:border-brand-purple';
+        var cardBgClass = 'bg-white border-slate-200 hover:border-brand-purple';
         if (isToday) {
           cardBgClass = 'bg-amber-50/40 border-2 border-brand-orange ring-2 ring-brand-orange/20 shadow-sm';
         } else if (isPast) {
@@ -747,24 +729,24 @@
     }
 
     function renderTeacherScheduleView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const firstDay = new Date(state.year, state.month - 1, 1).getDay();
-      const lastDate = new Date(state.year, state.month, 0).getDate();
+      var firstDay = new Date(state.year, state.month - 1, 1).getDay();
+      var lastDate = new Date(state.year, state.month, 0).getDate();
 
-      let calGridHtml = '';
-      for (let i = 0; i < firstDay; i++) {
+      var calGridHtml = '';
+      for (var i = 0; i < firstDay; i++) {
         calGridHtml += `<div class="bg-slate-50/50 rounded-xl p-2 min-h-[120px]"></div>`;
       }
 
-      for (let d = 1; d <= lastDate; d++) {
-        const dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const activeList = TEACHER_SCHEDULE[dateStr] || [];
-        const isClosed = state.closedDates.includes(dateStr);
+      for (var d = 1; d <= lastDate; d++) {
+        var dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        var activeList = TEACHER_SCHEDULE[dateStr] || [];
+        var isClosed = state.closedDates.includes(dateStr);
 
-        const teacherCheckboxes = ALL_TEACHERS.map(function(t) {
-          const isChecked = activeList.includes(t);
+        var teacherCheckboxes = ALL_TEACHERS.map(function(t) {
+          var isChecked = activeList.includes(t);
           return `
             <label class="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] whitespace-nowrap cursor-pointer hover:bg-slate-100 p-0.5 rounded ${isClosed ? 'opacity-50 cursor-not-allowed' : ''}">
               <input type="checkbox" onchange="toggleTeacherForDate('${dateStr}', '${t}', this.checked)" ${isChecked ? 'checked' : ''} ${isClosed ? 'disabled' : ''} class="w-3 h-3 text-brand-purple rounded shrink-0">
@@ -815,10 +797,10 @@
     }
 
     function renderTeacherEvalsView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const studentMap = {};
+      var studentMap = {};
       state.regs.forEach(function(r) {
         if (!studentMap[r.num]) {
           studentMap[r.num] = { num: r.num, name: r.name, records: [] };
@@ -826,16 +808,16 @@
         studentMap[r.num].records.push(r);
       });
 
-      const students = Object.values(studentMap).filter(function(s) {
+      var students = Object.values(studentMap).filter(function(s) {
         if (!state.evalSearchKeyword) return true;
-        const kw = state.evalSearchKeyword.toLowerCase();
+        var kw = state.evalSearchKeyword.toLowerCase();
         return s.name.toLowerCase().includes(kw) || String(s.num).includes(kw);
       });
 
-      const studentCardsHtml = students.map(function(s) {
+      var studentCardsHtml = students.map(function(s) {
         s.records.sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
 
-        const recordsListHtml = s.records.map(function(r, i) {
+        var recordsListHtml = s.records.map(function(r, i) {
           return `
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
               <div class="flex justify-between items-center flex-wrap gap-1">
@@ -893,20 +875,20 @@
     }
 
     function renderTeacherRealReviewsView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const filteredReviews = state.realReviews.filter(function(r) {
+      var filteredReviews = state.realReviews.filter(function(r) {
         if (!state.realReviewKeyword) return true;
-        const kw = state.realReviewKeyword.toLowerCase();
+        var kw = state.realReviewKeyword.toLowerCase();
         return (r.univ || '').toLowerCase().includes(kw) ||
                (r.dept || '').toLowerCase().includes(kw) ||
                (r.name || '').toLowerCase().includes(kw) ||
                (r.type || '').toLowerCase().includes(kw);
       });
 
-      const cardsHtml = filteredReviews.map(function(r) {
-        const qaItems = r.qaList || (r.questions || []).map(function(q) { return { question: q, answer: '' }; });
+      var cardsHtml = filteredReviews.map(function(r) {
+        var qaItems = r.qaList || (r.questions || []).map(function(q) { return { question: q, answer: '' }; });
 
         return `
           <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
@@ -971,10 +953,10 @@
     }
 
     function renderTeacherAdminView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const studentRowsHtml = STUDENT_LIST.map(function(s, i) {
+      var studentRowsHtml = STUDENT_LIST.map(function(s, i) {
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-xs">
             <td class="py-2 px-2 text-center text-slate-400 whitespace-nowrap">${i + 1}</td>
@@ -988,7 +970,7 @@
         `;
       }).join('');
 
-      const groupARows = TEACHER_A_GROUP.map(function(t, idx) {
+      var groupARows = TEACHER_A_GROUP.map(function(t, idx) {
         return `
           <div class="flex justify-between items-center bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-200 text-xs">
             <span class="font-bold text-amber-900">${idx+1}. ${t} 선생님</span>
@@ -1000,7 +982,7 @@
         `;
       }).join('') || '<div class="text-xs text-slate-400 py-2 text-center">등록된 A그룹 교사가 없습니다.</div>';
 
-      const groupBRows = TEACHER_B_GROUP.map(function(t, idx) {
+      var groupBRows = TEACHER_B_GROUP.map(function(t, idx) {
         return `
           <div class="flex justify-between items-center bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-200 text-xs">
             <span class="font-bold text-blue-900">${idx+1}. ${t} 선생님</span>
@@ -1066,13 +1048,13 @@
     }
 
     function renderTeacherStatsView() {
-      const main = document.getElementById('mainContent');
+      var main = document.getElementById('mainContent');
       if (!main) return;
 
-      const totalRegs = state.regs.length;
-      const completedRegs = state.regs.filter(function(r) { return r.status === '완료'; }).length;
-      const feedbackRegs = state.regs.filter(function(r) { return r.feedback; }).length;
-      const absentRegs = state.regs.filter(function(r) { return r.status === '불참'; }).length;
+      var totalRegs = state.regs.length;
+      var completedRegs = state.regs.filter(function(r) { return r.status === '완료'; }).length;
+      var feedbackRegs = state.regs.filter(function(r) { return r.feedback; }).length;
+      var absentRegs = state.regs.filter(function(r) { return r.status === '불참'; }).length;
 
       main.innerHTML = `
         <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-5">
@@ -1107,7 +1089,7 @@
     }
 
     function openOnlineEvalModal(regId) {
-      const reg = state.regs.find(function(r) { return r.id === regId; });
+      var reg = state.regs.find(function(r) { return r.id === regId; });
       if (!reg) return;
       window.tempEvalRegId = regId;
       window.tempEvalData = JSON.parse(JSON.stringify(reg.evalData || { qaList: [], summary: '' }));
@@ -1116,7 +1098,7 @@
     }
 
     function renderOnlineEvalModalContent(reg) {
-      const evalData = window.tempEvalData;
+      var evalData = window.tempEvalData;
       document.getElementById('evalModalTitle').innerHTML = `<i class="fa-solid fa-laptop-code text-brand-purple"></i> ${reg.name} (${reg.num}) 온라인 면접 평가 기록지`;
       document.getElementById('evalModalContent').innerHTML = `
         <div class="space-y-4">
@@ -1135,6 +1117,25 @@
     function toggleStudentStatus(id) { renderTeacherListView(); }
     function deleteRegistration(id) { renderTeacherListView(); }
     function updateLocation() {}
+    function toggleTeacherDateSelect() {}
+    function selectAllTeacherMonthDates() {}
+    function clearSelectedTeacherDates() {}
+    function applySelectedBulkClose() {}
+    function applyWeekendClose() {}
+    function showTeacherDateDetail() {}
+    function toggleDateClosed() {}
+    function printDatePreQuestions() {}
+    function printSingleStudentPreQuestions() {}
+    function printEvaluationSheet() {}
+    function printStudentCumulativeEvalSheet() {}
+    function openSmsModal() {}
+    function assignRandomTeachersForDate() {}
+    function autoAssignRandomTeachers() {}
+    function exportToCSV() {}
+    function exportRealReviewsToCSV() {}
+    function deleteRealReview() {}
+    function saveOnlineEval() { closeOnlineEvalModal(); }
+    function changeMonth() {}
   </script>
 </body>
 </html>
