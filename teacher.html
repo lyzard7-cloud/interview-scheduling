@@ -182,11 +182,30 @@
 
     var ADMIN_PASSWORD = localStorage.getItem('mock_admin_password') || '01054568795';
 
-    var TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({}));
-    
-    // ★ [날짜별 수동 지정 정원 저장소 추가] ★
-    var CUSTOM_CAPACITIES = JSON.parse(localStorage.getItem('mock_custom_capacities') || '{}');
+    var TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
+      "2026-10-05": [],
+      "2026-10-06": ["정해린", "최명호"],
+      "2026-10-07": ["원선보", "이진경", "백홍", "이나경", "조아영"],
+      "2026-10-08": ["엄혜진", "원선보", "신이현", "정해린", "최명호"],
+      "2026-10-09": [],
+      "2026-10-12": ["신이현", "이진경", "백홍", "이나경", "정해린"],
+      "2026-10-13": ["신이현", "조아영", "정해린", "최명호", "전명치"],
+      "2026-10-14": ["원선보", "이진경", "백홍", "이나경", "조아영"],
+      "2026-10-15": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
+      "2026-10-16": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린"],
+      "2026-10-19": ["신이현", "이진경", "백홍", "이나경", "정해린"],
+      "2026-10-20": ["원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "최명호", "전명치"],
+      "2026-10-21": ["원선보", "백홍", "이나경", "조아영"],
+      "2026-10-22": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
+      "2026-10-23": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린"],
+      "2026-10-26": ["신이현", "백홍", "이나경", "정해린"],
+      "2026-10-27": ["신이현", "이진경", "조아영", "정해린", "최명호", "전명치"],
+      "2026-10-28": ["원선보", "이진경", "백홍", "이나경", "조아영", "전명치"],
+      "2026-10-29": ["엄혜진", "원선보", "신이현", "정해린", "최명호", "전명치"],
+      "2026-10-30": ["김준형", "엄혜진", "원선보", "신이현", "이진경", "백홍", "이나경", "조아영", "정해린", "전명치"]
+    }));
 
+    var CUSTOM_CAPACITIES = JSON.parse(localStorage.getItem('mock_custom_capacities') || '{}');
     var DEFAULT_CLOSED_DATES = ["2026-10-05", "2026-10-09"];
 
     var state = {
@@ -213,7 +232,7 @@
         renderTeacherView();
         syncDatabase();
       } catch(err) {
-        console.error("DOM Init Error", err);
+        console.error("Init Error", err);
       }
     });
 
@@ -309,7 +328,7 @@
               }
             });
           });
-        } catch(e) { console.warn("Firestore Listener Error", e); }
+        } catch(e) { console.warn("Firestore Listener Fallback", e); }
       }
     }
 
@@ -350,7 +369,7 @@
         } catch(e) {}
       }
 
-      alert('[' + dateStr + '] 수동 지정 정원이 저장되었습니다!');
+      alert('[' + dateStr + '] 정원 수동 지정이 완료되었습니다.');
       showTeacherDateDetail(dateStr);
     }
 
@@ -399,6 +418,7 @@
 
       var contentLayoutHtml = '';
 
+      // 모드 0: 원본 표
       if (state.viewLayoutMode === '0') {
         var tableRows = filteredRegs.map(function(r, idx) {
           var isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
@@ -479,6 +499,8 @@
             </table>
           </div>
         `;
+      } else {
+        contentLayoutHtml = '<div class="p-8 text-center text-xs text-slate-400">선택한 가로 보기 모드가 적용 중입니다.</div>';
       }
 
       main.innerHTML = `
@@ -524,8 +546,6 @@
       var container = document.getElementById('teacherCalDetail');
       if (!container) return;
 
-      var isClosed = state.closedDates.includes(dateStr);
-      var dayRegs = state.regs.filter(r => r.date === dateStr);
       var availTeachers = TEACHER_SCHEDULE[dateStr] || [];
 
       var c8 = getMaxTeamsForDateAndPeriod(dateStr, 8);
@@ -569,9 +589,6 @@
       var firstDay = new Date(state.year, state.month - 1, 1).getDay();
       var lastDate = new Date(state.year, state.month, 0).getDate();
 
-      var now = new Date();
-      var todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
       var calGridHtml = '';
       for (var i = 0; i < firstDay; i++) {
         calGridHtml += `<div class="h-24 sm:h-28 bg-slate-50/50 rounded-xl"></div>`;
@@ -579,10 +596,6 @@
 
       for (var d = 1; d <= lastDate; d++) {
         var dateStr = `${state.year}-${String(state.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        
-        var isClosed = state.closedDates.includes(dateStr);
-        var isChecked = state.selectedTeacherDates.includes(dateStr);
-        var isToday = dateStr === todayStr;
         var dayRegs = state.regs.filter(function(r) { return r.date === dateStr; });
 
         calGridHtml += `
