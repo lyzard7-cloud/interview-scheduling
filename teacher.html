@@ -49,6 +49,10 @@
     .reservation-fit-table .reservation-actions { flex-wrap:nowrap; gap:2px; width:100%; }
     .reservation-fit-table .reservation-actions button { flex:0 0 auto; padding:4px 2px; white-space:nowrap; line-height:1.2; }
     .reservation-fit-table .reservation-actions button i { margin:0; }
+    .reservation-fit-table td:not(:nth-child(6)):not(:nth-child(7)) {white-space:nowrap;}
+    .reservation-fit-table .cell-single-line {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .reservation-fit-table .reservation-actions:last-child {gap:7px;}
+    .reservation-fit-table .reservation-actions button {min-width:0;}
     /* 모든 교사용 탭에서 사이드바와 본문 비율을 동일하게 유지 */
     @media (min-width:768px) {
       #mainDashboardContainer { max-width:100%; width:100%; }
@@ -221,6 +225,7 @@
 
     let ADMIN_PASSWORD = localStorage.getItem('mock_admin_password') || '01054568795';
 
+    let EXTRA_RESERVATION_SLOTS = JSON.parse(localStorage.getItem('interview_extra_slots') || '{}');
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -368,7 +373,11 @@
 
           onSnapshot(collection(window.db, 'interview_settings'), (snapshot) => {
             snapshot.forEach(doc => {
-              if (doc.id === 'closed_dates') {
+              if (doc.id === 'extra_reservation_slots') {
+                EXTRA_RESERVATION_SLOTS = doc.data().slots || {};
+                localStorage.setItem('interview_extra_slots', JSON.stringify(EXTRA_RESERVATION_SLOTS));
+                renderTeacherView();
+              } else if (doc.id === 'closed_dates') {
                 state.closedDates = doc.data().dates || [];
                 localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
                 renderTeacherView();
@@ -538,6 +547,72 @@
           await setDoc(doc(window.db, 'interview_settings', 'teacher_schedule'), { schedule: TEACHER_SCHEDULE });
         } catch(e) { console.warn("Firestore Teacher Schedule Save Error", e); }
       }
+    }
+
+    async function saveExtraReservationSlots() {
+      localStorage.setItem('interview_extra_slots', JSON.stringify(EXTRA_RESERVATION_SLOTS));
+      if (window.isFirebaseReady && window.dbTools) {
+        const {doc, setDoc} = window.dbTools;
+        try {
+          await setDoc(doc(window.db, 'interview_settings', 'extra_reservation_slots'), {slots:EXTRA_RESERVATION_SLOTS});
+        } catch (e) { alert('Firebase 저장에 실패했습니다. Firestore 규칙을 확인해 주세요.'); console.error(e); return false; }
+      }
+      return true;
+    }
+
+    async function addManualSlot(dateStr, period) {
+      if (!EXTRA_RESERVATION_SLOTS[dateStr]) EXTRA_RESERVATION_SLOTS[dateStr] = {};
+      const day = EXTRA_RESERVATION_SLOTS[dateStr];
+      const key = String(period);
+      if (!day[key]) day[key] = [];
+      const teacher1 = document.getElementById(`extraT1_${period}`)?.value || '';
+      const teacher2 = document.getElementById(`extraT2_${period}`)?.value || '';
+      day[key].push({id: String(Date.now()) + '_' + Math.random().toString(36).slice(2,7), teacher1, teacher2});
+      if (await saveExtraReservationSlots()) showTeacherDateDetail(dateStr);
+    }
+
+    async function removeManualSlot(dateStr, period, slotId) {
+      const arr = (EXTRA_RESERVATION_SLOTS[dateStr] || {})[String(period)] || [];
+      const entry = arr.find(x => x.id === slotId);
+      if (!entry) return;
+      const booked = state.regs.filter(r => r.date === dateStr && Number(r.period) === Number(period)).length;
+      if (booked >= getReservationCapacity(dateStr, period)) { alert('이미 예약된 칸은 삭제할 수 없습니다. 먼저 해당 학생의 교시를 변경해 주세요.'); return; }
+      if (!confirm('추가한 예약 칸을 삭제하시겠습니까?')) return;
+      EXTRA_RESERVATION_SLOTS[dateStr][String(period)] = arr.filter(x => x.id !== slotId);
+      if (await saveExtraReservationSlots()) showTeacherDateDetail(dateStr);
+    }
+
+    function promptMoveReservation(id) {
+      const r = state.regs.find(x => x.id === id);
+      if (!r) return;
+      const val = prompt(`${r.name} 학생의 새 교시를 입력하세요. (7, 8, 9)`, String(r.period));
+      if (val === null) return;
+      if (!['7','8','9'].includes(val.trim())) { alert('7, 8, 9 중 하나를 입력해 주세요.'); return; }
+      const picker = document.createElement('select');
+      picker.id = `movePeriod_${id}`;
+      picker.innerHTML = `<option value="${val.trim()}">${val.trim()}</option>`;
+      document.body.appendChild(picker);
+      moveReservationPeriod(id).finally(() => picker.remove());
+    }
+
+    async function moveReservationPeriod(id) {
+      const r = state.regs.find(x => x.id === id);
+      if (!r) return;
+      const next = Number(document.getElementById(`movePeriod_${id}`)?.value);
+      if (![7,8,9].includes(next) || next === Number(r.period)) return;
+      if (state.regs.some(x => x.id !== id && x.date === r.date && x.num === r.num && Number(x.period) === next)) { alert('해당 학생의 같은 교시 예약이 이미 있습니다.'); return; }
+      const occupied = state.regs.filter(x => x.id !== id && x.date === r.date && Number(x.period) === next).length;
+      if (occupied >= getReservationCapacity(r.date,next) && !confirm('이동할 교시의 정원이 가득 찼습니다. 관리자로서 정원을 초과하여 이동하시겠습니까?')) return;
+      if (!confirm(`${r.name} 학생을 ${r.period}교시에서 ${next}교시로 변경할까요?`)) return;
+      // Keep the original document id to preserve evaluation, questions, and other linked data.
+      r.period = next;
+      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+      if (window.isFirebaseReady && window.dbTools) {
+        try { const {doc,setDoc}=window.dbTools; await setDoc(doc(window.db,'interview_registrations',r.id),r); }
+        catch(e) { console.error(e); alert('Firebase 반영에 실패했습니다. 연결 상태를 확인해 주세요.'); return; }
+      }
+      renderTeacherView();
+      alert('교시 변경이 완료되었습니다.');
     }
 
     async function saveTeacherRosterToDb() {
@@ -1244,6 +1319,11 @@
       link.click();
     }
 
+    function getReservationCapacity(dateStr, period) {
+      const base = getMaxTeamsForDate(dateStr);
+      return base + ([8, 9].includes(Number(period)) ? ((EXTRA_RESERVATION_SLOTS[dateStr] || {})[String(period)] || []).length : 0);
+    }
+
     function getMaxTeamsForDate(dateStr) {
       const availList = TEACHER_SCHEDULE[dateStr] || [];
       const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
@@ -1279,6 +1359,7 @@
         exportedAt: new Date().toLocaleString(),
         closedDates: state.closedDates,
         teacherSchedule: TEACHER_SCHEDULE,
+        extraReservationSlots: EXTRA_RESERVATION_SLOTS,
         teacherGroupA: TEACHER_A_GROUP,
         teacherGroupB: TEACHER_B_GROUP,
         adminPassword: ADMIN_PASSWORD,
@@ -1313,6 +1394,7 @@
 
           state.closedDates = restored.closedDates || [];
           TEACHER_SCHEDULE = restored.teacherSchedule || TEACHER_SCHEDULE;
+          if (restored.extraReservationSlots) EXTRA_RESERVATION_SLOTS = restored.extraReservationSlots;
           if (restored.teacherGroupA) TEACHER_A_GROUP = restored.teacherGroupA;
           if (restored.teacherGroupB) TEACHER_B_GROUP = restored.teacherGroupB;
           if (restored.adminPassword) ADMIN_PASSWORD = restored.adminPassword;
@@ -1337,6 +1419,7 @@
 
           await saveClosedDatesToDb();
           await saveTeacherScheduleToDb();
+          await saveExtraReservationSlots();
           await saveTeacherRosterToDb();
 
           if (window.isFirebaseReady && window.dbTools) {
@@ -1948,12 +2031,12 @@
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
             <td class="font-semibold text-slate-500 text-center">${idx + 1}</td>
             <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${String(r.date || "").slice(5)} ${isTodayRow ? '⭐' : ''}</td>
-            <td class="font-bold text-brand-purple text-center">${r.period}교시</td>
+            <td class="font-bold text-brand-purple text-center">${r.period}교시 <button onclick="promptMoveReservation('${r.id}')" title="교시 변경" class="text-slate-500 text-[10px]" style="white-space:nowrap">↔</button></td>
             <td class="font-semibold text-center">${r.num}</td>
             <td class="font-bold text-slate-900 text-center">${r.name}</td>
             <td class="text-center " title="${r.univ}"><span class="cell-two-lines">${r.univ}</span></td>
             <td class="text-center " title="${r.dept}"><span class="cell-two-lines">${r.dept}</span></td>
-            <td class="text-center text-slate-500" title="${r.note || '-'}"><span class="cell-two-lines">${r.note || '-'}</span></td>
+            <td class="text-center text-slate-500" title="${r.note || '-'}"><span class="cell-single-line">${r.note || '-'}</span></td>
             <td class="text-center">
               <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle}">
                 ${r.status || '대기'}
@@ -2529,6 +2612,21 @@
       const availTeachers = TEACHER_SCHEDULE[dateStr] || [];
       const maxTeams = getMaxTeamsForDate(dateStr);
 
+      const extraSlotControls = [8,9].map(period => {
+        const slots = (EXTRA_RESERVATION_SLOTS[dateStr] || {})[String(period)] || [];
+        const booked = dayRegs.filter(r => Number(r.period) === period).length;
+        const options = `<option value="">담당 교사 미지정</option>` + availTeachers.map(t => `<option value="${t}">${t}</option>`).join('');
+        return `<div class="bg-white rounded-xl border border-slate-200 p-3 space-y-2 text-xs">
+          <div class="font-bold">${period}교시 · 자동 ${maxTeams}칸 + 수동 ${slots.length}칸 = ${getReservationCapacity(dateStr,period)}칸 (예약 ${booked}명)</div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <select id="extraT1_${period}" class="border rounded-lg px-2 py-1.5 min-w-0">${options}</select>
+            <select id="extraT2_${period}" class="border rounded-lg px-2 py-1.5 min-w-0">${options}</select>
+            <button onclick="addManualSlot('${dateStr}', ${period})" class="bg-brand-purple text-white px-3 py-1.5 rounded-lg font-bold">+ 예약 칸 추가</button>
+          </div>
+          <div class="flex flex-wrap gap-2">${slots.map((slot,i) => `<span class="inline-flex gap-1 items-center bg-slate-100 rounded-lg px-2 py-1">추가 ${i+1}칸: ${[slot.teacher1,slot.teacher2].filter(Boolean).join('/') || '교사 미지정'} <button onclick="removeManualSlot('${dateStr}',${period},'${slot.id}')" class="text-red-600" title="칸 삭제">✕</button></span>`).join('')}</div>
+        </div>`;
+      }).join('');
+
       let listHtml = dayRegs.map(r => {
         const assignedTeachers = [r.teacher1, r.teacher2].filter(Boolean);
         const teacherBadge = assignedTeachers.length > 0 
@@ -2549,6 +2647,7 @@
             <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
               ${teacherBadge}
               <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white px-2 py-1 rounded-lg font-bold text-xs whitespace-nowrap">📝 온라인 평가지</button>
+              <button onclick="promptMoveReservation('${r.id}')" class="text-indigo-600 font-bold underline whitespace-nowrap">교시 변경</button>
               <button onclick="deleteRegistration('${r.id}')" class="text-red-500 hover:text-red-700 font-bold underline ml-1 whitespace-nowrap">삭제</button>
             </div>
           </div>
@@ -2559,7 +2658,7 @@
       container.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-brand-purpleLight/50 p-3.5 sm:p-4 rounded-xl border border-brand-purple/20 gap-2">
           <div>
-            <h4 class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">📅 ${dateStr} 신청 현황 (정원: 8교시 ${maxTeams}명 / 9교시 ${maxTeams}명)</h4>
+            <h4 class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">📅 ${dateStr} 신청 현황 (정원: 8교시 ${getReservationCapacity(dateStr,8)}명 / 9교시 ${getReservationCapacity(dateStr,9)}명)</h4>
             <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5 whitespace-nowrap">가능 교사: <strong>${availTeachers.length > 0 ? availTeachers.join(', ') : '없음/공휴일'}</strong></p>
           </div>
           <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
@@ -2574,6 +2673,7 @@
             </button>
           </div>
         </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-2 pt-2">${extraSlotControls}</div>
         <div class="space-y-2 pt-1">
           ${listHtml}
         </div>
