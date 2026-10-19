@@ -45,7 +45,10 @@
     .reservation-fit-table .teacher-actions button { padding:2px 4px; }
     .reservation-fit-table .teacher-chip { display:inline-block; padding:2px 3px; border-radius:4px; }
     .reservation-fit-table .location-field { display:block; width:100%; min-width:0; padding:4px 1px; }
-    .reservation-fit-table .reservation-actions button { padding:4px 3px; white-space:nowrap; }
+    /* 사전질문 및 관리 버튼을 한 줄에 고정 */
+    .reservation-fit-table .reservation-actions { flex-wrap:nowrap; gap:2px; width:100%; }
+    .reservation-fit-table .reservation-actions button { flex:0 0 auto; padding:4px 2px; white-space:nowrap; line-height:1.2; }
+    .reservation-fit-table .reservation-actions button i { margin:0; }
     /* 모든 교사용 탭에서 사이드바와 본문 비율을 동일하게 유지 */
     @media (min-width:768px) {
       #mainDashboardContainer { max-width:100%; width:100%; }
@@ -909,7 +912,7 @@
 
           <div class="grid grid-cols-2 gap-2 text-xs bg-slate-100 p-3 rounded font-medium border border-slate-300">
             <div>■ 면접 일자: <strong>${reg.date} [${reg.period}교시]</strong></div>
-            <div>■ 면접 장소: <strong>${reg.location || '3학년 교무실'}</strong></div>
+            <div>■ 면접 장소: <strong>${reg.location || '3층 소형강의실'}</strong></div>
             <div>■ 지원 학생: <strong>${reg.name} (${reg.num})</strong></div>
             <div>■ 지원 대학/학과: <strong>${reg.univ} ${reg.dept}</strong></div>
             ${reg.note ? `<div class="col-span-2">■ 학생 전달사항: <strong>${reg.note}</strong></div>` : ''}
@@ -953,7 +956,7 @@
 
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-100 p-3 rounded font-medium border border-slate-300">
               <div>■ 면접 일자: <strong>${reg.date} [${reg.period}교시]</strong></div>
-              <div>■ 면접 장소: <strong>${reg.location || '3학년 교무실'}</strong></div>
+              <div>■ 면접 장소: <strong>${reg.location || '3층 소형강의실'}</strong></div>
               <div>■ 지원 학생: <strong>${reg.name} (${reg.num})</strong></div>
               <div>■ 지원 대학/학과: <strong>${reg.univ} ${reg.dept}</strong></div>
               ${reg.note ? `<div class="col-span-2">■ 학생 전달사항: <strong>${reg.note}</strong></div>` : ''}
@@ -1260,7 +1263,7 @@
       }
       let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,학생후기,교사총평,담당면접교사1,담당면접교사2,면접장소\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},"${r.feedback || ''}","${r.teacherEvaluation || ''}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3학년 교무실'}\n`;
+        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},"${r.feedback || ''}","${r.teacherEvaluation || ''}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3층 소형강의실'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -1376,7 +1379,7 @@
 
           <div class="grid grid-cols-2 gap-2 text-xs bg-slate-100 p-3 rounded font-medium border border-slate-300">
             <div>■ 면접 일자: <strong>${r.date} [${r.period}교시]</strong></div>
-            <div>■ 면접 장소: <strong>${r.location || '3학년 교무실'}</strong></div>
+            <div>■ 면접 장소: <strong>${r.location || '3층 소형강의실'}</strong></div>
             <div>■ 지원 학생: <strong>${r.name} (${r.num})</strong></div>
             <div>■ 지원 대학/학과: <strong>${r.univ} ${r.dept}</strong></div>
             ${r.note ? `<div class="col-span-2">■ 학생 요청사항: <strong>${r.note}</strong></div>` : ''}
@@ -1448,7 +1451,7 @@
 
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-100 p-2.5 rounded font-medium border border-slate-300">
               <div>■ 지원 대학/학과: <strong>${r.univ} ${r.dept}</strong></div>
-              <div>■ 면접 장소: <strong>${r.location || '3학년 교무실'}</strong></div>
+              <div>■ 면접 장소: <strong>${r.location || '3층 소형강의실'}</strong></div>
               <div class="col-span-2">■ 담당 면접관: <strong>[A] ${r.teacher1 || '미배정'} / [B] ${r.teacher2 || '미배정'}</strong></div>
             </div>
 
@@ -1944,7 +1947,7 @@
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
             <td class="font-semibold text-slate-500 text-center">${idx + 1}</td>
-            <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${r.date} ${isTodayRow ? '⭐' : ''}</td>
+            <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${String(r.date || "").slice(5)} ${isTodayRow ? '⭐' : ''}</td>
             <td class="font-bold text-brand-purple text-center">${r.period}교시</td>
             <td class="font-semibold text-center">${r.num}</td>
             <td class="font-bold text-slate-900 text-center">${r.name}</td>
@@ -1966,7 +1969,7 @@
             </td>
             <td class="text-center">${teacherCellHtml}</td>
             <td class="text-center">
-              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="location-field text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+              <input type="text" value="${r.location || '3층 소형강의실'}" onchange="updateLocation('${r.id}', this.value)" class="location-field text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
             </td>
             <td class="text-center">
               <div class="reservation-actions">
@@ -2045,7 +2048,7 @@
           <!-- 모든 열을 화면 폭에 맞추고 각 행의 높이를 동일하게 유지 -->
           <div class="w-full min-w-0 rounded-xl border border-slate-200 overflow-hidden">
             <table class="reservation-fit-table">
-              <colgroup><col style="width:3%"><col style="width:9%"><col style="width:4%"><col style="width:6%"><col style="width:6%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:8%"><col style="width:15%"><col style="width:9%"><col style="width:9%"></colgroup>
+              <colgroup><col style="width:3%"><col style="width:7%"><col style="width:4%"><col style="width:6%"><col style="width:6%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:9%"><col style="width:15%"><col style="width:9%"><col style="width:10%"></colgroup>
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600">
                   <th class="text-center">No</th>
@@ -2299,7 +2302,7 @@
     async function updateLocation(id, newLoc) {
       const reg = state.regs.find(r => r.id === id);
       if (reg) {
-        reg.location = newLoc.trim() || '3학년 교무실';
+        reg.location = newLoc.trim() || '3층 소형강의실';
         localStorage.setItem('mock_regs', JSON.stringify(state.regs));
 
         if (window.isFirebaseReady && window.dbTools) {
@@ -2540,7 +2543,7 @@
                 <span class="font-bold text-slate-900 text-xs sm:text-sm whitespace-nowrap">${r.name} (${r.num})</span>
                 <span class="text-slate-500 ml-1.5 whitespace-nowrap">${r.univ} ${r.dept}</span>
                 ${r.note ? `<span class="text-amber-700 font-medium ml-1.5 whitespace-nowrap">(${r.note})</span>` : ''}
-                <span class="text-brand-purple font-bold ml-1.5 whitespace-nowrap">장소: ${r.location || '3학년 교무실'}</span>
+                <span class="text-brand-purple font-bold ml-1.5 whitespace-nowrap">장소: ${r.location || '3층 소형강의실'}</span>
               </div>
             </div>
             <div class="flex items-center space-x-2 self-end sm:self-auto whitespace-nowrap">
