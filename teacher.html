@@ -22,37 +22,40 @@
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 
-    /* 면접 예약 목록: PC 화면에서 전체 열을 표시하는 압축형 균등 행 레이아웃 */
-    @media (min-width: 1100px) {
-      #mainDashboardContainer:has(.reservation-list-panel) {
-        max-width: 100%; padding-left: 12px; padding-right: 12px; gap: 12px;
-      }
-      #mainDashboardContainer:has(.reservation-list-panel) > aside { width: 176px; }
-      #mainDashboardContainer:has(.reservation-list-panel) > main { min-width: 0; }
-      .reservation-list-panel { padding-left: 10px; padding-right: 10px; }
+    /* 예약 현황: 13개 열을 가로 스크롤 없이 보여주는 데스크톱 압축 표 */
+    .reservation-fit-table { width:100%; table-layout:fixed; border-collapse:collapse; }
+    .reservation-fit-table th, .reservation-fit-table td {
+      box-sizing:border-box; padding:6px 3px; text-align:center;
+      vertical-align:middle; font-size:10px; letter-spacing:-0.035em;
+      overflow:hidden; line-height:1.35;
     }
-    .reservation-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-    .reservation-table th, .reservation-table td {
-      padding: 5px 2px; text-align: center; vertical-align: middle;
-      overflow-wrap: anywhere; word-break: keep-all; letter-spacing: -0.035em;
+    .reservation-fit-table thead tr { height:44px; }
+    .reservation-fit-table tbody tr { height:66px; }
+    .reservation-fit-table .cell-two-lines {
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+      line-clamp:2; overflow:hidden; overflow-wrap:anywhere;
+      word-break:keep-all; max-height:2.7em;
     }
-    .reservation-table thead tr { height: 42px; }
-    .reservation-table tbody tr { height: 72px; }
-    .reservation-table tbody td { height: 72px; }
-    .reservation-table .cell-lines {
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-      line-clamp: 2; overflow: hidden; line-height: 1.4;
+    .reservation-fit-table .cell-compact { white-space:nowrap; }
+    .reservation-fit-table td button, .reservation-fit-table td select,
+    .reservation-fit-table td input { max-width:100%; box-sizing:border-box; font-size:10px; }
+    .reservation-fit-table .teacher-actions,
+    .reservation-fit-table .reservation-actions { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:3px; }
+    .reservation-fit-table .teacher-actions select { flex:1 1 43%; min-width:0; width:0; padding:3px 0; }
+    .reservation-fit-table .teacher-actions button { padding:2px 4px; }
+    .reservation-fit-table .teacher-chip { display:inline-block; padding:2px 3px; border-radius:4px; }
+    .reservation-fit-table .location-field { display:block; width:100%; min-width:0; padding:4px 1px; }
+    .reservation-fit-table .reservation-actions button { padding:4px 3px; white-space:nowrap; }
+    /* 모든 교사용 탭에서 사이드바와 본문 비율을 동일하게 유지 */
+    @media (min-width:768px) {
+      #mainDashboardContainer { max-width:100%; width:100%; }
+      #mainDashboardContainer > aside { flex:0 0 16rem; width:16rem; min-width:16rem; }
+      #mainDashboardContainer > main { flex:1 1 0%; min-width:0; max-width:100%; }
     }
-    .reservation-table .teacher-controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
-    .reservation-table .teacher-controls select { width: 46%; min-width: 0; padding-left: 1px; padding-right: 1px; }
-    .reservation-table .teacher-controls .save-teachers { flex-basis: 60%; }
-    .reservation-table .assigned-teachers { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
-    .reservation-table .location-input { width: 100%; min-width: 0; }
-    .reservation-table .row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 3px; }
-    .reservation-table .row-actions button { padding-left: 4px; padding-right: 4px; }
-    @media (max-width: 1099px) {
-      /* 작은 화면은 글자가 과도하게 압축되지 않도록 가로 스크롤 허용 */
-      .reservation-table { min-width: 1050px; }
+    @media (max-width:767px) {
+      .reservation-fit-table th, .reservation-fit-table td { font-size:9px; padding:4px 1px; }
+      .reservation-fit-table td button, .reservation-fit-table td select,
+      .reservation-fit-table td input { font-size:9px; }
     }
 
     @media print {
@@ -1870,7 +1873,7 @@
       renderTeacherListView();
     }
 
-    // ★ [테이블 가로 스크롤 overflow-x-auto & 여유폭 설정 적용] ★
+    // 예약 목록: 열 너비 최적화 + 모든 예약 행 높이 통일
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1907,7 +1910,7 @@
           const t2Options = availB.map(t => `<option value="${t}" ${r.teacher2 === t ? 'selected' : ''}>${t}</option>`).join('');
 
           teacherCellHtml = `
-            <div class="teacher-controls">
+            <div class="teacher-actions">
               <select id="t1Input_${r.id}" class="px-1 py-0.5 text-[10px] border border-slate-300 rounded focus:outline-none bg-white">
                 <option value="">A교사</option>
                 ${t1Options}
@@ -1916,14 +1919,14 @@
                 <option value="">B교사</option>
                 ${t2Options}
               </select>
-              <button onclick="saveTeachers('${r.id}')" class="save-teachers bg-brand-purple text-white px-1.5 py-0.5 rounded text-[10px] font-bold">저장</button>
+              <button onclick="saveTeachers('${r.id}')" class="bg-brand-purple text-white px-1.5 py-0.5 rounded text-[10px] font-bold">저장</button>
             </div>
           `;
         } else {
           teacherCellHtml = `
-            <div class="assigned-teachers">
-              ${r.teacher1 ? `<span class="bg-amber-100 text-amber-800 px-1 py-0.5 rounded font-bold text-[10px]">${r.teacher1}</span>` : ''}
-              ${r.teacher2 ? `<span class="bg-blue-100 text-blue-800 px-1 py-0.5 rounded font-bold text-[10px]">${r.teacher2}</span>` : ''}
+            <div class="teacher-actions">
+              ${r.teacher1 ? `<span class="teacher-chip bg-amber-100 text-amber-800 font-bold text-[10px]">${r.teacher1}</span>` : ''}
+              ${r.teacher2 ? `<span class="teacher-chip bg-blue-100 text-blue-800 font-bold text-[10px]">${r.teacher2}</span>` : ''}
               <button onclick="enableTeacherEdit('${r.id}')" class="text-slate-400 hover:text-brand-purple text-[10px] underline ml-0.5">수정</button>
             </div>
           `;
@@ -1939,38 +1942,38 @@
         const isTodayRow = r.date === todayStr;
 
         return `
-          <tr class="border-b border-slate-100 hover:bg-slate-50 text-[10px] text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
-            <td class="py-1 px-1 font-semibold text-slate-500 text-center">${idx + 1}</td>
-            <td class="py-1 px-1 font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${r.date} ${isTodayRow ? '⭐' : ''}</td>
-            <td class="py-1 px-1 font-bold text-brand-purple text-center">${r.period}교시</td>
-            <td class="py-1 px-1 font-semibold text-center">${r.num}</td>
-            <td class="py-1 px-1 font-bold text-slate-900 text-center">${r.name}</td>
-            <td class="py-1 px-1 text-center" title="${r.univ}"><span class="cell-lines">${r.univ}</span></td>
-            <td class="py-1 px-1 text-center" title="${r.dept}"><span class="cell-lines">${r.dept}</span></td>
-            <td class="py-1 px-1 text-center text-slate-500" title="${r.note || '-'}"><span class="cell-lines">${r.note || '-'}</span></td>
-            <td class="py-1 px-1 text-center">
-              <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle} whitespace-nowrap">
+          <tr class="border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
+            <td class="font-semibold text-slate-500 text-center">${idx + 1}</td>
+            <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${r.date} ${isTodayRow ? '⭐' : ''}</td>
+            <td class="font-bold text-brand-purple text-center">${r.period}교시</td>
+            <td class="font-semibold text-center">${r.num}</td>
+            <td class="font-bold text-slate-900 text-center">${r.name}</td>
+            <td class="text-center " title="${r.univ}"><span class="cell-two-lines">${r.univ}</span></td>
+            <td class="text-center " title="${r.dept}"><span class="cell-two-lines">${r.dept}</span></td>
+            <td class="text-center text-slate-500" title="${r.note || '-'}"><span class="cell-two-lines">${r.note || '-'}</span></td>
+            <td class="text-center">
+              <button onclick="toggleStudentStatus('${r.id}')" class="px-2 py-0.5 rounded-full font-bold text-[10px] border transition-all ${statusStyle}">
                 ${r.status || '대기'}
               </button>
             </td>
-            <td class="py-1 px-1 text-center">
-              <div class="row-actions">
-                <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200 text-[10px] whitespace-nowrap">
+            <td class="text-center">
+              <div class="reservation-actions">
+                <button onclick="openPreQuestionsModal('${r.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200 text-[10px]">
                   ❓질문(${preQCount})
                 </button>
                 <button onclick="printSingleStudentPreQuestions('${r.id}')" class="text-indigo-600 hover:text-indigo-800 text-[10px] font-bold underline" title="질문지 인쇄">🖨️</button>
               </div>
             </td>
-            <td class="py-1 px-1 text-center">${teacherCellHtml}</td>
-            <td class="py-1 px-1 text-center">
-              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="location-input px-1 py-0.5 text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
+            <td class="text-center">${teacherCellHtml}</td>
+            <td class="text-center">
+              <input type="text" value="${r.location || '3학년 교무실'}" onchange="updateLocation('${r.id}', this.value)" class="location-field text-[10px] text-center border border-slate-200 rounded focus:border-brand-purple">
             </td>
-            <td class="py-1 px-1 text-center">
-              <div class="row-actions">
-                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm whitespace-nowrap">
+            <td class="text-center">
+              <div class="reservation-actions">
+                <button onclick="openOnlineEvalModal('${r.id}')" class="bg-brand-purple text-white hover:bg-brand-purple/90 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm">
                   📝 평가지
                 </button>
-                <button onclick="deleteRegistration('${r.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm transition-all whitespace-nowrap">
+                <button onclick="deleteRegistration('${r.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm transition-all">
                   취소
                 </button>
               </div>
@@ -1980,21 +1983,21 @@
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400 whitespace-nowrap">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
       }
 
       main.innerHTML = `
-        <section class="reservation-list-panel bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
+        <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3.5 flex-wrap gap-2 sm:gap-3">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">면접 예약 현황 및 온라인 직접 평가</h3>
-              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">실시간 면접 신청 현황 및 현장 평가 입력 (총 ${filteredRegs.length}건)</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900">면접 예약 현황 및 온라인 직접 평가</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">실시간 면접 신청 현황 및 현장 평가 입력 (총 ${filteredRegs.length}건)</p>
             </div>
             <div class="flex items-center space-x-1.5 flex-wrap gap-1.5">
-              <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+              <button onclick="openSmsModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
                 📱 SMS 안내문 복사
               </button>
-              <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+              <button onclick="printEvaluationSheet()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
                 📄 평가 기록지 전체 인쇄
               </button>
               <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -2002,18 +2005,18 @@
                   <option value="">날짜 선택</option>
                   ${dateSelectOptions}
                 </select>
-                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) printDatePreQuestions(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1 rounded-lg font-bold transition-all whitespace-nowrap" title="선택한 날짜 사전질문지 출력">
+                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) printDatePreQuestions(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1 rounded-lg font-bold transition-all" title="선택한 날짜 사전질문지 출력">
                   질문지 인쇄
                 </button>
-                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) assignRandomTeachersForDate(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-xs px-2 py-1 rounded-lg font-bold transition-all whitespace-nowrap">
+                <button onclick="const d=document.getElementById('targetAssignDate').value; if(d) assignRandomTeachersForDate(d); else alert('날짜를 먼저 선택해주세요.');" class="bg-brand-orange hover:bg-brand-orangeHover text-white text-xs px-2 py-1 rounded-lg font-bold transition-all">
                   균등배정
                 </button>
               </div>
 
-              <button onclick="autoAssignRandomTeachers()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+              <button onclick="autoAssignRandomTeachers()" class="bg-brand-purple hover:bg-brand-purple/90 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
                 <i class="fa-solid fa-shuffle mr-1"></i> 전체 배정
               </button>
-              <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+              <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl font-bold shadow-sm transition-all">
                 <i class="fa-solid fa-file-excel mr-1"></i> 엑셀
               </button>
             </div>
@@ -2026,7 +2029,7 @@
             </div>
 
             <div class="flex items-center space-x-2 flex-wrap gap-1.5">
-              <button onclick="toggleTodayOnlyFilter()" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap ${state.isTodayOnly ? 'bg-brand-orange text-white border-brand-orange shadow-sm ring-2 ring-brand-orange/30' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}">
+              <button onclick="toggleTodayOnlyFilter()" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${state.isTodayOnly ? 'bg-brand-orange text-white border-brand-orange shadow-sm ring-2 ring-brand-orange/30' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}">
                 📅 오늘 면접 (${todayRegsCount}명) ${state.isTodayOnly ? '✓' : ''}
               </button>
 
@@ -2035,35 +2038,29 @@
                 ${dateSelectOptions}
               </select>
 
-              <span class="text-xs text-slate-500 whitespace-nowrap pl-1" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
+              <span class="text-xs text-slate-500 pl-1" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
             </div>
           </div>
 
-          <!-- PC: 전체 열 한눈에 표시 / 작은 화면: 최소 너비 유지 -->
-          <div class="w-full rounded-xl border border-slate-200 overflow-x-auto custom-scroll">
-            <table class="reservation-table text-left text-[10px]">
-              <colgroup>
-                <col style="width:3%"><col style="width:9%"><col style="width:4%">
-                <col style="width:5.5%"><col style="width:5.5%"><col style="width:9%">
-                <col style="width:9%"><col style="width:6%"><col style="width:5.5%">
-                <col style="width:8%"><col style="width:16%"><col style="width:10%">
-                <col style="width:9.5%">
-              </colgroup>
+          <!-- 모든 열을 화면 폭에 맞추고 각 행의 높이를 동일하게 유지 -->
+          <div class="w-full min-w-0 rounded-xl border border-slate-200 overflow-hidden">
+            <table class="reservation-fit-table">
+              <colgroup><col style="width:3%"><col style="width:9%"><col style="width:4%"><col style="width:6%"><col style="width:6%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:8%"><col style="width:15%"><col style="width:9%"><col style="width:9%"></colgroup>
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600">
-                  <th class="py-1 px-1 text-center">No</th>
-                  <th class="py-1 px-1 text-center">희망일</th>
-                  <th class="py-1 px-1 text-center">교시</th>
-                  <th class="py-1 px-1 text-center">학번</th>
-                  <th class="py-1 px-1 text-center">이름</th>
-                  <th class="py-1 px-1 text-center">지원 대학교</th>
-                  <th class="py-1 px-1 text-center">지원 학과</th>
-                  <th class="py-1 px-1 text-center">요청사항</th>
-                  <th class="py-1 px-1 text-center">상태</th>
-                  <th class="py-1 px-1 text-center">사전질문</th>
-                  <th class="py-1 px-1 text-center">담당 교사(A/B)</th>
-                  <th class="py-1 px-1 text-center">면접 장소</th>
-                  <th class="py-1 px-1 text-center">관리</th>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600">
+                  <th class="text-center">No</th>
+                  <th class="text-center">희망일</th>
+                  <th class="text-center">교시</th>
+                  <th class="text-center">학번</th>
+                  <th class="text-center">이름</th>
+                  <th class="text-center">지원 대학교</th>
+                  <th class="text-center">지원 학과</th>
+                  <th class="text-center">요청사항</th>
+                  <th class="text-center">상태</th>
+                  <th class="text-center">사전질문</th>
+                  <th class="text-center">담당 교사(A/B)</th>
+                  <th class="text-center">면접 장소</th>
+                  <th class="text-center">관리</th>
                 </tr>
               </thead>
               <tbody>
