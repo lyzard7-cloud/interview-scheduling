@@ -26,7 +26,7 @@
     .reservation-fit-table { width:100%; table-layout:fixed; border-collapse:collapse; }
     .reservation-fit-table th, .reservation-fit-table td {
       box-sizing:border-box; padding:6px 3px; text-align:center;
-      vertical-align:middle; font-size:10px; letter-spacing:-0.035em;
+      vertical-align:middle; font-size:13px; letter-spacing:-0.035em;
       overflow:hidden; line-height:1.35;
     }
     .reservation-fit-table thead tr { height:44px; }
@@ -38,7 +38,7 @@
     }
     .reservation-fit-table .cell-compact { white-space:nowrap; }
     .reservation-fit-table td button, .reservation-fit-table td select,
-    .reservation-fit-table td input { max-width:100%; box-sizing:border-box; font-size:10px; }
+    .reservation-fit-table td input { max-width:100%; box-sizing:border-box; font-size:13px; }
     .reservation-fit-table .teacher-actions,
     .reservation-fit-table .reservation-actions { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:3px; }
     .reservation-fit-table .teacher-actions select { flex:1 1 43%; min-width:0; width:0; padding:3px 0; }
@@ -53,6 +53,17 @@
     .reservation-fit-table .cell-single-line {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .reservation-fit-table .reservation-actions:last-child {gap:7px;}
     .reservation-fit-table .reservation-actions button {min-width:0;}
+    /* 예약 목록의 글꼴 크기 통일: 헤더 14px, 데이터/컨트롤 13px.
+       기존 Tailwind text-[10px] 클래스보다 우선 적용하여 기능에는 영향 없이 크기만 조정. */
+    .reservation-fit-table thead th { font-size:14px; }
+    .reservation-fit-table tbody td,
+    .reservation-fit-table tbody td button,
+    .reservation-fit-table tbody td input,
+    .reservation-fit-table tbody td select,
+    .reservation-fit-table tbody td .teacher-chip { font-size:13px; }
+    .reservation-fit-table .teacher-actions { flex-wrap:nowrap; gap:2px; }
+    .reservation-fit-table .teacher-actions select { flex:1 1 0; min-width:0; padding:3px 0; }
+    .reservation-fit-table .teacher-actions button { flex:0 0 auto; padding:2px 3px; }
     /* 모든 교사용 탭에서 사이드바와 본문 비율을 동일하게 유지 */
     @media (min-width:768px) {
       #mainDashboardContainer { max-width:100%; width:100%; }
@@ -60,9 +71,9 @@
       #mainDashboardContainer > main { flex:1 1 0%; min-width:0; max-width:100%; }
     }
     @media (max-width:767px) {
-      .reservation-fit-table th, .reservation-fit-table td { font-size:9px; padding:4px 1px; }
+      .reservation-fit-table th, .reservation-fit-table td { font-size:13px; padding:4px 1px; }
       .reservation-fit-table td button, .reservation-fit-table td select,
-      .reservation-fit-table td input { font-size:9px; }
+      .reservation-fit-table td input { font-size:13px; }
     }
 
     @media print {
