@@ -287,6 +287,7 @@
       realReviewKeyword: '',
       dateFilter: '',
       isTodayOnly: false,
+      showPastReservations: false, // 기본값: 지난 일정 접기 (현재 브라우저 세션)
       closedDates: JSON.parse(localStorage.getItem('mock_closed_dates') || JSON.stringify(DEFAULT_CLOSED_DATES)),
       regs: JSON.parse(localStorage.getItem('mock_regs') || '[]'),
       realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
@@ -1930,7 +1931,9 @@
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const todayRegsCount = state.regs.filter(r => r.date === todayStr).length;
 
-      const filteredRegs = state.regs.filter(r => {
+      // 검색·날짜 필터를 먼저 적용한 뒤 지난 일정 접기 여부를 반영한다.
+      // 과거 날짜를 드롭다운에서 직접 선택했다면 접힌 상태에서도 해당 날짜를 표시한다.
+      const matchingRegs = state.regs.filter(r => {
         if (state.isTodayOnly && r.date !== todayStr) return false;
         if (state.dateFilter && r.date !== state.dateFilter) return false;
 
@@ -1939,8 +1942,11 @@
         return (r.name || '').toLowerCase().includes(kw) ||
                (r.univ || '').toLowerCase().includes(kw) ||
                (r.dept || '').toLowerCase().includes(kw) ||
-               (r.num || '').includes(kw);
+               String(r.num || '').includes(kw);
       });
+      const hidePast = !state.showPastReservations && !state.dateFilter;
+      const hiddenPastCount = hidePast ? matchingRegs.filter(r => r.date && r.date < todayStr).length : 0;
+      const filteredRegs = hidePast ? matchingRegs.filter(r => !r.date || r.date >= todayStr) : matchingRegs;
 
       let tableRows = filteredRegs.map((r, idx) => {
         const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
@@ -2028,7 +2034,7 @@
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400">검색 조건에 맞는 학생 신청 내역이 없습니다.</td></tr>`;
+        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400">${hiddenPastCount > 0 ? `지난 일정 ${hiddenPastCount}건이 접혀 있습니다. 위의 ‘지난 일정 펼치기’를 눌러 확인하세요.` : '검색 조건에 맞는 학생 신청 내역이 없습니다.'}</td></tr>`;
       }
 
       main.innerHTML = `
@@ -2083,6 +2089,9 @@
                 ${dateSelectOptions}
               </select>
 
+              <button type="button" onclick="togglePastReservations()" aria-expanded="${state.showPastReservations}" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap ${state.showPastReservations ? 'bg-brand-purpleLight text-brand-purple border-brand-purple/30' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}">
+                <i class="fa-solid fa-${state.showPastReservations ? 'chevron-up' : 'chevron-down'} mr-1"></i> 지난 일정 ${state.showPastReservations ? '접기' : '펼치기'}${hiddenPastCount > 0 ? ` (${hiddenPastCount}건 숨김)` : ''}
+              </button>
               <span class="text-xs text-slate-500 pl-1" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
             </div>
           </div>
@@ -2115,6 +2124,11 @@
           </div>
         </section>
       `;
+    }
+
+    function togglePastReservations() {
+      state.showPastReservations = !state.showPastReservations;
+      renderTeacherListView();
     }
 
     function toggleTodayOnlyFilter() {
