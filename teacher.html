@@ -76,6 +76,30 @@
       .reservation-fit-table td input { font-size:13px; }
     }
 
+
+    /* 지난 일정: 슬라이드 + 페이드 + 순차 등장, 버튼 회전/색상 전환 */
+    #pastScheduleToggle { transition: background-color .32s ease, color .32s ease, border-color .32s ease, box-shadow .32s ease, transform .2s ease; }
+    #pastScheduleToggle:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(124,58,237,.13); }
+    #pastScheduleToggle:active { transform:scale(.98); }
+    #pastScheduleToggle .past-chevron { display:inline-block; transition:transform .42s cubic-bezier(.2,.75,.2,1); transform:rotate(0); }
+    #pastScheduleToggle[aria-expanded="true"] .past-chevron { transform:rotate(180deg); }
+    #pastScheduleTableWrap { overflow:hidden; will-change:height; }
+    @keyframes pastRowEnter {
+      from { opacity:0; transform:translateY(-13px); filter:blur(2px); }
+      to { opacity:1; transform:translateY(0); filter:blur(0); }
+    }
+    @keyframes pastRowLeave {
+      from { opacity:1; transform:translateY(0); }
+      to { opacity:0; transform:translateY(-9px); }
+    }
+    .reservation-fit-table tbody tr.past-row-enter { animation:pastRowEnter .36s both cubic-bezier(.18,.75,.25,1); }
+    .reservation-fit-table tbody tr.past-row-leave { animation:pastRowLeave .16s both ease-in; }
+    @media (prefers-reduced-motion:reduce) {
+      #pastScheduleToggle, #pastScheduleToggle .past-chevron { transition:none!important; }
+      .reservation-fit-table tbody tr.past-row-enter,
+      .reservation-fit-table tbody tr.past-row-leave { animation:none!important; }
+    }
+
     @media print {
       body * { visibility: hidden; }
       #printArea, #printArea * { visibility: visible; }
@@ -1991,9 +2015,10 @@
 
         const preQCount = (r.preQuestions || []).length;
         const isTodayRow = r.date === todayStr;
+        const isPastRow = Boolean(r.date && r.date < todayStr);
 
         return `
-          <tr class="border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
+          <tr class="${isPastRow ? 'past-reservation-row ' : ''}border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
             <td class="font-semibold text-slate-500 text-center">${idx + 1}</td>
             <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${String(r.date || "").slice(5)} ${isTodayRow ? '⭐' : ''}</td>
             <td class="font-bold text-brand-purple text-center">${r.period}교시 <button onclick="promptMoveReservation('${r.id}')" title="교시 변경" class="text-slate-500 text-[10px]" style="white-space:nowrap">↔</button></td>
@@ -2089,15 +2114,15 @@
                 ${dateSelectOptions}
               </select>
 
-              <button type="button" onclick="togglePastReservations()" aria-expanded="${state.showPastReservations}" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap ${state.showPastReservations ? 'bg-brand-purpleLight text-brand-purple border-brand-purple/30' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}">
-                <i class="fa-solid fa-${state.showPastReservations ? 'chevron-up' : 'chevron-down'} mr-1"></i> 지난 일정 ${state.showPastReservations ? '접기' : '펼치기'}${hiddenPastCount > 0 ? ` (${hiddenPastCount}건 숨김)` : ''}
+              <button id="pastScheduleToggle" type="button" onclick="togglePastReservations()" aria-expanded="${state.showPastReservations}" class="text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap ${state.showPastReservations ? 'bg-brand-purpleLight text-brand-purple border-brand-purple/30' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}">
+                <i class="fa-solid fa-chevron-down past-chevron mr-1"></i> 지난 일정 ${state.showPastReservations ? '접기' : '펼치기'}${hiddenPastCount > 0 ? ` (${hiddenPastCount}건 숨김)` : ''}
               </button>
               <span class="text-xs text-slate-500 pl-1" id="teacherSearchResultCount">결과: <strong>${filteredRegs.length}건</strong></span>
             </div>
           </div>
 
           <!-- 모든 열을 화면 폭에 맞추고 각 행의 높이를 동일하게 유지 -->
-          <div class="w-full min-w-0 rounded-xl border border-slate-200 overflow-hidden">
+          <div id="pastScheduleTableWrap" class="w-full min-w-0 rounded-xl border border-slate-200 overflow-hidden">
             <table class="reservation-fit-table">
               <colgroup><col style="width:3%"><col style="width:7%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:9%"><col style="width:17%"><col style="width:9%"><col style="width:10%"></colgroup>
               <thead>
@@ -2126,9 +2151,59 @@
       `;
     }
 
-    function togglePastReservations() {
-      state.showPastReservations = !state.showPastReservations;
-      renderTeacherListView();
+    let pastScheduleAnimating = false;
+    async function togglePastReservations() {
+      if (pastScheduleAnimating) return;
+      const oldWrap = document.getElementById('pastScheduleTableWrap');
+      const expand = !state.showPastReservations;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!oldWrap || reduceMotion || !oldWrap.animate) {
+        state.showPastReservations = expand;
+        renderTeacherListView();
+        return;
+      }
+
+      pastScheduleAnimating = true;
+      try {
+        // 접는 경우 기존 과거 예약부터 부드럽게 사라지게 한다.
+        if (!expand) {
+          const leaving = [...oldWrap.querySelectorAll('tr.past-reservation-row')];
+          leaving.forEach(row => row.classList.add('past-row-leave'));
+          if (leaving.length) await new Promise(resolve => setTimeout(resolve, 155));
+        }
+        const oldHeight = oldWrap.getBoundingClientRect().height;
+        state.showPastReservations = expand;
+        renderTeacherListView();
+        const newWrap = document.getElementById('pastScheduleTableWrap');
+        if (!newWrap) return;
+        const newHeight = newWrap.getBoundingClientRect().height;
+        newWrap.style.height = `${oldHeight}px`;
+        newWrap.style.overflow = 'hidden';
+        // 레이아웃을 확정한 뒤 실제 높이를 애니메이션으로 변화시킨다.
+        void newWrap.offsetHeight;
+        const slide = newWrap.animate(
+          [{ height:`${oldHeight}px` }, { height:`${newHeight}px` }],
+          { duration:520, easing:'cubic-bezier(.22,1,.36,1)' }
+        );
+        newWrap.style.height = `${newHeight}px`;
+        if (expand) {
+          const rows = [...newWrap.querySelectorAll('tr.past-reservation-row')];
+          rows.forEach((row,i) => {
+            row.style.animationDelay = `${Math.min(i, 10)*38}ms`;
+            row.classList.add('past-row-enter');
+          });
+        }
+        await slide.finished.catch(() => {});
+        if (newWrap.isConnected) {
+          newWrap.style.height = '';
+          newWrap.querySelectorAll('.past-row-enter').forEach(row => {
+            row.classList.remove('past-row-enter');
+            row.style.animationDelay = '';
+          });
+        }
+      } finally {
+        pastScheduleAnimating = false;
+      }
     }
 
     function toggleTodayOnlyFilter() {
