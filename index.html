@@ -363,6 +363,7 @@
     let ALL_TEACHERS = Array.from(new Set([...TEACHER_A_GROUP, ...TEACHER_B_GROUP]));
 
     let EXTRA_RESERVATION_SLOTS = JSON.parse(localStorage.getItem('interview_extra_slots') || '{}');
+    let TEACHER_ASSIGNMENT_MODE = localStorage.getItem('interview_teacher_assignment_mode') === 'random' ? 'random' : 'experience';
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({}));
     const DEFAULT_CLOSED_DATES = ["2026-10-05", "2026-10-09"];
 
@@ -531,6 +532,10 @@
                 state.closedDates = doc.data().dates || [];
                 localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
                 renderCalendar();
+              } else if (doc.id === 'teacher_assignment_mode') {
+                TEACHER_ASSIGNMENT_MODE = doc.data().mode === 'random' ? 'random' : 'experience';
+                localStorage.setItem('interview_teacher_assignment_mode', TEACHER_ASSIGNMENT_MODE);
+                renderCalendar(); if (state.selectedDate) selectDate(state.selectedDate);
               } else if (doc.id === 'teacher_schedule') {
                 TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
                 localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
@@ -685,7 +690,8 @@
     }
 
     function getMaxTeamsForDate(dateStr) {
-      const availList = TEACHER_SCHEDULE[dateStr] || [];
+      const availList = [...new Set(TEACHER_SCHEDULE[dateStr] || [])].filter(t => ALL_TEACHERS.includes(t));
+      if (TEACHER_ASSIGNMENT_MODE === 'random') return Math.floor(availList.length / 2);
       const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
       const countB = availList.filter(t => TEACHER_B_GROUP.includes(t)).length;
 

@@ -226,6 +226,7 @@
     let ADMIN_PASSWORD = localStorage.getItem('mock_admin_password') || '01054568795';
 
     let EXTRA_RESERVATION_SLOTS = JSON.parse(localStorage.getItem('interview_extra_slots') || '{}');
+    let TEACHER_ASSIGNMENT_MODE = localStorage.getItem('interview_teacher_assignment_mode') === 'random' ? 'random' : 'experience';
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -380,6 +381,10 @@
               } else if (doc.id === 'closed_dates') {
                 state.closedDates = doc.data().dates || [];
                 localStorage.setItem('mock_closed_dates', JSON.stringify(state.closedDates));
+                renderTeacherView();
+              } else if (doc.id === 'teacher_assignment_mode') {
+                TEACHER_ASSIGNMENT_MODE = doc.data().mode === 'random' ? 'random' : 'experience';
+                localStorage.setItem('interview_teacher_assignment_mode', TEACHER_ASSIGNMENT_MODE);
                 renderTeacherView();
               } else if (doc.id === 'teacher_schedule') {
                 TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
@@ -695,173 +700,50 @@
     }
 
     async function assignRandomTeachersForDate(targetDateStr) {
-      if (!targetDateStr) {
-        alert('날짜를 먼저 선택해 주세요.');
-        return;
-      }
-
-      const dayStudentList = state.regs.filter(r => r.date === targetDateStr);
-      if (dayStudentList.length === 0) {
-        alert(`${targetDateStr} 날짜에 면접을 신청한 학생이 없습니다.`);
-        return;
-      }
-
-      const availList = TEACHER_SCHEDULE[targetDateStr] || ALL_TEACHERS;
-      let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-      let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-
-      const workload = getTeacherWorkloadCounts();
-      const sortByWorkload = (arr) => [...arr].sort((a, b) => {
-        const diff = (workload[a] || 0) - (workload[b] || 0);
-        return diff !== 0 ? diff : Math.random() - 0.5;
-      });
-
-      availA = sortByWorkload(availA);
-      availB = sortByWorkload(availB);
-
-      const teams = [];
-
-      while (availA.length > 0 && availB.length > 0) {
-        teams.push({ t1: availA.shift(), t2: availB.shift() });
-      }
-
-      while (availA.length >= 2) {
-        teams.push({ t1: availA.shift(), t2: availA.shift() });
-      }
-
-      if (teams.length === 0) {
-        alert(`${targetDateStr} 날짜에 배정 가능한 교사 팀이 부족합니다.`);
-        return;
-      }
-
-      const p7Students = dayStudentList.filter(r => Number(r.period) === 7);
-      const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
-      const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
-
-      let count = 0;
-      p7Students.forEach((st, idx) => {
-        if (teams[idx]) {
-          st.teacher1 = teams[idx].t1;
-          st.teacher2 = teams[idx].t2;
-          count++;
-        }
-      });
-
-      p8Students.forEach((st, idx) => {
-        if (teams[idx]) {
-          st.teacher1 = teams[idx].t1;
-          st.teacher2 = teams[idx].t2;
-          count++;
-        }
-      });
-
-      p9Students.forEach((st, idx) => {
-        if (teams[idx]) {
-          st.teacher1 = teams[idx].t1;
-          st.teacher2 = teams[idx].t2;
-          count++;
-        }
-      });
-
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          for (const reg of dayStudentList) {
-            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
-          }
-        } catch(e) { console.warn("Firestore Batch Save Error", e); }
-      }
-
-      alert(`[${targetDateStr} 균등 배정 완료]\n총 ${count}명 학생에게 면접관 팀이 고르게 배치되었습니다.`);
-      renderTeacherView();
+      if (!targetDateStr) { alert('날짜를 먼저 선택해 주세요.'); return; }
+      const rows=state.regs.filter(r=>r.date===targetDateStr);
+      if(!rows.length) { alert('해당 날짜에 면접 신청 학생이 없습니다.'); return; }
+      if(!confirm(`${targetDateStr} 날짜의 미배정 학생에게 현재 방식으로 2인 1조 면접교사를 배정할까요?\n이미 배정한 학생은 변경하지 않습니다.`)) return;
+      const count=await assignTeacherPairsForDates([targetDateStr]);
+      alert(`배정 완료: ${count}건 (기존 배정 유지)`); renderTeacherView();
     }
 
     async function autoAssignRandomTeachers() {
-      if (state.regs.length === 0) {
-        alert('배정할 면접 신청 학생 내역이 없습니다.');
-        return;
-      }
+      if(!state.regs.length) { alert('배정할 학생이 없습니다.'); return; }
+      if(!confirm('전체 날짜의 미배정 학생만 자동 배정할까요? 이미 배정된 학생은 유지됩니다.')) return;
+      const count=await assignTeacherPairsForDates([...new Set(state.regs.map(r=>r.date))].sort());
+      alert(`전체 날짜 배정 완료: ${count}건 (기존 배정 유지)`); renderTeacherView();
+    }
 
-      if (!confirm('현재 신청된 전체 학생에게 [누적 건수 균등 고려] 2인 1조 팀을 자동으로 배정하시겠습니까?')) return;
-
-      const dateGroup = {};
-      state.regs.forEach(r => {
-        if (!dateGroup[r.date]) dateGroup[r.date] = [];
-        dateGroup[r.date].push(r);
-      });
-
-      let assignedCount = 0;
-
-      for (const dateStr in dateGroup) {
-        const availList = TEACHER_SCHEDULE[dateStr] || ALL_TEACHERS;
-        
-        let availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-        let availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
-
-        const workload = getTeacherWorkloadCounts();
-        const sortByWorkload = (arr) => [...arr].sort((a, b) => {
-          const diff = (workload[a] || 0) - (workload[b] || 0);
-          return diff !== 0 ? diff : Math.random() - 0.5;
-        });
-
-        availA = sortByWorkload(availA);
-        availB = sortByWorkload(availB);
-
-        const teams = [];
-        while (availA.length > 0 && availB.length > 0) {
-          teams.push({ t1: availA.shift(), t2: availB.shift() });
+    async function assignTeacherPairsForDates(dates) {
+      if(!window.isFirebaseReady || !window.dbTools) { alert('Firebase 연결 확인 후 다시 시도해 주세요.'); return 0; }
+      const {doc,setDoc}=window.dbTools;
+      const changed=[];
+      const workload=getTeacherWorkloadCounts();
+      for(const dateStr of dates) {
+        // 같은 날짜, 같은 교시에서는 교사를 중복 배정하지 않도록 합니다.
+        const allPairs=createTeacherPairsForDate(dateStr,workload);
+        if(!allPairs.length) continue;
+        for(const period of [7,8,9]) {
+          const rows=state.regs.filter(r=>r.date===dateStr && Number(r.period)===period);
+          const busy=new Set(rows.flatMap(r=>[r.teacher1,r.teacher2].filter(Boolean)));
+          const freePairs=allPairs.filter(p=>!busy.has(p.t1)&&!busy.has(p.t2));
+          for(const reg of rows) {
+            if(reg.teacher1 || reg.teacher2) continue;
+            const pair=freePairs.shift(); if(!pair) break;
+            const updated={...reg,teacher1:pair.t1,teacher2:pair.t2};
+            try {
+              await setDoc(doc(window.db,'interview_registrations',reg.id), updated);
+              Object.assign(reg,updated); changed.push(reg);
+              busy.add(pair.t1);busy.add(pair.t2);
+              workload[pair.t1]=(workload[pair.t1]||0)+1;
+              workload[pair.t2]=(workload[pair.t2]||0)+1;
+            } catch(e) { console.error(e); alert('일부 배정의 Firebase 저장에 실패했습니다. 다시 확인해 주세요.'); localStorage.setItem('mock_regs',JSON.stringify(state.regs));return changed.length; }
+          }
         }
-        while (availA.length >= 2) {
-          teams.push({ t1: availA.shift(), t2: availA.shift() });
-        }
-
-        if (teams.length === 0) continue;
-
-        const dayStudentList = dateGroup[dateStr];
-        const p7Students = dayStudentList.filter(r => Number(r.period) === 7);
-        const p8Students = dayStudentList.filter(r => Number(r.period) === 8);
-        const p9Students = dayStudentList.filter(r => Number(r.period) === 9);
-
-        p7Students.forEach((st, idx) => {
-          if (teams[idx]) {
-            st.teacher1 = teams[idx].t1;
-            st.teacher2 = teams[idx].t2;
-            assignedCount++;
-          }
-        });
-
-        p8Students.forEach((st, idx) => {
-          if (teams[idx]) {
-            st.teacher1 = teams[idx].t1;
-            st.teacher2 = teams[idx].t2;
-            assignedCount++;
-          }
-        });
-
-        p9Students.forEach((st, idx) => {
-          if (teams[idx]) {
-            st.teacher1 = teams[idx].t1;
-            st.teacher2 = teams[idx].t2;
-            assignedCount++;
-          }
-        });
       }
-
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, setDoc } = window.dbTools;
-          for (const reg of state.regs) {
-            await setDoc(doc(window.db, 'interview_registrations', reg.id), reg);
-          }
-        } catch(e) { console.warn("Firestore Batch Save Error", e); }
-      }
-
-      alert(`[전체 날짜 균등 배정 완료]\n총 ${assignedCount}건의 면접교사 배정이 성공적으로 완료되었습니다.`);
-      renderTeacherView();
+      localStorage.setItem('mock_regs',JSON.stringify(state.regs));
+      return changed.length;
     }
 
     function openPreQuestionsModal(regId) {
@@ -1325,7 +1207,8 @@
     }
 
     function getMaxTeamsForDate(dateStr) {
-      const availList = TEACHER_SCHEDULE[dateStr] || [];
+      const availList = [...new Set(TEACHER_SCHEDULE[dateStr] || [])].filter(t => ALL_TEACHERS.includes(t));
+      if (TEACHER_ASSIGNMENT_MODE === 'random') return Math.floor(availList.length / 2);
       const countA = availList.filter(t => TEACHER_A_GROUP.includes(t)).length;
       const countB = availList.filter(t => TEACHER_B_GROUP.includes(t)).length;
 
@@ -1360,6 +1243,7 @@
         closedDates: state.closedDates,
         teacherSchedule: TEACHER_SCHEDULE,
         extraReservationSlots: EXTRA_RESERVATION_SLOTS,
+        teacherAssignmentMode: TEACHER_ASSIGNMENT_MODE,
         teacherGroupA: TEACHER_A_GROUP,
         teacherGroupB: TEACHER_B_GROUP,
         adminPassword: ADMIN_PASSWORD,
@@ -1395,6 +1279,7 @@
           state.closedDates = restored.closedDates || [];
           TEACHER_SCHEDULE = restored.teacherSchedule || TEACHER_SCHEDULE;
           if (restored.extraReservationSlots) EXTRA_RESERVATION_SLOTS = restored.extraReservationSlots;
+          if (restored.teacherAssignmentMode) TEACHER_ASSIGNMENT_MODE = restored.teacherAssignmentMode === "random" ? "random" : "experience";
           if (restored.teacherGroupA) TEACHER_A_GROUP = restored.teacherGroupA;
           if (restored.teacherGroupB) TEACHER_B_GROUP = restored.teacherGroupB;
           if (restored.adminPassword) ADMIN_PASSWORD = restored.adminPassword;
@@ -1421,6 +1306,11 @@
           await saveTeacherScheduleToDb();
           await saveExtraReservationSlots();
           await saveTeacherRosterToDb();
+          localStorage.setItem('interview_teacher_assignment_mode', TEACHER_ASSIGNMENT_MODE);
+          if (window.isFirebaseReady && window.dbTools) {
+            const {doc,setDoc}=window.dbTools;
+            await setDoc(doc(window.db,'interview_settings','teacher_assignment_mode'),{mode:TEACHER_ASSIGNMENT_MODE});
+          }
 
           if (window.isFirebaseReady && window.dbTools) {
             const { doc, setDoc } = window.dbTools;
@@ -1748,6 +1638,47 @@
       container.innerHTML = studentCardsHtml;
     }
 
+    async function saveTeacherAssignmentMode() {
+      const selected = document.querySelector('input[name="teacherAssignmentMode"]:checked')?.value;
+      if (!['experience', 'random'].includes(selected)) return;
+      if (selected === TEACHER_ASSIGNMENT_MODE) { alert('이미 선택된 배정 방식입니다.'); return; }
+      if (!confirm(`면접교사 배정 방식을 [${selected === 'random' ? '전체 무작위' : '경력별'}]로 변경하시겠습니까?\n기존 예약 및 배정은 유지됩니다.`)) return;
+      if (!window.isFirebaseReady || !window.dbTools) {
+        alert('Firebase 연결이 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.'); return;
+      }
+      try {
+        const {doc,setDoc} = window.dbTools;
+        await setDoc(doc(window.db,'interview_settings','teacher_assignment_mode'), {mode:selected});
+        TEACHER_ASSIGNMENT_MODE=selected;
+        localStorage.setItem('interview_teacher_assignment_mode', selected);
+        renderTeacherAdminView();
+        alert('배정 방식이 저장되었습니다. 학생용 예약 정원에도 반영됩니다.');
+      } catch(e) { console.error(e); alert('저장에 실패했습니다. Firestore 권한 및 연결 상태를 확인해 주세요.'); }
+    }
+
+    // 참여 교사를 날짜별로 2명씩 묶습니다. 홀수 인원은 배정하지 않습니다.
+    function createTeacherPairsForDate(dateStr, workload = {}) {
+      const participants=[...new Set(TEACHER_SCHEDULE[dateStr] || [])].filter(t=>ALL_TEACHERS.includes(t));
+      const shuffle = arr => {
+        const result=[...arr];
+        for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}
+        return result;
+      };
+      if(TEACHER_ASSIGNMENT_MODE === 'random') {
+        const pool=shuffle(participants);
+        const result=[];
+        while(pool.length>=2) result.push({t1:pool.shift(),t2:pool.shift()});
+        return result;
+      }
+      const sortWorkload=arr=>shuffle(arr).sort((a,b)=>(workload[a]||0)-(workload[b]||0));
+      const senior=sortWorkload(participants.filter(t=>TEACHER_A_GROUP.includes(t)));
+      const junior=sortWorkload(participants.filter(t=>TEACHER_B_GROUP.includes(t)));
+      const result=[];
+      while(senior.length && junior.length) result.push({t1:senior.shift(),t2:junior.shift()});
+      while(senior.length>=2) result.push({t1:senior.shift(),t2:senior.shift()});
+      return result;
+    }
+
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1789,6 +1720,23 @@
           <div class="border-b border-slate-100 pb-3.5">
             <h3 class="text-base sm:text-lg font-bold text-slate-900 whitespace-nowrap">🔐 교사 관리자 전용 포털</h3>
             <p class="text-xs text-slate-500 mt-0.5 whitespace-nowrap">학생 PIN 명단 관리, 내년도 면접관 교사진 변경 및 관리자 설정을 지원합니다.</p>
+          </div>
+
+          <div class="bg-violet-50/80 p-4 sm:p-5 rounded-2xl border border-violet-200 space-y-3">
+            <h4 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-people-group text-violet-600 mr-1"></i> 면접교사 2인 1조 배정 방식</h4>
+            <p class="text-xs text-slate-600">배정 방식을 선택하고 저장하세요. 이미 배정된 교사진은 자동으로 바뀌지 않습니다. 이후 자동 배정과 기본 예약 정원에 적용됩니다.</p>
+            <label class="flex items-start gap-2 bg-white border border-violet-100 rounded-xl p-3 cursor-pointer text-xs">
+              <input type="radio" name="teacherAssignmentMode" value="experience" ${TEACHER_ASSIGNMENT_MODE === 'experience' ? 'checked' : ''} class="mt-0.5 accent-violet-600">
+              <span><strong>① 경력별 배정 (기존 방식)</strong><br><span class="text-slate-500">A(고경력) 1명 + B(저경력) 1명 우선 편성 · 기존의 A 잔여 2인 조합 규칙 유지</span></span>
+            </label>
+            <label class="flex items-start gap-2 bg-white border border-violet-100 rounded-xl p-3 cursor-pointer text-xs">
+              <input type="radio" name="teacherAssignmentMode" value="random" ${TEACHER_ASSIGNMENT_MODE === 'random' ? 'checked' : ''} class="mt-0.5 accent-violet-600">
+              <span><strong>② 전체 무작위 배정</strong><br><span class="text-slate-500">경력 구분 없이 날짜별 참여 교사 전원을 섞어 2명씩 편성 · 홀수 인원 1명은 제외</span></span>
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+              <button onclick="saveTeacherAssignmentMode()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-4 py-2 rounded-xl">배정 방식 저장</button>
+              <span class="text-xs text-slate-600">현재: ${TEACHER_ASSIGNMENT_MODE === 'random' ? '전체 무작위 배정' : '경력별 배정'}</span>
+            </div>
           </div>
 
           <div class="bg-purple-50/60 p-4 sm:p-5 rounded-2xl border border-purple-200 space-y-4">
@@ -1987,8 +1935,8 @@
         const isEditing = state.editingTeacherId === r.id || (!r.teacher1 && !r.teacher2);
         const availList = TEACHER_SCHEDULE[r.date] || ALL_TEACHERS;
 
-        const availA = availList.filter(t => TEACHER_A_GROUP.includes(t));
-        const availB = availList.filter(t => TEACHER_B_GROUP.includes(t));
+        const availA = TEACHER_ASSIGNMENT_MODE === 'random' ? [...new Set(availList)] : availList.filter(t => TEACHER_A_GROUP.includes(t));
+        const availB = TEACHER_ASSIGNMENT_MODE === 'random' ? [...new Set(availList)] : availList.filter(t => TEACHER_B_GROUP.includes(t));
         
         let teacherCellHtml = '';
         if (isEditing) {
@@ -2697,6 +2645,7 @@
       const t1 = document.getElementById(`t1Input_${id}`)?.value || '';
       const t2 = document.getElementById(`t2Input_${id}`)?.value || '';
 
+      if (t1 && t2 && t1 === t2) { alert('같은 교사를 2명으로 중복 지정할 수 없습니다.'); return; }
       const reg = state.regs.find(r => r.id === id);
       if (reg) {
         reg.teacher1 = t1;
