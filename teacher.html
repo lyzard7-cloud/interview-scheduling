@@ -17,6 +17,18 @@
       font-style: normal;
     }
     .font-jua { font-family: 'BMJUA', 'Pretendard', sans-serif; }
+    @font-face {
+      font-family: 'GangwonEduAll';
+      src: url('./강원교육모두%20Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    .teacher-system-title {
+      font-family: 'GangwonEduAll', 'Pretendard', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
     .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -169,7 +181,7 @@
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
       <div>
-        <h1 class="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-jua whitespace-nowrap">강일여고 교사용 면접 관리 시스템</h1>
+        <h1 class="teacher-system-title text-xl sm:text-[28px] text-white whitespace-nowrap">강일여고 모의면접 통합 운영 시스템</h1>
       </div>
       <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner whitespace-nowrap">
         <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
