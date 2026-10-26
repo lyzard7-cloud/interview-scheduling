@@ -126,7 +126,13 @@
     .weekly-grid tr td:first-child {background:#f8fafc;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;color:#475569}
     .weekly-slot {display:block;text-align:left;width:100%;min-height:68px;border:1px dashed #cbd5e1;border-radius:9px;padding:7px;transition:background .15s,border-color .15s;overflow-wrap:anywhere}
     .weekly-slot:hover {background:#f5f3ff;border-color:#a78bfa}
-    .weekly-slot.is-filled {border:1px solid #ddd6fe;background:#faf5ff}
+    /* 입력된 일정만 장소별 고정 색상으로 구분 */
+    .weekly-slot.is-filled.room-small {background:#e0e7ff;border:1px solid #a5b4fc;color:#3730a3}
+    .weekly-slot.is-filled.room-meeting {background:#d1fae5;border:1px solid #6ee7b7;color:#065f46}
+    .weekly-slot.is-filled.room-small .room-tag,.weekly-slot.is-filled.room-small .slot-person {color:#3730a3}
+    .weekly-slot.is-filled.room-meeting .room-tag,.weekly-slot.is-filled.room-meeting .slot-person {color:#065f46}
+    .weekly-slot.is-filled.room-small:hover {background:#c7d2fe;border-color:#818cf8}
+    .weekly-slot.is-filled.room-meeting:hover {background:#a7f3d0;border-color:#34d399}
     .weekly-slot .room-tag{display:block;color:#64748b;font-size:11px;margin-bottom:4px;white-space:nowrap}
     .weekly-slot .slot-person{display:block;font-weight:600;font-size:12px;line-height:1.4;white-space:pre-wrap}
     .weekly-slot .slot-empty{color:#94a3b8;font-size:12px}
@@ -1600,7 +1606,7 @@
           WEEKLY_ROOMS.forEach((room,ri)=>{
             const key=weeklyKey(day,pi,ri),entry=weeklyEntries[key]||{};
             const filled=Boolean(entry.student||entry.teacher);
-            grid+=`<button type="button" onclick="openWeeklySlot(${day},${pi},${ri})" class="weekly-slot ${filled?'is-filled':''}" title="${weeklyHtml(room)} - 클릭하여 입력 또는 수정"><span class="room-tag">${ri===0?'소형강의실':'소회의실'}</span>${filled?`<span class="slot-person">학생: ${weeklyHtml(entry.student||'-')}</span><span class="slot-person" style="font-weight:400">교사: ${weeklyHtml(entry.teacher||'-')}</span>`:'<span class="slot-empty">＋ 입력</span>'}</button>`;
+            grid+=`<button type="button" onclick="openWeeklySlot(${day},${pi},${ri})" class="weekly-slot ${filled ? (ri === 0 ? 'is-filled room-small' : 'is-filled room-meeting') : ''}" title="${weeklyHtml(room)} - 클릭하여 입력 또는 수정"><span class="room-tag">${ri===0?'소형강의실':'소회의실'}</span>${filled?`<span class="slot-person">학생: ${weeklyHtml(entry.student||'-')}</span><span class="slot-person" style="font-weight:400">교사: ${weeklyHtml(entry.teacher||'-')}</span>`:'<span class="slot-empty">＋ 입력</span>'}</button>`;
           });
           grid+='</div></td>';
         }
@@ -1611,7 +1617,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-bold text-slate-900">주간 모의면접 운영 시간표</h2><p class="text-xs text-slate-500 mt-1">실제 운영 시간·장소 기록용 · 기존 8·9교시 행정 배정과 별개</p></div><div class="flex flex-wrap items-center gap-2"><button onclick="changeWeeklyWeek(-1)" class="border rounded-lg py-2 px-3 text-sm hover:bg-slate-50">◀ 이전 주</button><button onclick="goToCurrentWeek()" class="border rounded-lg py-2 px-3 text-sm font-semibold text-brand-purple hover:bg-purple-50">이번 주</button><button onclick="changeWeeklyWeek(1)" class="border rounded-lg py-2 px-3 text-sm hover:bg-slate-50">다음 주 ▶</button></div></div>
         <div class="bg-purple-50 text-purple-800 rounded-xl px-4 py-3 font-bold text-sm">${weeklyHtml(weeklyIso(start))} (월) ~ ${weeklyHtml(weeklyIso(end))} (금)</div>
         <p class="text-xs text-slate-500">칸을 클릭하면 학생명과 교사명을 입력할 수 있습니다. 다음 주 월요일부터는 자동으로 새 빈 시간표가 나타나며, 이전 기록은 주차별로 보관됩니다.</p>
-        ${grid}<p id="weeklyMessage" class="text-xs text-slate-500">교사용 브라우저에서 공동 편집 · Firebase 실시간 동기화</p></section>`;
+        ${grid}</section>`;
     }
     function openWeeklySlot(day,period,room){
       weeklyActiveSlot={day,period,room,week:weeklyIso(weeklyWeekStart)};
