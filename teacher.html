@@ -118,6 +118,19 @@
       #printArea { position: absolute; left: 0; top: 0; width: 100%; }
       .no-print { display: none !important; }
     }
+
+    /* 주간 운영 시간표 — 예약 및 수당 배정과 완전히 독립 */
+    .weekly-grid {width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:13px}
+    .weekly-grid th {background:#f1f5f9;color:#334155;padding:10px 5px;border-bottom:1px solid #cbd5e1;font-weight:700}
+    .weekly-grid td {border-bottom:1px solid #e2e8f0;border-right:1px solid #edf2f7;padding:5px;vertical-align:top}
+    .weekly-grid tr td:first-child {background:#f8fafc;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;color:#475569}
+    .weekly-slot {display:block;text-align:left;width:100%;min-height:68px;border:1px dashed #cbd5e1;border-radius:9px;padding:7px;transition:background .15s,border-color .15s;overflow-wrap:anywhere}
+    .weekly-slot:hover {background:#f5f3ff;border-color:#a78bfa}
+    .weekly-slot.is-filled {border:1px solid #ddd6fe;background:#faf5ff}
+    .weekly-slot .room-tag{display:block;color:#64748b;font-size:11px;margin-bottom:4px;white-space:nowrap}
+    .weekly-slot .slot-person{display:block;font-weight:600;font-size:12px;line-height:1.4;white-space:pre-wrap}
+    .weekly-slot .slot-empty{color:#94a3b8;font-size:12px}
+    @media(max-width:900px){.weekly-table-wrap{overflow-x:auto}.weekly-grid{min-width:870px}}
   </style>
 
   <script>
@@ -143,7 +156,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
@@ -158,8 +171,9 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       window.db = db;
-      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot };
+      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, deleteField };
       window.isFirebaseReady = true;
+      window.dispatchEvent(new Event('interview-firebase-ready'));
     } catch(e) {
       console.warn("Firebase Init fallback", e);
       window.isFirebaseReady = false;
@@ -251,6 +265,18 @@
       <div class="flex justify-end pt-3 border-t">
         <button onclick="closePreQuestionsModal()" class="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs">닫기</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- 주간 실제 운영 시간표 편집 모달 -->
+  <div id="weeklyModal" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="weeklyModalTitle">
+    <div class="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-md space-y-4">
+      <div class="flex justify-between items-start gap-3 border-b pb-3"><div><h3 class="font-bold text-lg text-slate-900">실제 면접 운영 시간 입력</h3><p id="weeklyModalTitle" class="text-xs text-slate-500 mt-1"></p></div><button onclick="closeWeeklyModal()" class="text-slate-500 hover:text-slate-900 text-xl" aria-label="닫기">×</button></div>
+      <div><label for="weeklyStudent" class="block font-semibold text-sm mb-1">학생 이름</label><textarea id="weeklyStudent" rows="2" placeholder="학생 이름 (여러 명 입력 가능)" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-purple-500"></textarea></div>
+      <div><label for="weeklyTeacher" class="block font-semibold text-sm mb-1">면접 교사 이름</label><textarea id="weeklyTeacher" rows="2" placeholder="면접 교사 이름 (여러 명 입력 가능)" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-purple-500"></textarea></div>
+      <p class="text-xs text-slate-500">저장된 정보는 다른 교사의 시간표에도 표시됩니다. 기존 행정상 8·9교시 배정은 변경되지 않습니다.</p>
+      <div class="flex justify-between items-center gap-2 pt-2 border-t"><button id="weeklyDeleteBtn" onclick="saveWeeklySlot(true)" class="text-red-600 border border-red-200 px-3 py-2 rounded-lg text-sm hover:bg-red-50">입력 삭제</button><div class="flex gap-2 ml-auto"><button onclick="closeWeeklyModal()" class="bg-slate-100 px-4 py-2 rounded-lg text-sm">취소</button><button id="weeklySaveBtn" onclick="saveWeeklySlot(false)" class="bg-brand-purple text-white px-5 py-2 rounded-lg text-sm">저장</button></div></div>
     </div>
   </div>
 
@@ -355,6 +381,10 @@
           <span><i class="fa-solid fa-list-check mr-2"></i>면접 예약 현황 목록</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
+        <button onclick="switchTeacherTab('weekly')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'weekly' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
+          <span><i class="fa-solid fa-table-cells-large mr-2"></i>주간 면접 운영 시간표</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
         <button onclick="switchTeacherTab('evals')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg ${state.teacherTab === 'evals' ? 'bg-brand-purpleLight text-brand-purple font-bold' : 'text-slate-700 hover:bg-slate-100 font-medium'} transition-all mb-1 whitespace-nowrap">
           <span><i class="fa-solid fa-file-signature mr-2 text-indigo-600"></i>학생 면접 평가지 관리</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -387,6 +417,10 @@
         }
       }
       state.teacherTab = tabName;
+      if (tabName === 'weekly') {
+        if (!weeklyWeekManuallySelected) weeklyWeekStart = weekMonday(new Date());
+        subscribeWeeklySchedule();
+      } else { stopWeeklySubscription(); }
       updateSidebarNavForTeacher();
       renderTeacherView();
     }
@@ -1505,9 +1539,125 @@
       }, 500);
     }
 
+
+    window.addEventListener('interview-firebase-ready', () => { if (state.teacherTab === 'weekly') subscribeWeeklySchedule(); });
+    // --- 실제 모의면접 시간표: 매주 월요일을 키로 사용해 지난주 기록 보관 ---
+    const WEEKLY_ROOMS = ['3층 소형강의실','3층 소회의실'];
+    const WEEKLY_PERIODS = ['1교시','2교시','3교시','4교시','점심','5교시','6교시','7교시','8교시','9교시'];
+    let weeklyWeekStart = weekMonday(new Date());
+    let weeklyWeekManuallySelected = false;
+    let weeklyEntries = {};
+    let weeklyUnsubscribe = null;
+    let weeklyActiveSlot = null;
+    let weeklySavePending = false;
+    function weekMonday(d) {
+      const date = new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);
+      date.setDate(date.getDate() - ((date.getDay()+6)%7));
+      return date;
+    }
+    function weeklyIso(d) {
+      return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+    }
+    function weeklyDay(i) {
+      let d = new Date(weeklyWeekStart);d.setDate(d.getDate()+i);return d;
+    }
+    function weeklyKey(day, period, room) {return `${weeklyIso(weeklyWeekStart)}_${day}_${period}_${room}`;}
+    function weeklyCacheKey(){return 'mock_weekly_schedule_'+weeklyIso(weeklyWeekStart);}
+    function weeklyHtml(v) {return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+    function stopWeeklySubscription() {if (weeklyUnsubscribe) {weeklyUnsubscribe();weeklyUnsubscribe=null;}}
+    function subscribeWeeklySchedule(){
+      stopWeeklySubscription();
+      try {weeklyEntries=JSON.parse(localStorage.getItem(weeklyCacheKey())||'{}');}catch(e){weeklyEntries={};}
+      if (!(window.isFirebaseReady && window.dbTools)) return;
+      const expected=weeklyIso(weeklyWeekStart);
+      const {doc,onSnapshot}=window.dbTools;
+      weeklyUnsubscribe=onSnapshot(doc(window.db,'interview_weekly_room_schedule',expected), snapshot=>{
+        if (expected!==weeklyIso(weeklyWeekStart))return;
+        weeklyEntries=snapshot.exists()?(snapshot.data().entries||{}):{};
+        localStorage.setItem(weeklyCacheKey(),JSON.stringify(weeklyEntries));
+        if(state.teacherTab==='weekly')renderWeeklySchedule();
+      }, err=>{console.warn('주간 시간표 불러오기 실패',err); weeklyScheduleMessage('Firebase 동기화 실패: 네트워크 및 보안 규칙을 확인해 주세요.',true);});
+    }
+    function weeklyScheduleMessage(message,error=false){
+      const n=document.getElementById('weeklyMessage');if(!n)return;
+      n.textContent=message;n.className='text-xs '+(error?'text-red-600':'text-slate-500');
+    }
+    function changeWeeklyWeek(offset){
+      let d=new Date(weeklyWeekStart);d.setDate(d.getDate()+offset*7);
+      weeklyWeekStart=d;weeklyWeekManuallySelected=true;
+      subscribeWeeklySchedule();renderWeeklySchedule();
+    }
+    function goToCurrentWeek(){weeklyWeekStart=weekMonday(new Date());weeklyWeekManuallySelected=false;subscribeWeeklySchedule();renderWeeklySchedule();}
+    function renderWeeklySchedule(){
+      const main=document.getElementById('mainContent');if(!main)return;
+      const start=weeklyDay(0),end=weeklyDay(4);
+      const weekdays=['월','화','수','목','금'];
+      let grid=`<div class="weekly-table-wrap rounded-xl border border-slate-200"><table class="weekly-grid"><thead><tr><th style="width:70px">교시</th>${weekdays.map((w,i)=>`<th>${w}요일 <span class="text-slate-400 text-xs">${weeklyDay(i).getMonth()+1}/${weeklyDay(i).getDate()}</span></th>`).join('')}</tr></thead><tbody>`;
+      WEEKLY_PERIODS.forEach((period,pi)=>{
+        grid+=`<tr><td>${weeklyHtml(period)}</td>`;
+        for(let day=0;day<5;day++){
+          grid+='<td><div class="grid grid-cols-1 gap-1.5">';
+          WEEKLY_ROOMS.forEach((room,ri)=>{
+            const key=weeklyKey(day,pi,ri),entry=weeklyEntries[key]||{};
+            const filled=Boolean(entry.student||entry.teacher);
+            grid+=`<button type="button" onclick="openWeeklySlot(${day},${pi},${ri})" class="weekly-slot ${filled?'is-filled':''}" title="${weeklyHtml(room)} - 클릭하여 입력 또는 수정"><span class="room-tag">${ri===0?'소형강의실':'소회의실'}</span>${filled?`<span class="slot-person">학생: ${weeklyHtml(entry.student||'-')}</span><span class="slot-person" style="font-weight:400">교사: ${weeklyHtml(entry.teacher||'-')}</span>`:'<span class="slot-empty">＋ 입력</span>'}</button>`;
+          });
+          grid+='</div></td>';
+        }
+        grid+='</tr>';
+      });
+      grid+='</tbody></table></div>';
+      main.innerHTML=`<section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-bold text-slate-900">주간 모의면접 운영 시간표</h2><p class="text-xs text-slate-500 mt-1">실제 운영 시간·장소 기록용 · 기존 8·9교시 행정 배정과 별개</p></div><div class="flex flex-wrap items-center gap-2"><button onclick="changeWeeklyWeek(-1)" class="border rounded-lg py-2 px-3 text-sm hover:bg-slate-50">◀ 이전 주</button><button onclick="goToCurrentWeek()" class="border rounded-lg py-2 px-3 text-sm font-semibold text-brand-purple hover:bg-purple-50">이번 주</button><button onclick="changeWeeklyWeek(1)" class="border rounded-lg py-2 px-3 text-sm hover:bg-slate-50">다음 주 ▶</button></div></div>
+        <div class="bg-purple-50 text-purple-800 rounded-xl px-4 py-3 font-bold text-sm">${weeklyHtml(weeklyIso(start))} (월) ~ ${weeklyHtml(weeklyIso(end))} (금)</div>
+        <p class="text-xs text-slate-500">칸을 클릭하면 학생명과 교사명을 입력할 수 있습니다. 다음 주 월요일부터는 자동으로 새 빈 시간표가 나타나며, 이전 기록은 주차별로 보관됩니다.</p>
+        ${grid}<p id="weeklyMessage" class="text-xs text-slate-500">교사용 브라우저에서 공동 편집 · Firebase 실시간 동기화</p></section>`;
+    }
+    function openWeeklySlot(day,period,room){
+      weeklyActiveSlot={day,period,room,week:weeklyIso(weeklyWeekStart)};
+      const key=weeklyKey(day,period,room),entry=weeklyEntries[key]||{};
+      const d=weeklyDay(day);
+      document.getElementById('weeklyModalTitle').textContent=`${d.getMonth()+1}/${d.getDate()} (${['월','화','수','목','금'][day]}) · ${WEEKLY_PERIODS[period]} · ${WEEKLY_ROOMS[room]}`;
+      document.getElementById('weeklyStudent').value=entry.student||'';
+      document.getElementById('weeklyTeacher').value=entry.teacher||'';
+      document.getElementById('weeklyDeleteBtn').classList.toggle('hidden',!entry.student&&!entry.teacher);
+      document.getElementById('weeklyModal').classList.remove('hidden');
+      document.getElementById('weeklyStudent').focus();
+    }
+    function closeWeeklyModal(){if(weeklySavePending)return;document.getElementById('weeklyModal').classList.add('hidden');weeklyActiveSlot=null;}
+    async function saveWeeklySlot(clear=false){
+      if(!weeklyActiveSlot||weeklySavePending)return;
+      const slot=weeklyActiveSlot,student=clear?'':document.getElementById('weeklyStudent').value.trim(),teacher=clear?'':document.getElementById('weeklyTeacher').value.trim();
+      if(!clear&&!student&&!teacher){alert('학생 이름 또는 교사 이름을 입력해 주세요. 비우려면 삭제 버튼을 이용하세요.');return;}
+      if(clear&&!confirm('이 시간표 칸의 입력 내용을 삭제할까요?'))return;
+      if(slot.week!==weeklyIso(weeklyWeekStart)){alert('표시 주차가 바뀌었습니다. 다시 선택해 주세요.');return;}
+      if(!(window.isFirebaseReady&&window.dbTools)) {alert('Firebase 연결이 확인되지 않아 저장할 수 없습니다. 네트워크를 확인해 주세요.');return;}
+      weeklySavePending=true;
+      const saveButton=document.getElementById('weeklySaveBtn');saveButton.disabled=true;saveButton.textContent='저장 중…';
+      const key=weeklyKey(slot.day,slot.period,slot.room);
+      const updated={...weeklyEntries};
+      if(clear)delete updated[key];else updated[key]={student,teacher};
+      try{
+        const {doc,setDoc,updateDoc,deleteField}=window.dbTools;
+        const weekRef=doc(window.db,'interview_weekly_room_schedule',slot.week);
+        // 다른 선생님이 작성한 다른 칸을 덮어쓰지 않도록 셀별 병합 저장
+        if(clear) {
+          await updateDoc(weekRef, 'entries.'+key, deleteField());
+        } else {
+          await setDoc(weekRef,{entries:{[key]:{student,teacher}},updatedAt:new Date().toISOString()},{merge:true});
+        }
+        weeklyEntries=updated;localStorage.setItem(weeklyCacheKey(),JSON.stringify(updated));
+        document.getElementById('weeklyModal').classList.add('hidden');weeklyActiveSlot=null;
+        renderWeeklySchedule();
+      }catch(err){console.error('주간 시간표 저장 오류',err);alert('저장 실패: Firestore 보안 규칙 또는 연결 상태를 확인해 주세요.');}
+      finally{weeklySavePending=false;saveButton.disabled=false;saveButton.textContent='저장';}
+    }
+
     function renderTeacherView() {
       if (state.teacherTab === 'calendar') {
         renderTeacherCalendarView();
+      } else if (state.teacherTab === 'weekly') {
+        renderWeeklySchedule();
       } else if (state.teacherTab === 'stats') {
         renderTeacherStatsView();
       } else if (state.teacherTab === 'schedule') {
