@@ -136,7 +136,7 @@
     .weekly-slot .room-tag{display:block;color:#64748b;font-size:11px;margin-bottom:4px;white-space:nowrap}
     .weekly-slot .slot-person{display:block;font-weight:600;font-size:12px;line-height:1.4;white-space:pre-wrap}
     .weekly-slot .slot-empty{color:#94a3b8;font-size:12px}
-    /* 시간표 내부 스크롤: 날짜/요일/강의실 표기를 상단에 고정 */
+    /* 시간표 내부 스크롤: 요일과 날짜를 상단에 고정 */
     .weekly-table-wrap {max-height:min(74vh,780px);overflow:auto;position:relative;overscroll-behavior:contain;}
     .weekly-grid thead th {position:sticky;top:0;z-index:5;background:#e9eef7;box-shadow:0 2px 0 #aebbd0;}
     .weekly-grid thead th:first-child {z-index:6;}
@@ -1613,7 +1613,7 @@
       const main=document.getElementById('mainContent');if(!main)return;
       const start=weeklyDay(0),end=weeklyDay(4);
       const weekdays=['월','화','수','목','금'];
-      let grid=`<div class="weekly-table-wrap rounded-xl border border-slate-200"><table class="weekly-grid"><thead><tr><th style="width:70px">교시</th>${weekdays.map((w,i)=>`<th><div>${w}요일 <span class="text-slate-500 text-xs">${weeklyDay(i).getMonth()+1}/${weeklyDay(i).getDate()}</span></div><div class="weekly-header-rooms"><span>3층 소형강의실</span><span>3층 소회의실</span></div></th>`).join('')}</tr></thead><tbody>`;
+      let grid=`<div class="weekly-table-wrap rounded-xl border border-slate-200"><table class="weekly-grid"><thead><tr><th style="width:70px">교시</th>${weekdays.map((w,i)=>`<th><div>${w}요일 <span class="text-slate-500 text-xs">${weeklyDay(i).getMonth()+1}/${weeklyDay(i).getDate()}</span></div></th>`).join('')}</tr></thead><tbody>`;
       WEEKLY_PERIODS.forEach((period,pi)=>{
         grid+=`<tr class="${period.includes('점심') ? 'weekly-lunch-row' : ''}"><td>${weeklyHtml(period)}</td>`;
         for(let day=0;day<5;day++){
