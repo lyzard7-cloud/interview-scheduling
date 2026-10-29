@@ -2511,6 +2511,84 @@
       );
     }
 
+    // 통계 화면은 인쇄 CSS에서 숨겨지므로 별도의 인쇄 영역을 먼저 생성합니다.
+    function printTeacherStatsReport() {
+      const area = document.getElementById('printArea');
+      if (!area) { alert('인쇄 영역을 찾을 수 없습니다.'); return; }
+
+      const regs = state.regs || [];
+      const teacherMap = new Map();
+      regs.forEach(r => {
+        [...new Set([r.teacher1, r.teacher2].filter(Boolean))].forEach(name => {
+          if (!teacherMap.has(name)) teacherMap.set(name, []);
+          teacherMap.get(name).push(r);
+        });
+      });
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const total = regs.length;
+      const completed = regs.filter(r => r.status === '완료').length;
+      const reviews = regs.filter(r => r.feedback).length;
+      const absent = regs.filter(r => r.status === '불참').length;
+      const now = new Date();
+      const generated = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+      const sortedTeachers = [...teacherMap.entries()].sort((a,b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'ko'));
+      const summaryRows = sortedTeachers.map(([name, assigned], idx) => `
+        <tr><td>${idx+1}</td><td>${escapeHtml(name)}</td>
+        <td>${TEACHER_A_GROUP.includes(name) ? 'A그룹' : TEACHER_B_GROUP.includes(name) ? 'B그룹' : '기타'}</td>
+        <td>${assigned.length}</td><td>${assigned.filter(r=>r.status==='완료').length}</td>
+        <td>${assigned.filter(r=>r.status==='불참').length}</td></tr>`).join('');
+      const detailSections = sortedTeachers.map(([name, assigned]) => `
+        <section class="stats-teacher-detail">
+          <h3>${escapeHtml(name)} 선생님 · 배정 ${assigned.length}건</h3>
+          <table><thead><tr><th>날짜</th><th>교시</th><th>학번</th><th>학생</th><th>대학 / 학과</th><th>상태</th></tr></thead>
+          <tbody>${assigned.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)) || Number(a.period)-Number(b.period)).map(r=>`
+            <tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.period)}</td><td>${escapeHtml(r.num)}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml([r.univ,r.dept].filter(Boolean).join(' / '))}</td><td>${escapeHtml(r.status || '대기')}</td></tr>`).join('')}</tbody></table>
+        </section>`).join('');
+
+      area.innerHTML = `
+        <div id="teacherStatsPrintable" class="stats-print-report">
+          <style>
+            @media print {
+              @page { size:A4 portrait; margin:14mm; }
+              #printArea { padding:0!important; font-family:Arial,'Pretendard',sans-serif; color:#111827; }
+              .stats-print-report { font-size:11px; line-height:1.45; }
+              .stats-print-report h1 { font-size:20px; font-weight:800; text-align:center; margin:0 0 8px; }
+              .stats-print-report h2 { font-size:14px; font-weight:700; margin:20px 0 8px; }
+              .stats-print-report h3 { font-size:12px; font-weight:700; margin:15px 0 6px; }
+              .stats-print-report .report-subtitle { text-align:center; padding-bottom:12px; border-bottom:2px solid #334155; }
+              .stats-print-report table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:10px; }
+              .stats-print-report th,.stats-print-report td { border:1px solid #cbd5e1; padding:5px 6px; text-align:left; overflow-wrap:anywhere; }
+              .stats-print-report th { background:#edf2f7!important; font-weight:700; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+              .stats-print-report tr { break-inside:avoid; }
+              .stats-print-report .stats-teacher-detail { break-inside:auto; }
+              .stats-print-report .metric-summary { display:flex; gap:8px; margin:16px 0; }
+              .stats-print-report .metric-summary div { flex:1; border:1px solid #cbd5e1; border-radius:5px; padding:10px; text-align:center; }
+              .stats-print-report .metric-summary strong { display:block; font-size:16px; margin-top:4px; }
+            }
+          </style>
+          <h1>2026학년도 모의면접 운영 종합 결과 보고서</h1>
+          <p class="report-subtitle">강일여자고등학교 3학년부 · 출력일: ${generated}</p>
+          <div class="metric-summary">
+            <div>총 예약 신청<strong>${total}건</strong></div>
+            <div>면접 실시 완료<strong>${completed}건</strong></div>
+            <div>학생 후기 작성<strong>${reviews}건</strong></div>
+            <div>미진행 / 불참<strong>${absent}건</strong></div>
+          </div>
+          <h2>1. 면접교사별 배정 통계</h2>
+          ${sortedTeachers.length ? `<table><thead><tr><th>No</th><th>담당 교사</th><th>교사 그룹</th><th>배정</th><th>완료</th><th>불참</th></tr></thead><tbody>${summaryRows}</tbody></table>` : '<p>배정된 면접교사가 없습니다.</p>'}
+          <h2>2. 교사별 담당 학생 상세 내역</h2>
+          ${detailSections || '<p>담당 학생 내역이 없습니다.</p>'}
+        </div>`;
+
+      // 다른 평가지 인쇄 기능에는 영향을 주지 않도록 이 보고서만 출력 후 정리합니다.
+      const cleanup = () => {
+        if (area.querySelector('#teacherStatsPrintable')) area.innerHTML = '';
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    }
+
     function renderTeacherStatsView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2572,7 +2650,7 @@
               <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 whitespace-nowrap">전체 면접 운영 성과 및 교사별 담당 실적 요약</p>
             </div>
             <div class="flex items-center space-x-2">
-              <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
+              <button onclick="printTeacherStatsReport()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
                 📄 종합 결과 보고서 인쇄
               </button>
               <button onclick="goToStudentPage()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-xl font-bold shadow-sm transition-all whitespace-nowrap">
