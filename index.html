@@ -53,7 +53,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
@@ -68,7 +68,7 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       window.db = db;
-      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot };
+      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc };
       window.isFirebaseReady = true;
     } catch(e) {
       console.warn("Firebase Init fallback", e);
@@ -364,6 +364,7 @@
 
     let EXTRA_RESERVATION_SLOTS = JSON.parse(localStorage.getItem('interview_extra_slots') || '{}');
     let TEACHER_ASSIGNMENT_MODE = localStorage.getItem('interview_teacher_assignment_mode') === 'random' ? 'random' : 'experience';
+    let STUDENT_CANCELLATION_MODE = localStorage.getItem('interview_student_cancellation_mode') === 'teacher_only' ? 'teacher_only' : 'student';
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({}));
     const DEFAULT_CLOSED_DATES = ["2026-10-05", "2026-10-09"];
 
@@ -536,6 +537,10 @@
                 TEACHER_ASSIGNMENT_MODE = doc.data().mode === 'random' ? 'random' : 'experience';
                 localStorage.setItem('interview_teacher_assignment_mode', TEACHER_ASSIGNMENT_MODE);
                 renderCalendar(); if (state.selectedDate) selectDate(state.selectedDate);
+              } else if (doc.id === 'student_cancellation_policy') {
+                STUDENT_CANCELLATION_MODE = doc.data().mode === 'teacher_only' ? 'teacher_only' : 'student';
+                localStorage.setItem('interview_student_cancellation_mode', STUDENT_CANCELLATION_MODE);
+                checkMyRegistrations();
               } else if (doc.id === 'teacher_schedule') {
                 TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
                 localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
@@ -797,7 +802,9 @@
                   <button onclick="downloadTicketImage('${r.id}')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow whitespace-nowrap">
                     🖼️ 확인증 저장
                   </button>
-                  ${isCancelLocked ? `
+                  ${STUDENT_CANCELLATION_MODE === 'teacher_only' ? `
+                    <span class="inline-flex items-center bg-slate-700 text-slate-200 border border-slate-600 font-bold px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap">🔒 취소는 담당 선생님께 문의</span>
+                  ` : isCancelLocked ? `
                     <button onclick="alert('면접 7일 전부터는 선생님의 서류 준비 및 질문 구성을 위해 직접 취소/변경이 불가능합니다.\\n\\n불가피한 변경 사유는 담임선생님 및 3학년부로 문의해 주세요.')" class="bg-slate-700 text-slate-400 font-bold px-2.5 py-1.5 rounded-lg text-xs cursor-not-allowed border border-slate-600 whitespace-nowrap" title="면접 7일전 직접 취소 불가">
                       🔒 D-7 변경마감 (3학년부 문의)
                     </button>
@@ -1033,20 +1040,46 @@
     }
 
     async function deleteRegistration(id) {
-      if (!confirm('이 학생의 면접 예약 내역을 취소/삭제하시겠습니까?')) return;
-      state.regs = state.regs.filter(r => r.id !== id);
-      localStorage.setItem('mock_regs', JSON.stringify(state.regs));
-
-      if (window.isFirebaseReady && window.dbTools) {
-        try {
-          const { doc, deleteDoc } = window.dbTools;
-          await deleteDoc(doc(window.db, 'interview_registrations', id));
-        } catch(e) { console.warn("Delete Firestore Error", e); }
+      // 버튼 표시와 별도로 저장 직전 최신 정책과 면접 날짜를 재확인합니다.
+      const registration = state.regs.find(r => r.id === id);
+      if (!registration || !state.user || String(registration.num) !== String(state.user.num)) {
+        alert('본인의 예약만 취소할 수 있습니다.');
+        return;
       }
-
-      checkMyRegistrations();
-      alert('예약 내역이 삭제되었습니다.');
+      if (!window.isFirebaseReady || !window.dbTools || !window.dbTools.getDoc) {
+        alert('취소 권한을 확인할 수 없습니다. 인터넷 연결을 확인한 후 다시 시도해 주세요.');
+        return;
+      }
+      try {
+        const {doc, getDoc, deleteDoc} = window.dbTools;
+        const policyDoc = await getDoc(doc(window.db, 'interview_settings', 'student_cancellation_policy'));
+        const policy = policyDoc.exists() && policyDoc.data().mode === 'teacher_only' ? 'teacher_only' : 'student';
+        STUDENT_CANCELLATION_MODE = policy;
+        localStorage.setItem('interview_student_cancellation_mode', policy);
+        if (policy === 'teacher_only') {
+          checkMyRegistrations();
+          alert('관리자 설정에 따라 학생이 직접 취소할 수 없습니다. 담당 선생님께 문의해 주세요.');
+          return;
+        }
+        const interviewDay = new Date(registration.date + 'T00:00:00');
+        const today = new Date(); today.setHours(0,0,0,0);
+        const daysRemaining = Math.ceil((interviewDay - today) / 86400000);
+        if (!Number.isFinite(daysRemaining) || daysRemaining <= 7) {
+          alert('면접 7일 전부터는 직접 취소할 수 없습니다. 담임선생님께 문의해 주세요.');
+          return;
+        }
+        if (!confirm('본인의 면접 예약을 취소하시겠습니까?')) return;
+        await deleteDoc(doc(window.db, 'interview_registrations', id));
+        state.regs = state.regs.filter(r => r.id !== id);
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+        checkMyRegistrations();
+        alert('예약이 취소되었습니다.');
+      } catch(e) {
+        console.error('학생 예약 취소 실패:', e);
+        alert('취소 처리에 실패했습니다. 네트워크와 Firebase 접근 권한을 확인해 주세요.');
+      }
     }
+
   </script>
 </body>
 </html>

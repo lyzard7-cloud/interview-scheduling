@@ -321,6 +321,7 @@
 
     let EXTRA_RESERVATION_SLOTS = JSON.parse(localStorage.getItem('interview_extra_slots') || '{}');
     let TEACHER_ASSIGNMENT_MODE = localStorage.getItem('interview_teacher_assignment_mode') === 'random' ? 'random' : 'experience';
+    let STUDENT_CANCELLATION_MODE = localStorage.getItem('interview_student_cancellation_mode') === 'teacher_only' ? 'teacher_only' : 'student';
     let TEACHER_SCHEDULE = JSON.parse(localStorage.getItem('mock_teacher_schedule') || JSON.stringify({
       "2026-10-05": [],
       "2026-10-06": ["정해린", "최명호"],
@@ -489,6 +490,10 @@
                 TEACHER_ASSIGNMENT_MODE = doc.data().mode === 'random' ? 'random' : 'experience';
                 localStorage.setItem('interview_teacher_assignment_mode', TEACHER_ASSIGNMENT_MODE);
                 renderTeacherView();
+              } else if (doc.id === 'student_cancellation_policy') {
+                STUDENT_CANCELLATION_MODE = doc.data().mode === 'teacher_only' ? 'teacher_only' : 'student';
+                localStorage.setItem('interview_student_cancellation_mode', STUDENT_CANCELLATION_MODE);
+                if (state.teacherTab === 'admin') renderTeacherAdminView();
               } else if (doc.id === 'teacher_schedule') {
                 TEACHER_SCHEDULE = doc.data().schedule || TEACHER_SCHEDULE;
                 localStorage.setItem('mock_teacher_schedule', JSON.stringify(TEACHER_SCHEDULE));
@@ -1898,6 +1903,26 @@
       return result;
     }
 
+    async function saveStudentCancellationPolicy() {
+      const choice = document.querySelector('input[name="studentCancellationMode"]:checked');
+      if (!choice) return;
+      if (!window.isFirebaseReady || !window.dbTools) {
+        alert('Firebase 연결을 확인한 후 다시 저장해 주세요.');
+        return;
+      }
+      try {
+        const { doc, setDoc } = window.dbTools;
+        await setDoc(doc(window.db, 'interview_settings', 'student_cancellation_policy'), {mode: choice.value});
+        STUDENT_CANCELLATION_MODE = choice.value;
+        localStorage.setItem('interview_student_cancellation_mode', choice.value);
+        renderTeacherAdminView();
+        alert('학생 예약 취소 권한 설정을 저장했습니다.');
+      } catch(err) {
+        console.error('취소 권한 설정 저장 실패', err);
+        alert('설정 저장 실패: Firestore 연결과 권한을 확인해 주세요.');
+      }
+    }
+
     function renderTeacherAdminView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -1955,6 +1980,23 @@
             <div class="flex flex-wrap items-center gap-3">
               <button onclick="saveTeacherAssignmentMode()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs px-4 py-2 rounded-xl">배정 방식 저장</button>
               <span class="text-xs text-slate-600">현재: ${TEACHER_ASSIGNMENT_MODE === 'random' ? '전체 무작위 배정' : '경력별 배정'}</span>
+            </div>
+          </div>
+
+          <div class="bg-sky-50/80 p-4 sm:p-5 rounded-2xl border border-sky-200 space-y-3">
+            <h4 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-lock text-sky-600 mr-1"></i> 학생 면접 예약 취소 권한</h4>
+            <p class="text-xs text-slate-600">학생용 사이트의 직접 취소 가능 여부를 선택합니다. 교사용 수동 취소 기능은 항상 유지됩니다.</p>
+            <label class="flex items-start gap-2 bg-white border border-sky-100 rounded-xl p-3 cursor-pointer text-xs">
+              <input type="radio" name="studentCancellationMode" value="student" ${STUDENT_CANCELLATION_MODE === 'student' ? 'checked' : ''} class="mt-0.5 accent-sky-600">
+              <span><strong>① 학생 직접 취소 허용</strong><span class="block mt-1 text-slate-500">기존 규칙 유지: 면접일까지 7일 이하 남은 예약은 학생이 직접 취소할 수 없습니다.</span></span>
+            </label>
+            <label class="flex items-start gap-2 bg-white border border-sky-100 rounded-xl p-3 cursor-pointer text-xs">
+              <input type="radio" name="studentCancellationMode" value="teacher_only" ${STUDENT_CANCELLATION_MODE === 'teacher_only' ? 'checked' : ''} class="mt-0.5 accent-sky-600">
+              <span><strong>② 교사만 취소 가능</strong><span class="block mt-1 text-slate-500">학생용에서 취소 버튼을 제한합니다. 학생은 담당 교사에게 취소를 요청해야 합니다.</span></span>
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+              <button onclick="saveStudentCancellationPolicy()" class="bg-sky-700 hover:bg-sky-800 text-white font-bold text-xs px-4 py-2 rounded-xl">취소 권한 저장</button>
+              <span class="text-xs text-slate-600">현재: ${STUDENT_CANCELLATION_MODE === 'teacher_only' ? '교사만 취소 가능' : '학생 직접 취소 허용 (7일 제한 유지)'}</span>
             </div>
           </div>
 
