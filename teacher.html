@@ -34,7 +34,7 @@
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 
-    /* 예약 현황: 13개 열을 가로 스크롤 없이 보여주는 데스크톱 압축 표 */
+    /* 예약 현황: 14개 열을 가로 스크롤 없이 보여주는 데스크톱 압축 표 */
     .reservation-fit-table { width:100%; table-layout:fixed; border-collapse:collapse; }
     .reservation-fit-table th, .reservation-fit-table td {
       box-sizing:border-box; padding:6px 3px; text-align:center;
@@ -61,7 +61,7 @@
     .reservation-fit-table .reservation-actions { flex-wrap:nowrap; gap:2px; width:100%; }
     .reservation-fit-table .reservation-actions button { flex:0 0 auto; padding:4px 2px; white-space:nowrap; line-height:1.2; }
     .reservation-fit-table .reservation-actions button i { margin:0; }
-    .reservation-fit-table td:not(:nth-child(6)):not(:nth-child(7)) {white-space:nowrap;}
+    .reservation-fit-table td:not(:nth-child(7)):not(:nth-child(8)) {white-space:nowrap;}
     .reservation-fit-table .cell-single-line {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .reservation-fit-table .reservation-actions:last-child {gap:7px;}
     .reservation-fit-table .reservation-actions button {min-width:0;}
@@ -152,6 +152,20 @@
     .weekly-grid tbody tr.weekly-lunch-row td {background:#fff7ed;border-top:2px solid #fdba74;}
     .weekly-grid tbody tr.weekly-lunch-row td:first-child {background:#ffedd5;color:#9a3412;}
     @media(max-width:900px){.weekly-grid{min-width:870px}}
+
+    /* 교사용 업데이트 알림센터 */
+    .update-bell {position:relative;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;border:1px solid #475569;background:#334155;color:white;transition:background .2s, transform .2s;flex-shrink:0;}
+    .update-bell:hover {background:#475569;transform:translateY(-1px);}
+    .update-unread-dot {position:absolute;top:5px;right:5px;width:9px;height:9px;background:#fb923c;border:2px solid #1e1e2d;border-radius:50%;}
+    #updateCenterPanel {position:absolute;right:0;top:calc(100% + 10px);width:min(370px,calc(100vw - 32px));max-height:min(70vh,530px);overflow-y:auto;z-index:80;color:#0f172a;background:white;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 18px 45px rgba(15,23,42,.25);}
+    #updateCenterPanel[hidden],#updateNoticeOverlay[hidden] {display:none!important;}
+    #updateNoticeOverlay {position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.62);z-index:120;}
+    .update-notice-dialog {width:min(100%,480px);max-height:min(85vh,680px);overflow-y:auto;background:white;color:#0f172a;border-radius:22px;box-shadow:0 28px 80px rgba(0,0,0,.28);padding:24px;}
+    .update-feature-list {list-style:none;padding:0;margin:0;display:grid;gap:10px;}
+    .update-feature-list li {display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.55;color:#334155;}
+    .update-feature-list li::before {content:'✓';color:#7c3aed;font-weight:800;flex:none;}
+    .update-meta {font-size:11px;color:#64748b;}
+    @media (prefers-reduced-motion:reduce) {.update-bell{transition:none;}}
   </style>
 
   <script>
@@ -218,7 +232,20 @@
       <div>
         <h1 class="teacher-system-title text-xl sm:text-[28px] text-white whitespace-nowrap">강일여고 모의면접 통합 운영 시스템</h1>
       </div>
-      <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner whitespace-nowrap">
+      <div class="flex items-center gap-3 self-end sm:self-auto">
+        <div class="relative" id="updateCenterRoot">
+          <button type="button" id="updateBellButton" class="update-bell" aria-label="업데이트 알림센터" aria-expanded="false" aria-controls="updateCenterPanel" onclick="toggleUpdateCenter(event)">
+            <i class="fa-regular fa-bell text-lg" aria-hidden="true"></i><span id="updateUnreadDot" class="update-unread-dot" hidden></span>
+          </button>
+          <section id="updateCenterPanel" hidden aria-label="업데이트 내역">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between border-b border-slate-100">
+              <div><h2 class="font-extrabold text-sm text-slate-900">업데이트 알림센터</h2><p class="update-meta mt-1">최근 변경 사항을 확인하세요.</p></div>
+              <button type="button" class="text-slate-500 hover:text-slate-900 p-2" aria-label="알림센터 닫기" onclick="closeUpdateCenter()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="updateCenterHistory" class="p-4 space-y-4"></div>
+          </section>
+        </div>
+        <div id="authStatus" class="text-[11px] sm:text-xs text-slate-300 bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-slate-700/80 flex items-center gap-2 shadow-inner whitespace-nowrap">
         <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
           <span class="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-yellow-400"></span>
@@ -226,9 +253,27 @@
         <span class="text-brand-orange font-bold flex items-center gap-1 whitespace-nowrap">
           <i class="fa-solid fa-user-shield text-xs"></i> 교사 관리자 접속됨
         </span>
+        </div>
       </div>
     </div>
   </header>
+
+  <div id="updateNoticeOverlay" hidden class="no-print" role="presentation">
+    <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="updateNoticeTitle">
+      <div class="flex justify-between items-start gap-3">
+        <div>
+          <div class="text-xs font-semibold text-violet-600 mb-2">✨ 시스템 업데이트</div>
+          <h2 id="updateNoticeTitle" class="text-xl font-extrabold text-slate-900">새로운 업데이트가 있어요!</h2>
+        </div>
+        <button type="button" class="text-slate-500 hover:text-slate-900 p-2" aria-label="나중에 확인" title="나중에 확인" onclick="dismissUpdateNotice()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="updateNoticeDetails" class="mt-5"></div>
+      <div class="mt-6 flex gap-2 justify-end">
+        <button type="button" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm" onclick="dismissUpdateNotice()">나중에</button>
+        <button type="button" class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm" onclick="acknowledgeUpdates()">확인했어요</button>
+      </div>
+    </div>
+  </div>
 
   <div id="mainDashboardContainer" class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-8 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 no-print">
     <aside class="w-full md:w-64 shrink-0 space-y-4">
@@ -377,7 +422,91 @@
       realReviews: JSON.parse(localStorage.getItem('mock_real_reviews') || '[]')
     };
 
+
+    // 업데이트 내역: 신규 배포 시 version을 변경하고 새 항목을 맨 앞에 추가하세요.
+    // 확인 정보는 기기/브라우저별로 localStorage에 저장됩니다. Firebase 변경 불필요.
+    const TEACHER_UPDATES = [
+      {
+        version: 'v1.0.0',
+        title: '면접 운영 시스템 기능 개선 안내',
+        items: [
+          '대학 실제 면접일을 학생·교사가 입력하거나 나중에 수정할 수 있습니다.',
+          '학생용 로그인 시 학생 명단을 Firebase에서 다시 확인하도록 개선했습니다.',
+          '학생 예약 취소 권한을 관리자 설정에서 선택할 수 있습니다.',
+          '주간 면접 운영 시간표와 강의실별 색상 구분 기능을 이용할 수 있습니다.'
+        ]
+      }
+    ];
+    const TEACHER_UPDATE_STORAGE_KEY = 'gangil_teacher_seen_update_version';
+    function readSeenUpdateVersion() {
+      try { return localStorage.getItem(TEACHER_UPDATE_STORAGE_KEY) || ''; }
+      catch (_) { return ''; }
+    }
+    function writeSeenUpdateVersion(version) {
+      try { localStorage.setItem(TEACHER_UPDATE_STORAGE_KEY, version); }
+      catch (_) { /* 브라우저 저장 차단 시 현재 화면에만 적용 */ }
+    }
+    function getUnseenUpdates() {
+      const lastSeen = readSeenUpdateVersion();
+      const seenIndex = TEACHER_UPDATES.findIndex(item => item.version === lastSeen);
+      return seenIndex < 0 ? TEACHER_UPDATES : TEACHER_UPDATES.slice(0, seenIndex);
+    }
+    function renderUpdateEntry(entry, isLatest) {
+      const lis = entry.items.map(t => `<li>${escapeUpdateHtml(t)}</li>`).join('');
+      return `<article class="space-y-3">
+        <div class="flex flex-wrap items-center gap-2"><span class="inline-flex px-2.5 py-1 rounded-full text-xs bg-violet-100 text-violet-700 font-extrabold">${escapeUpdateHtml(entry.version)}</span>${isLatest ? '<span class="text-xs text-slate-500">최신 업데이트</span>' : ''}</div>
+        <h3 class="font-bold text-slate-900 text-sm">${escapeUpdateHtml(entry.title)}</h3>
+        <ul class="update-feature-list">${lis}</ul>
+      </article>`;
+    }
+    function escapeUpdateHtml(str) {
+      return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function refreshUpdateCenter() {
+      const unseen = getUnseenUpdates().length > 0;
+      const dot = document.getElementById('updateUnreadDot');
+      if (dot) dot.hidden = !unseen;
+      const history = document.getElementById('updateCenterHistory');
+      if (history) history.innerHTML = TEACHER_UPDATES.map((entry, idx) => renderUpdateEntry(entry, idx === 0)).join('<hr class="border-slate-200 my-4">') + (unseen ? '<button type="button" onclick="acknowledgeUpdates()" class="mt-3 w-full py-2 rounded-lg bg-violet-600 text-white font-semibold text-xs">업데이트 확인 완료</button>' : '<p class="update-meta mt-3">확인한 업데이트입니다.</p>');
+    }
+    function initTeacherUpdateNotice() {
+      refreshUpdateCenter();
+      if (getUnseenUpdates().length) {
+        const details = document.getElementById('updateNoticeDetails');
+        if (details) details.innerHTML = TEACHER_UPDATES.filter(u => getUnseenUpdates().includes(u)).map((entry, i) => renderUpdateEntry(entry, i === 0)).join('<hr class="border-slate-200 my-4">');
+        document.getElementById('updateNoticeOverlay').hidden = false;
+      }
+    }
+    function toggleUpdateCenter(event) {
+      if (event) event.stopPropagation();
+      const panel = document.getElementById('updateCenterPanel');
+      panel.hidden = !panel.hidden;
+      document.getElementById('updateBellButton').setAttribute('aria-expanded', String(!panel.hidden));
+      if (!panel.hidden) refreshUpdateCenter();
+    }
+    function closeUpdateCenter() {
+      const panel = document.getElementById('updateCenterPanel');
+      if (panel) panel.hidden = true;
+      document.getElementById('updateBellButton')?.setAttribute('aria-expanded','false');
+    }
+    function dismissUpdateNotice() {
+      document.getElementById('updateNoticeOverlay').hidden = true;
+    }
+    function acknowledgeUpdates() {
+      writeSeenUpdateVersion(TEACHER_UPDATES[0].version);
+      dismissUpdateNotice();
+      refreshUpdateCenter();
+    }
+    document.addEventListener('click', event => {
+      const root = document.getElementById('updateCenterRoot');
+      if (root && !root.contains(event.target)) closeUpdateCenter();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {closeUpdateCenter(); dismissUpdateNotice();}
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
+      initTeacherUpdateNotice();
       syncDatabase();
       updateSidebarNavForTeacher();
       renderTeacherView();
@@ -1332,9 +1461,9 @@
         alert('다운로드할 면접 신청 내역이 없습니다.');
         return;
       }
-      let csvStr = '\uFEFFNo,면접희망일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,학생후기,교사총평,담당면접교사1,담당면접교사2,면접장소\n';
+      let csvStr = '\uFEFFNo,면접희망일,대학실제면접일,교시,학번,이름,지원대학교,지원학과,요청사항,진행상태,학생후기,교사총평,담당면접교사1,담당면접교사2,면접장소\n';
       state.regs.forEach((r, i) => {
-        csvStr += `${i+1},${r.date},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},"${r.feedback || ''}","${r.teacherEvaluation || ''}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3층 소형강의실'}\n`;
+        csvStr += `${i+1},${r.date},${r.actualInterviewDate || ""},${r.period}교시,${r.num},${r.name},"${r.univ}","${r.dept}","${r.note || ''}",${r.status || '대기'},"${r.feedback || ''}","${r.teacherEvaluation || ''}",${r.teacher1 || '미배정'},${r.teacher2 || '미배정'},${r.location || '3층 소형강의실'}\n`;
       });
 
       const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
@@ -2169,6 +2298,76 @@
     }
 
     // 예약 목록: 열 너비 최적화 + 모든 예약 행 높이 통일
+
+    // 실제 대학 면접일은 예약 날짜/교시와 독립적으로 수정한다.
+    function openActualInterviewDateEditor(regId) {
+      const reg = state.regs.find(r => r.id === regId);
+      if (!reg) { alert('예약을 찾을 수 없습니다. 화면을 새로고침해 주세요.'); return; }
+      // 교사 관리자 화면에서 해당 예약의 실제 대학 면접일을 수정합니다.
+      document.getElementById('actualInterviewDateEditorOverlay')?.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'actualInterviewDateEditorOverlay';
+      overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 no-print';
+      overlay.innerHTML = `
+        <div role="dialog" aria-modal="true" aria-labelledby="actualInterviewDateEditorTitle" class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4 text-slate-800">
+          <h3 id="actualInterviewDateEditorTitle" class="font-bold text-lg">대학 실제 면접일 입력·수정</h3>
+          <p id="actualInterviewDateEditorSummary" class="text-sm text-slate-600"></p>
+          <label for="actualInterviewDateEditorInput" class="block text-sm font-semibold">대학 실제 면접일</label>
+          <input id="actualInterviewDateEditorInput" type="date" class="block w-full rounded-xl border border-slate-300 px-3 py-3 text-base focus:outline-none focus:border-indigo-500" />
+          <p class="text-xs text-slate-500">날짜를 지우고 저장하면 ‘미정’으로 표시됩니다. 모의면접 예약 날짜와 교시는 변경되지 않습니다.</p>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="closeActualInterviewDateEditor()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold">취소</button>
+            <button id="actualInterviewDateEditorSave" type="button" class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold">저장</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('actualInterviewDateEditorSummary').textContent = `${reg.name} (${reg.num}) · ${reg.univ || ''} ${reg.dept || ''}`;
+      const input = document.getElementById('actualInterviewDateEditorInput');
+      input.value = /^\d{4}-\d{2}-\d{2}$/.test(reg.actualInterviewDate || '') ? reg.actualInterviewDate : '';
+      document.getElementById('actualInterviewDateEditorSave').onclick = () => saveActualInterviewDate(reg.id);
+      overlay.addEventListener('click', event => { if (event.target === overlay) closeActualInterviewDateEditor(); });
+      input.focus();
+    }
+
+    function closeActualInterviewDateEditor() {
+      document.getElementById('actualInterviewDateEditorOverlay')?.remove();
+    }
+
+    function isValidActualInterviewDate(dateString) {
+      if (dateString === '') return true;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+      const parsed = new Date(dateString + 'T12:00:00Z');
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === dateString;
+    }
+
+    async function saveActualInterviewDate(regId) {
+      const reg = state.regs.find(r => r.id === regId);
+      if (!reg) { alert('예약 정보를 찾을 수 없습니다.'); return; }
+      // 교사 관리자 화면에서 해당 예약의 실제 대학 면접일을 수정합니다.
+      const value = document.getElementById('actualInterviewDateEditorInput')?.value || '';
+      if (!isValidActualInterviewDate(value)) { alert('올바른 날짜를 입력해 주세요.'); return; }
+      const btn = document.getElementById('actualInterviewDateEditorSave');
+      if (btn?.disabled) return;
+      if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+      try {
+        if (!window.isFirebaseReady || !window.dbTools?.updateDoc) throw new Error('Firebase 연결이 준비되지 않았습니다.');
+        const { doc, updateDoc } = window.dbTools;
+        // 기존 예약 데이터의 다른 필드를 덮어쓰지 않도록 부분 업데이트만 수행
+        await updateDoc(doc(window.db, 'interview_registrations', regId), { actualInterviewDate: value });
+        const latest = state.regs.find(r => r.id === regId);
+        if (latest) latest.actualInterviewDate = value;
+        localStorage.setItem('mock_regs', JSON.stringify(state.regs));
+        closeActualInterviewDateEditor();
+        renderTeacherListView();
+        alert('대학 실제 면접일이 저장되었습니다.');
+      } catch (error) {
+        console.error('대학 실제 면접일 저장 실패:', error);
+        alert('날짜를 저장하지 못했습니다. 인터넷 연결과 Firebase 권한을 확인한 후 다시 시도해 주세요.');
+      } finally {
+        if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '저장'; }
+      }
+    }
+
     function renderTeacherListView() {
       const main = document.getElementById('mainContent');
       if (!main) return;
@@ -2246,6 +2445,7 @@
           <tr class="${isPastRow ? 'past-reservation-row ' : ''}border-b border-slate-100 hover:bg-slate-50 text-slate-700 ${isTodayRow ? 'bg-amber-50/30 font-semibold' : ''}">
             <td class="font-semibold text-slate-500 text-center">${idx + 1}</td>
             <td class="font-bold ${isTodayRow ? 'text-brand-orange' : 'text-brand-navy'} text-center">${String(r.date || "").slice(5)} ${isTodayRow ? '⭐' : ''}</td>
+            <td class="text-center font-semibold text-slate-700" title="${r.actualInterviewDate || '미입력'}"><div class="flex items-center justify-center gap-1 whitespace-nowrap"><span>${r.actualInterviewDate ? r.actualInterviewDate.slice(5).replace('-', '/') : '-'}</span><button type="button" onclick="openActualInterviewDateEditor('${r.id}')" aria-label="대학 실제 면접일 수정" title="대학 실제 면접일 수정" class="text-brand-purple hover:text-indigo-900" style="font-size:13px;white-space:nowrap">✎</button></div></td>
             <td class="font-bold text-brand-purple text-center">${r.period}교시 <button onclick="promptMoveReservation('${r.id}')" title="교시 변경" class="text-slate-500 text-[10px]" style="white-space:nowrap">↔</button></td>
             <td class="font-semibold text-center">${r.num}</td>
             <td class="font-bold text-slate-900 text-center">${r.name}</td>
@@ -2284,7 +2484,7 @@
       }).join('');
 
       if (filteredRegs.length === 0) {
-        tableRows = `<tr><td colspan="13" class="py-8 text-center text-xs text-slate-400">${hiddenPastCount > 0 ? `지난 일정 ${hiddenPastCount}건이 접혀 있습니다. 위의 ‘지난 일정 펼치기’를 눌러 확인하세요.` : '검색 조건에 맞는 학생 신청 내역이 없습니다.'}</td></tr>`;
+        tableRows = `<tr><td colspan="14" class="py-8 text-center text-xs text-slate-400">${hiddenPastCount > 0 ? `지난 일정 ${hiddenPastCount}건이 접혀 있습니다. 위의 ‘지난 일정 펼치기’를 눌러 확인하세요.` : '검색 조건에 맞는 학생 신청 내역이 없습니다.'}</td></tr>`;
       }
 
       main.innerHTML = `
@@ -2349,11 +2549,12 @@
           <!-- 모든 열을 화면 폭에 맞추고 각 행의 높이를 동일하게 유지 -->
           <div id="pastScheduleTableWrap" class="w-full min-w-0 rounded-xl border border-slate-200 overflow-hidden">
             <table class="reservation-fit-table">
-              <colgroup><col style="width:3%"><col style="width:7%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:6%"><col style="width:9%"><col style="width:17%"><col style="width:9%"><col style="width:10%"></colgroup>
+              <colgroup><col style="width:3%"><col style="width:6%"><col style="width:6%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:8%"><col style="width:8%"><col style="width:6%"><col style="width:5%"><col style="width:8%"><col style="width:16%"><col style="width:9%"><col style="width:11%"></colgroup>
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600">
                   <th class="text-center">No</th>
                   <th class="text-center">희망일</th>
+                  <th class="text-center">대학 면접일</th>
                   <th class="text-center">교시</th>
                   <th class="text-center">학번</th>
                   <th class="text-center">이름</th>
