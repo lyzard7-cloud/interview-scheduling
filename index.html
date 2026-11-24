@@ -53,7 +53,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD7xuekPxP9C_JIo586h-XvsbWMM7Lzle0",
@@ -68,11 +68,14 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       window.db = db;
-      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc };
+      window.dbTools = { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocFromServer };
+      window.dispatchEvent(new Event('interview-firebase-ready'));
       window.isFirebaseReady = true;
     } catch(e) {
       console.warn("Firebase Init fallback", e);
       window.isFirebaseReady = false;
+      window.firebaseInitializationError = e;
+      window.dispatchEvent(new Event('interview-firebase-error'));
     }
   </script>
 </head>
@@ -380,66 +383,102 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      syncDatabase();
+      // Firebase SDK는 module로 로드되므로 DOMContentLoaded보다 늦게 준비될 수 있습니다.
+      if (window.isFirebaseReady && window.dbTools) syncDatabase();
+      else window.addEventListener('interview-firebase-ready', syncDatabase, { once: true });
     });
 
-    // ★ [로그인 처리 보완: 로컬스토리지 및 온라인 DB 통합 검증] ★
-    async function handleStudentLogin() {
-      STUDENT_LIST = JSON.parse(localStorage.getItem('mock_student_list') || '[]');
+    function waitForFirebaseReady(timeoutMs = 12000) {
+      if (window.isFirebaseReady && window.dbTools?.getDocFromServer) return Promise.resolve();
+      if (window.firebaseInitializationError) return Promise.reject(window.firebaseInitializationError);
+      return new Promise((resolve, reject) => {
+        let finished = false;
+        const cleanup = () => {
+          clearTimeout(timer);
+          window.removeEventListener('interview-firebase-ready', onReady);
+          window.removeEventListener('interview-firebase-error', onError);
+        };
+        const onReady = () => { if (!finished) { finished = true; cleanup(); resolve(); } };
+        const onError = () => { if (!finished) { finished = true; cleanup(); reject(window.firebaseInitializationError || new Error('Firebase 초기화 실패')); } };
+        window.addEventListener('interview-firebase-ready', onReady);
+        window.addEventListener('interview-firebase-error', onError);
+        const timer = setTimeout(() => { if (!finished) { finished = true; cleanup(); reject(new Error('Firebase SDK 연결 시간 초과')); } }, timeoutMs);
+        // 등록 직후 준비된 경우도 놓치지 않습니다.
+        if (window.isFirebaseReady && window.dbTools?.getDocFromServer) onReady();
+      });
+    }
 
+    // 학생 로그인은 브라우저 캐시가 아닌 Firestore 서버의 학번 문서를 직접 확인합니다.
+    // 기존 학생 데이터 형식(interview_students/{학번})은 변경하지 않습니다.
+    let studentLoginInProgress = false;
+    async function handleStudentLogin() {
+      if (studentLoginInProgress) return;
       const num = document.getElementById('sNum').value.trim();
       const name = document.getElementById('sName').value.trim();
       const pin = document.getElementById('sPin').value.trim();
-
       if (!num || !name || !pin) {
         alert('학번, 이름, 개인 부여 코드를 모두 입력해 주세요.');
         return;
       }
 
-      // 1차: 로컬 데이터 검색
-      let foundStudent = STUDENT_LIST.find(s => String(s.num).trim() === num && String(s.name).trim() === name);
-
-      // 2차: 로컬에 없을 경우 온라인 DB 직접 조회
-      if (!foundStudent && window.isFirebaseReady && window.dbTools) {
-        try {
-          const { collection, onSnapshot } = window.dbTools;
-          // DB 수신 대기 처리
-        } catch(e) {}
+      const loginBtn = document.querySelector('#loginPortalContainer button[type="submit"]');
+      const originalButtonHtml = loginBtn?.innerHTML;
+      studentLoginInProgress = true;
+      if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="text-base">학생 명단 확인 중...</span>';
+        loginBtn.classList.add('opacity-70', 'cursor-wait');
       }
+      try {
+        await waitForFirebaseReady();
+        const { doc, getDocFromServer } = window.dbTools;
+        // 교사 관리자 사이트는 학생 문서 ID를 학번으로 저장합니다.
+        const studentSnapshot = await getDocFromServer(doc(window.db, 'interview_students', num));
+        if (!studentSnapshot.exists()) {
+          alert('Firebase 학생 명단에서 해당 학번을 확인할 수 없습니다.\n\n교사용 관리자 화면에 명단이 표시되더라도 서버 업로드가 완료되지 않았을 수 있습니다. 담당 선생님께 문의해 주세요.');
+          return;
+        }
+        const student = studentSnapshot.data();
+        if (String(student.num ?? '').trim() !== num || String(student.name ?? '').trim() !== name) {
+          alert('학번 또는 이름이 등록된 정보와 일치하지 않습니다. 담임선생님께 확인해 주세요.');
+          return;
+        }
+        if (String(student.pin ?? '').trim() !== pin) {
+          alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
+          return;
+        }
 
-      if (STUDENT_LIST.length === 0 && !foundStudent) {
-        alert('아직 시스템에 등록된 학생 명단이 없습니다.\n\n교사 전용 사이트(teacher.html)의 [교사 관리자 전용] 탭에서 학생 명단 엑셀 파일을 먼저 업로드해 주세요.');
-        return;
+        // 원래 예약·취소·면접후기 동작은 그대로 유지합니다.
+        state.user = { num, name, pin };
+        document.getElementById('authStatus').innerHTML = `
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
+          </span>
+          <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
+            <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
+          </span>`;
+        document.getElementById('loginPortalContainer').classList.add('hidden');
+        document.getElementById('mainDashboardContainer').classList.remove('hidden');
+        updateSidebarNavForStudent();
+        switchStudentTab('reserve');
+        alert(`${name} 학생으로 로그인이 완료되었습니다.`);
+      } catch (error) {
+        console.error('학생 인증 Firestore 조회 실패:', error);
+        const code = String(error?.code || '');
+        if (code.includes('permission-denied')) {
+          alert('학생 명단을 읽을 권한이 없습니다. Firebase 보안 규칙을 관리자에게 확인해 주세요.');
+        } else {
+          alert('학생 명단 서버 연결에 실패했습니다.\n\n네트워크 연결 상태를 확인하고 잠시 후 다시 시도해 주세요. 문제가 계속되면 담당 선생님께 알려 주세요.');
+        }
+      } finally {
+        studentLoginInProgress = false;
+        if (loginBtn) {
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = originalButtonHtml;
+          loginBtn.classList.remove('opacity-70', 'cursor-wait');
+        }
       }
-
-      if (!foundStudent) {
-        alert('3학년 학생 명단에 등록되지 않은 학번 및 이름입니다. 담임선생님께 확인해 주세요.');
-        return;
-      }
-
-      if (String(foundStudent.pin).trim() !== pin) {
-        alert('접속 코드가 일치하지 않습니다. 부여받은 고유 6자리 코드를 다시 확인해 주세요.');
-        return;
-      }
-
-      state.user = { num, name, pin };
-      
-      document.getElementById('authStatus').innerHTML = `
-        <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-80"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400"></span>
-        </span>
-        <span class="text-yellow-300 font-bold flex items-center gap-1 whitespace-nowrap">
-          <i class="fa-solid fa-user-check text-xs"></i> ${name} (${num}) 접속됨
-        </span>
-      `;
-
-      document.getElementById('loginPortalContainer').classList.add('hidden');
-      document.getElementById('mainDashboardContainer').classList.remove('hidden');
-
-      updateSidebarNavForStudent();
-      switchStudentTab('reserve');
-      alert(`${name} 학생으로 로그인이 완료되었습니다.`);
     }
 
     function updateSidebarNavForStudent() {
